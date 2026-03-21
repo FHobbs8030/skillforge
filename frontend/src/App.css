@@ -45,6 +45,7 @@ body {
 .stat-card {
   background: var(--card-bg);
   padding: 20px;
+  border: 1px solid #1f1f1f;
   border-radius: 12px;
   width: 120px;
   text-align: center;
