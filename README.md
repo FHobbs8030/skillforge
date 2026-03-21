@@ -12,136 +12,195 @@
 
 ## 📌 Overview
 
-**SkillForge** is a full-stack web application designed to help developers **track their learning journey**, monitor progress, and visualize growth over time.
+**SkillForge** is a full-stack web application designed to help developers track their learning progress, monitor consistency, and visualize growth over time.
 
-It combines **manual learning logs** with **real GitHub data** to give a complete picture of developer activity.
+The application combines **manual learning entries** with **real GitHub data** to provide a complete picture of developer activity and improvement.
+
+---
+
+## 📸 Project Preview
+
+![SkillForge App](./images/app.png)
+
+---
+
+## 🌐 Live Project
+
+[View SkillForge Live](https://69beb231345e31ff24148486--euphonious-duckanoo-110dd4.netlify.app/)
+
+---
+
+## 🗂️ Project Planning
+
+![Trello Board](./images/trello.png)
 
 ---
 
 ## ✨ Features
 
-- 📚 **Learning Tracker**
-  - Add entries (topic, hours, notes, date)
-  - View and manage learning history
+### ✅ Current (Stage 1)
 
-- 📊 **Progress Analytics**
-  - Track hours over time
-  - Visualize learning trends
+- React frontend initialized and deployed
+- Displays learning entries in a structured UI
+- Clean and responsive layout
+- Project architecture established
 
-- 🐙 **GitHub Integration**
-  - Fetch user profile data
-  - Display repositories and activity
-  - Analyze languages used
+### 🔄 Planned Features
 
-- 🧠 **Developer Insights**
-  - Combine coding activity + learning habits
-  - Identify growth patterns
+#### 📚 Learning Tracker
+
+- Add entries (topic, hours, notes, date)
+- View and manage learning history
+
+#### 🐙 GitHub Integration
+
+- Fetch user profile data
+- Display repositories and activity
+- Analyze languages used
+
+#### 📊 Progress Analytics
+
+- Track hours over time
+- Visualize learning trends
+
+#### 🔐 Authentication
+
+- User login/signup
+- Secure data storage
 
 ---
 
 ## 🏗️ Architecture
 
-
+```text
 User (Browser)
-↓
+   ↓
 React Frontend (Vite)
-↓
+   ↓
 Node.js / Express Backend
-↓
+   ↓
 MongoDB Database
-↓
+   ↓
 GitHub API
-
+```
 
 ---
 
 ## 🧰 Tech Stack
 
 ### Frontend
+
 - ⚛️ React (Vite)
 - 🎨 CSS / Responsive Design
 
-### Backend
+### Backend (Planned)
+
 - 🟢 Node.js
 - 🚏 Express.js
 
-### Database
+### Database (Planned)
+
 - 🍃 MongoDB
 
 ### External API
+
 - 🐙 GitHub REST API
+
+---
+
+## 🔌 API Integration
+
+This project will use the **GitHub REST API**:
+
+- `GET /users/:username`
+- `GET /users/:username/repos`
+- `GET /users/:username/events`
 
 ---
 
 ## 📁 Project Structure
 
-
+```text
 skillforge/
-│
-├── frontend/ # React client (UI)
-├── backend/ # Express API server
+├── frontend/
+│   ├── src/
+│   └── dist/
+├── backend/
 ├── README.md
 └── .gitignore
-
+```
 
 ---
 
 ## ⚙️ Installation & Setup
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/FHobbs8030/skillforge.git
 cd skillforge
-2. Setup Frontend
+```
+
+### 2. Setup Frontend
+
+```bash
 cd frontend
 npm install
 npm run dev
-3. Setup Backend
+```
+
+### 3. Setup Backend (when implemented)
+
+```bash
 cd backend
 npm install
 npm run dev
-📈 Roadmap
-✅ Stage 1 (Current)
+```
 
-Project structure setup
+---
 
-React frontend initialized
+## 📈 Roadmap
 
-Express backend initialized
+### ✅ Stage 1 (Current)
 
-🔄 Stage 2
+- Project structure setup
+- React frontend initialized
+- Express backend initialized
+- Frontend deployed
 
-CRUD functionality for learning entries
+### 🔄 Stage 2
 
-MongoDB integration
+- CRUD functionality for learning entries
+- MongoDB integration
 
-🔄 Stage 3
+### 🔄 Stage 3
 
-GitHub API integration
+- GitHub API integration
+- Data visualization (charts)
 
-Data visualization (charts)
+### 🔄 Stage 4
 
-🔄 Stage 4
+- Authentication (JWT)
+- Full deployment
 
-Authentication (JWT)
+---
 
-Full deployment
+## 🎯 Goals
 
-🎯 Goals
+- Build a portfolio-quality full-stack application
+- Demonstrate third-party API integration
+- Showcase data-driven UI development
+- Strengthen backend architecture skills
 
-Build a portfolio-worthy full-stack application
+---
 
-Demonstrate real-world API integration
+## 📌 Status
 
-Showcase data-driven UI development
+🚧 In Development – Stage 1
 
-Strengthen backend architecture skills
+---
 
-📌 Status
-
-🚧 In Development – Stage 1 Complete
-
-👨‍💻 Author
+## 👨‍💻 Author
 
 Fred Hobbs
 
