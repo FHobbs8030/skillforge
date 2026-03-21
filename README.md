@@ -26,7 +26,7 @@ The application combines **manual learning entries** with **real GitHub data** t
 
 ## 🌐 Live Project
 
-<https://69beb231345e31ff24148486--euphonious-duckanoo-110dd4.netlify.app/>
+https://gleaming-meerkat-cfca2e.netlify.app/
 
 ---
 
