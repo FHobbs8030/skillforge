@@ -26,7 +26,7 @@ The application combines **manual learning entries** with **real GitHub data** t
 
 ## 🌐 Live Project
 
-[View SkillForge Live](https://69beb231345e31ff24148486--euphonious-duckanoo-110dd4.netlify.app/)
+<https://69beb231345e31ff24148486--euphonious-duckanoo-110dd4.netlify.app/>
 
 ---
 
@@ -40,17 +40,17 @@ The application combines **manual learning entries** with **real GitHub data** t
 
 ### ✅ Current (Stage 1)
 
-- React frontend initialized and deployed
-- Displays learning entries in a structured UI
-- Clean and responsive layout
-- Project architecture established
+- Add learning entries (topic, hours, notes)
+- Display entries in a clean dashboard UI
+- Track total entries and total hours
+- Responsive SaaS-style interface
 
 ### 🔄 Planned Features
 
 #### 📚 Learning Tracker
 
-- Add entries (topic, hours, notes, date)
-- View and manage learning history
+- Edit and delete entries
+- Store data in a database
 
 #### 🐙 GitHub Integration
 
@@ -61,7 +61,7 @@ The application combines **manual learning entries** with **real GitHub data** t
 #### 📊 Progress Analytics
 
 - Track hours over time
-- Visualize learning trends
+- Visualize learning trends with charts
 
 #### 🔐 Authentication
 
@@ -90,31 +90,29 @@ GitHub API
 
 ### Frontend
 
-- ⚛️ React (Vite)
-- 🎨 CSS / Responsive Design
+- React (Vite)
+- CSS / Responsive Design
 
 ### Backend (Planned)
 
-- 🟢 Node.js
-- 🚏 Express.js
+- Node.js
+- Express.js
 
 ### Database (Planned)
 
-- 🍃 MongoDB
+- MongoDB
 
 ### External API
 
-- 🐙 GitHub REST API
+- GitHub REST API
 
 ---
 
 ## 🔌 API Integration
 
-This project will use the **GitHub REST API**:
-
-- `GET /users/:username`
-- `GET /users/:username/repos`
-- `GET /users/:username/events`
+- GET /users/:username  
+- GET /users/:username/repos  
+- GET /users/:username/events  
 
 ---
 
@@ -134,14 +132,14 @@ skillforge/
 
 ## ⚙️ Installation & Setup
 
-### 1. Clone the repository
+### Clone the repository
 
 ```bash
 git clone https://github.com/FHobbs8030/skillforge.git
 cd skillforge
 ```
 
-### 2. Setup Frontend
+### Setup Frontend
 
 ```bash
 cd frontend
@@ -149,7 +147,7 @@ npm install
 npm run dev
 ```
 
-### 3. Setup Backend (when implemented)
+### Setup Backend (when implemented)
 
 ```bash
 cd backend
@@ -161,24 +159,23 @@ npm run dev
 
 ## 📈 Roadmap
 
-### ✅ Stage 1 (Current)
+### Stage 1
 
-- Project structure setup
 - React frontend initialized
-- Express backend initialized
-- Frontend deployed
+- Entry tracking UI built
+- Deployment completed
 
-### 🔄 Stage 2
+### Stage 2
 
-- CRUD functionality for learning entries
+- CRUD functionality for entries
 - MongoDB integration
 
-### 🔄 Stage 3
+### Stage 3
 
 - GitHub API integration
-- Data visualization (charts)
+- Data visualization
 
-### 🔄 Stage 4
+### Stage 4
 
 - Authentication (JWT)
 - Full deployment
@@ -196,12 +193,11 @@ npm run dev
 
 ## 📌 Status
 
-🚧 In Development – Stage 1
+In Development – Stage 1
 
 ---
 
 ## 👨‍💻 Author
 
-Fred Hobbs
-
-GitHub: <https://github.com/FHobbs8030>
+Fred Hobbs  
+<https://github.com/FHobbs8030>
