@@ -26,7 +26,7 @@ The application combines **manual learning entries** with **real GitHub data** t
 
 ## 🌐 Live Project
 
-https://app.netlify.com/projects/gleaming-meerkat-cfca2e/deploys/69beda01b8d2bc403dccfca1
+https://69beda01b8d2bc403dccfca1--gleaming-meerkat-cfca2e.netlify.app/
 
 ---
 
