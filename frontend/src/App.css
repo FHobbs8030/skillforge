@@ -28,6 +28,7 @@ body {
 }
 
 .logo {
+  filter: drop-shadow(0 0 10px rgba(255, 90, 0, 0.3));
   width: clamp(220px, 35vw, 400px);
   height: auto;
   display: block;
