@@ -204,4 +204,4 @@ npm run dev
 
 Fred Hobbs
 
-GitHub: https://github.com/FHobbs8030
+GitHub: <https://github.com/FHobbs8030>
