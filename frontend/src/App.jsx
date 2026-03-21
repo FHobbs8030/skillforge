@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./App.css";
+import logo from "./assets/logo.png";
 
 function App() {
   const [entries, setEntries] = useState([
@@ -42,10 +43,9 @@ function App() {
 
   return (
     <div className="dashboard">
-      <header className="header">
-        <h1>🚀 SkillForge</h1>
-        <p>Track your developer growth</p>
-      </header>
+      <div className="header">
+        <img src={logo} alt="SkillForge Logo" className="logo" />
+      </div>
 
       <div className="stats">
         <div className="stat-card">
