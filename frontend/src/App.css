@@ -11,8 +11,33 @@
 body {
   margin: 0;
   font-family: sans-serif;
-  background: radial-gradient(circle at 50% 20%, #111111 0%, #050505 100%);
   color: var(--text);
+
+  background:
+    radial-gradient(circle at 50% 10%, rgba(255, 90, 0, 0.16), transparent 55%),
+    radial-gradient(
+      circle at 25% 85%,
+      rgba(168, 85, 247, 0.12),
+      transparent 65%
+    ),
+    radial-gradient(
+      circle at 75% 85%,
+      rgba(59, 130, 246, 0.1),
+      transparent 65%
+    ),
+    #040404;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 90, 0, 0.06),
+    transparent 40%
+  );
+  pointer-events: none;
 }
 
 .dashboard {
@@ -20,6 +45,34 @@ body {
   margin: 0 auto;
   padding: 10px 16px 20px;
   animation: fadeIn 0.6s ease;
+  position: relative;
+  z-index: 1;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.04),
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
 @keyframes fadeIn {
@@ -42,6 +95,8 @@ body {
 .header img {
   max-height: 180px;
   object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(255, 90, 0, 0.25))
+    drop-shadow(0 0 25px rgba(168, 85, 247, 0.15));
 }
 
 .logo {
@@ -92,6 +147,14 @@ body {
 .stat-card p {
   color: #94a3b8;
   margin: 5px 0 0;
+}
+
+.card,
+.stat-card {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  background: rgba(17, 17, 17, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .entry-form {
@@ -152,8 +215,8 @@ body {
 .card:hover {
   transform: translateY(-6px) scale(1.01);
   box-shadow:
-    0 0 20px var(--accent-glow),
-    0 0 40px rgba(255, 90, 0, 0.2);
+    0 0 20px rgba(255, 90, 0, 0.4),
+    0 0 40px rgba(168, 85, 247, 0.15);
   border-color: var(--accent);
 }
 
@@ -170,6 +233,17 @@ body {
 .card span {
   color: var(--text-soft);
   font-size: 0.9rem;
+}
+
+button {
+  transition: all 0.25s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 15px rgba(255, 90, 0, 0.5),
+    0 0 30px rgba(255, 90, 0, 0.2);
 }
 
 /* GitHub Section */
@@ -189,6 +263,13 @@ body {
   color: white;
 }
 
+.github-section input:focus,
+.form-row input:focus {
+  outline: none;
+  border-color: rgba(255, 90, 0, 0.6);
+  box-shadow: 0 0 10px rgba(255, 90, 0, 0.25);
+}
+
 .github-section button {
   padding: 1rem 1.5rem;
   background: #ff5a00;
@@ -206,7 +287,9 @@ body {
   border-radius: 12px;
   background: #111;
   border: 1px solid #222;
-  box-shadow: 0 0 15px rgba(255, 90, 0, 0.2);
+  box-shadow:
+    0 0 20px rgba(255, 90, 0, 0.25),
+    0 0 30px rgba(168, 85, 247, 0.1);
   transition: all 0.3s ease;
 }
 
@@ -219,6 +302,7 @@ body {
 
 .github-card h3 {
   margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px rgba(255, 90, 0, 0.4);
 }
 
 .github-card p {
