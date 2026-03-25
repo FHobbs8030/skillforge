@@ -20,7 +20,7 @@ The application combines **manual learning entries** with **real GitHub data** t
 
 ## 📸 Project Preview
 
-![SkillForge App](./images/app.png)
+![SkillForge App](./frontend/src/assets/app.png)
 
 ---
 
@@ -32,7 +32,7 @@ The application combines **manual learning entries** with **real GitHub data** t
 
 ## 🗂️ Project Planning
 
-![Trello Board](./images/trello.png)
+![Trello Board](./frontend/src/assets/trello.png)
 
 ---
 
@@ -201,5 +201,3 @@ In Development – Stage 1
 
 Fred Hobbs  
 <https://github.com/FHobbs8030>
-
-## Stage 1 Submission
