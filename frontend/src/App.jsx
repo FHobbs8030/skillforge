@@ -1,3 +1,5 @@
+import { Routes, Route, Link } from "react-router-dom";
+import Profile from "./pages/Profile";
 import { useState, useEffect } from "react";
 import "./App.css";
 import Header from "./components/Header/Header";
@@ -108,53 +110,68 @@ function App() {
   };
 
   return (
-    <div className="app-container">
-      <div className="app-layout">
-        <Sidebar projects={projects} position="left" />
+  <Routes>
+    <Route
+      path="/"
+      element={
+        <div className="app-container">
+          <nav className="nav">
+            <Link to="/">Home</Link>
+            <Link to="/profile">Profile</Link>
+          </nav>
 
-        <main className="main-content">
-          <div className="main-inner">
-            <Header />
+          <div className="app-layout">
+            <Sidebar projects={projects} position="left" />
 
-            <GitHubCard
-              githubUser={githubUser}
-              setGithubUser={setGithubUser}
-              fetchGitHubData={fetchGitHubData}
-              githubData={githubData}
-            />
+            <main className="main-content">
+              <div className="main-inner">
+                <Header />
 
-            <div className="stats">
-              <div className="stat-card">
-                <h3>{entries.length}</h3>
-                <p>Entries</p>
-              </div>
-              <div className="stat-card">
-                <h3>{totalHours}</h3>
-                <p>Total Hours</p>
-              </div>
-            </div>
+                <GitHubCard
+                  githubUser={githubUser}
+                  setGithubUser={setGithubUser}
+                  fetchGitHubData={fetchGitHubData}
+                  githubData={githubData}
+                />
 
-            <EntryForm
-              formData={formData}
-              handleChange={handleChange}
-              handleSubmit={handleSubmit}
-            />
-
-            <div className="grid">
-              {entries.map((entry, index) => (
-                <div key={index} className="card">
-                  <h3>{entry.topic}</h3>
-                  <p>{entry.hours} hrs</p>
-                  <span>{entry.notes}</span>
+                <div className="stats">
+                  <div className="stat-card">
+                    <h3>{entries.length}</h3>
+                    <p>Entries</p>
+                  </div>
+                  <div className="stat-card">
+                    <h3>{totalHours}</h3>
+                    <p>Total Hours</p>
+                  </div>
                 </div>
-              ))}
-            </div>
+
+                <EntryForm
+                  formData={formData}
+                  handleChange={handleChange}
+                  handleSubmit={handleSubmit}
+                />
+
+                <div className="grid">
+                  {entries.map((entry, index) => (
+                    <div key={index} className="card">
+                      <h3>{entry.topic}</h3>
+                      <p>{entry.hours} hrs</p>
+                      <span>{entry.notes}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </main>
+
+            <Sidebar projects={projects} position="right" />
           </div>
-        </main>
-        <Sidebar projects={projects} position="right" />
-      </div>
-    </div>
-  );
+        </div>
+      }
+    />
+
+    <Route path="/profile" element={<Profile />} />
+  </Routes>
+);
 }
 
 export default App;
