@@ -203,6 +203,3 @@ Fred Hobbs
 <https://github.com/FHobbs8030>
 
 ## Stage 1 Submission
-
-- GitHub Repo: <https://github.com/FHobbs8030/skillforge>
-- Frontend Live: <https://69beb231345e31ff24148486--euphonious-duckanoo-110dd4.netlify.app/>
