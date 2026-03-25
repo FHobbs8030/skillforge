@@ -18,9 +18,9 @@ The application combines **manual learning entries** with **real GitHub data** t
 
 ---
 
-## 📸 Project Preview
+## 📊 Dashboard Preview
 
-![SkillForge App](./frontend/src/assets/app.png)
+![SkillForge Dashboard](./frontend/src/assets/app.png)
 
 ---
 
