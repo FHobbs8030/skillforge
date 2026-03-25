@@ -1,26 +1,24 @@
 const mongoose = require("mongoose");
 const express = require("express");
 const cors = require("cors");
+require("dotenv").config();
 
 const Entry = require("./models/Entry");
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
-mongoose
-  .connect("mongodb://127.0.0.1:27017/skillforge_db")
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error(err));
 
 app.use(cors());
 app.use(express.json());
 
-// Health check
 app.get("/health", (req, res) => {
   res.send({ status: "OK" });
 });
 
-// GitHub route
 app.get("/github/:username", async (req, res) => {
   const { username } = req.params;
 
@@ -45,11 +43,8 @@ app.get("/github/:username", async (req, res) => {
   }
 });
 
-// POST /entries
 app.post("/entries", async (req, res) => {
   try {
-    console.log("BODY:", req.body);
-
     const { topic, hours } = req.body;
 
     if (!topic || topic.trim() === "" || typeof hours !== "number") {
@@ -57,10 +52,8 @@ app.post("/entries", async (req, res) => {
     }
 
     const entry = await Entry.create(req.body);
-
     res.status(201).json(entry);
   } catch (err) {
-    console.error("ERROR:", err);
     res.status(400).json({
       error: "Failed to create entry",
       details: err.message,
@@ -68,13 +61,11 @@ app.post("/entries", async (req, res) => {
   }
 });
 
-// GET /entries
 app.get("/entries", async (req, res) => {
   try {
     const entries = await Entry.find().sort({ date: -1 });
     res.json(entries);
   } catch (err) {
-    console.error("ERROR:", err);
     res.status(500).json({ error: "Failed to fetch entries" });
   }
 });

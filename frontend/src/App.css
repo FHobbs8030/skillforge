@@ -8,10 +8,16 @@
   --accent-glow: rgba(255, 90, 0, 0.6);
 }
 
+html, body {
+  height: 100%;
+  overflow: hidden;   
+}
+
 body {
   margin: 0;
   font-family: sans-serif;
   color: var(--text);
+  overflow-x: hidden;
 
   background:
     radial-gradient(circle at 50% 10%, rgba(255, 90, 0, 0.16), transparent 55%),
@@ -32,32 +38,9 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 90, 0, 0.06),
-    transparent 40%
-  );
-  pointer-events: none;
-}
-
-.dashboard {
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 10px 16px 20px;
-  animation: fadeIn 0.6s ease;
-  position: relative;
-  z-index: 1;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.04),
-    transparent 70%
-  );
+  background:
+    linear-gradient(to bottom, rgba(255, 90, 0, 0.06), transparent 40%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.04), transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -75,6 +58,11 @@ body::after {
   z-index: 0;
 }
 
+body::before,
+body::after {
+  z-index: -1;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -86,10 +74,27 @@ body::after {
   }
 }
 
+.app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+
+  width: 100%;
+  max-width: 700px;     
+  margin: 0 auto 1.5rem;
+
   text-align: center;
-  margin-top: 1rem;
-  margin-bottom: 1.5rem;
+  align-self: center;
+
+  background: rgba(10, 10, 10, 0.8);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .header img {
@@ -119,19 +124,31 @@ body::after {
 
 .stats {
   display: flex;
-  gap: 16px;
   justify-content: center;
-  margin-bottom: 16px;
+  gap: 1.5rem;
+  margin: 2rem 0;
+  position: relative;
+  z-index: 1;
+}
+
+.stats-container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 2rem 0;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-card {
-  background: var(--card-bg);
-  padding: 20px;
-  border: 1px solid #1f1f1f;
+  background: rgba(20, 20, 20, 0.8);
+  padding: 1.5rem 2rem;
   border-radius: 12px;
-  width: 120px;
   text-align: center;
-  transition: all 0.3s ease;
+  min-width: 120px;
+  position: relative;
+  z-index: 1;
+  transform: none;
 }
 
 .stat-card:hover {
@@ -150,7 +167,11 @@ body::after {
 }
 
 .card,
-.stat-card {
+.stat-card,
+.github-card {
+  position: relative;
+  z-index: 1;
+  will-change: transform;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   background: rgba(17, 17, 17, 0.7);
@@ -163,7 +184,8 @@ body::after {
   justify-content: center;
   margin-bottom: 16px;
   flex-wrap: wrap;
-  width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 .entry-form input {
@@ -202,6 +224,8 @@ body::after {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   margin-top: 10px;
   gap: 16px;
+  position: relative;
+  z-index: 1;
 }
 
 .card {
@@ -210,10 +234,12 @@ body::after {
   border-radius: 12px;
   transition: all 0.3s ease;
   border: 1px solid #1f1f1f;
+  position: relative;
+  z-index: 1;
 }
 
 .card:hover {
-  transform: translateY(-6px) scale(1.01);
+  transform: translateY(-6px);
   box-shadow:
     0 0 20px rgba(255, 90, 0, 0.4),
     0 0 40px rgba(168, 85, 247, 0.15);
@@ -251,23 +277,19 @@ button:hover {
   display: flex;
   gap: 1rem;
   justify-content: center;
+  align-items: center;
   margin: 2rem 0;
 }
 
 .github-section input {
-  width: 400px;
+  width: 300px;        
+  max-width: 100%;
+
   padding: 1rem;
   border-radius: 8px;
   border: 1px solid #333;
   background: #111;
   color: white;
-}
-
-.github-section input:focus,
-.form-row input:focus {
-  outline: none;
-  border-color: rgba(255, 90, 0, 0.6);
-  box-shadow: 0 0 10px rgba(255, 90, 0, 0.25);
 }
 
 .github-section button {
@@ -277,6 +299,7 @@ button:hover {
   border-radius: 8px;
   color: white;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .github-card {
@@ -321,6 +344,8 @@ button:hover {
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .form-row input {
@@ -348,4 +373,150 @@ button:hover {
   border-radius: 50%;
   margin-bottom: 1rem;
   border: 2px solid #ff5a00;
+}
+
+.app-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 220px 1fr 220px;
+}
+
+.app-layout > * {
+  min-height: 0;
+}
+
+/* Side panels */
+.side {
+  display: flex;
+  flex-direction: column;
+  max-width: 220px;
+  min-height: 0;
+  overflow-y: auto;
+  gap: 10px;
+  padding: 0.5rem;
+}
+
+.side,
+.main-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  padding: 1rem;
+  padding-bottom: 2rem;
+}
+
+/* Project cards */
+.project-card {
+  background: rgba(20, 20, 20, 0.7);
+  border: 1px solid #222;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  transition: 0.3s;
+}
+
+.project-card:hover {
+  border-color: #ff5a00;
+  box-shadow: 0 0 15px rgba(255, 90, 0, 0.4);
+}
+
+/* MAIN CONTENT stays centered */
+.main-content {
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+
+  display: flex;
+  justify-content: center;
+}
+
+.main-inner {
+  width: 100%;
+  max-width: 700px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  min-height: 0;  
+  overflow: visible;      
+}
+
+.github-section,
+.entry-form,
+.grid,
+.stats {
+  width: 100%;
+}
+
+.side::-webkit-scrollbar,
+.main-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.side::-webkit-scrollbar-thumb,
+.main-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 90, 0, 0.3);
+  border-radius: 4px;
+}
+
+/* Media Queries */
+
+/* Tablet */
+@media (max-width: 900px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .side {
+    display: flex;
+    flex-direction: row;
+    min-height: 0;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+
+  .side.left {
+    order: 1;
+  }
+
+  .main-content {
+    order: 2;
+  }
+
+  .side.right {
+    order: 3;
+  }
+}
+
+@media (max-width: 500px) {
+  .github-section {
+    flex-direction: column;
+  }
+
+  .github-section input {
+    width: 100%;
+  }
+
+  .github-section button {
+    width: 100%;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .project-card {
+  min-width: 140px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+  .app-layout {
+    gap: 10px;
+    padding: 0 10px;
+  }
 }
