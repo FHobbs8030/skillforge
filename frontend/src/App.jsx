@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import "./App.css";
-import logo from "./assets/logo.png";
+import Header from "./components/Header/Header";
+import GitHubCard from "./components/GitHubCard/GitHubCard";
+import EntryForm from "./components/EntryForm/EntryForm";
+import Sidebar from "./components/Sidebar/Sidebar";
 import appImage from "./assets/app.png";
 import trelloImage from "./assets/trello.png";
 
@@ -107,45 +110,18 @@ function App() {
   return (
     <div className="app-container">
       <div className="app-layout">
-        <aside className="side left">
-          {projects.map((project, i) => (
-            <div key={i} className="project-card">
-              <img src={project.image} alt={project.title} />
-              <h4>{project.title}</h4>
-              <p>{project.date}</p>
-              {project.featured && <span>⭐ Featured</span>}
-            </div>
-          ))}
-        </aside>
+        <Sidebar projects={projects} position="left" />
 
         <main className="main-content">
           <div className="main-inner">
-            <div className="header">
-              <img src={logo} alt="SkillForge Logo" className="logo" />
-            </div>
+            <Header />
 
-            <div className="github-section">
-              <input
-                type="text"
-                placeholder="Enter GitHub username"
-                value={githubUser}
-                onChange={(e) => setGithubUser(e.target.value)}
-              />
-              <button onClick={fetchGitHubData}>Fetch GitHub Data</button>
-            </div>
-
-            {githubData && (
-              <div className="github-card">
-                <img
-                  src={githubData.avatar_url}
-                  alt="avatar"
-                  className="avatar"
-                />
-                <h3>{githubData.login}</h3>
-                <p>Followers: {githubData.followers}</p>
-                <p>Repos: {githubData.public_repos}</p>
-              </div>
-            )}
+            <GitHubCard
+              githubUser={githubUser}
+              setGithubUser={setGithubUser}
+              fetchGitHubData={fetchGitHubData}
+              githubData={githubData}
+            />
 
             <div className="stats">
               <div className="stat-card">
@@ -158,41 +134,11 @@ function App() {
               </div>
             </div>
 
-            <form className="entry-form" onSubmit={handleSubmit}>
-              <div className="form-row">
-                <input
-                  type="text"
-                  name="topic"
-                  placeholder="Topic"
-                  value={formData.topic}
-                  onChange={handleChange}
-                />
-                <input
-                  type="number"
-                  name="hours"
-                  placeholder="Hours"
-                  value={formData.hours}
-                  onChange={handleChange}
-                />
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                />
-                <input
-                  type="text"
-                  name="notes"
-                  placeholder="Notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <button type="submit" className="add-btn">
-                Add Entry
-              </button>
-            </form>
+            <EntryForm
+              formData={formData}
+              handleChange={handleChange}
+              handleSubmit={handleSubmit}
+            />
 
             <div className="grid">
               {entries.map((entry, index) => (
@@ -205,17 +151,7 @@ function App() {
             </div>
           </div>
         </main>
-
-        <aside className="side right">
-          {projects.map((project, i) => (
-            <div key={i} className="project-card">
-              <img src={project.image} alt={project.title} />
-              <h4>{project.title}</h4>
-              <p>{project.date}</p>
-              {project.featured && <span>⭐ Featured</span>}
-            </div>
-          ))}
-        </aside>
+        <Sidebar projects={projects} position="right" />
       </div>
     </div>
   );
