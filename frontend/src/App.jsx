@@ -5,9 +5,6 @@ import "./App.css";
 import Header from "./components/Header/Header";
 import GitHubCard from "./components/GitHubCard/GitHubCard";
 import EntryForm from "./components/EntryForm/EntryForm";
-import Sidebar from "./components/Sidebar/Sidebar";
-import appImage from "./assets/app.png";
-import trelloImage from "./assets/trello.png";
 
 function App() {
   const API_URL = "http://localhost:3001";
@@ -22,22 +19,7 @@ function App() {
 
   const [githubUser, setGithubUser] = useState("");
   const [githubData, setGithubData] = useState(null);
-
-  const projects = [
-    {
-      title: "SkillForge",
-      image: appImage,
-      date: "2026-03-23",
-      featured: true,
-    },
-    { title: "WTWR", image: trelloImage, date: "2026-02-01", featured: false },
-    {
-      title: "Portfolio",
-      image: appImage,
-      date: "2026-01-10",
-      featured: false,
-    },
-  ];
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetch(`${API_URL}/entries`)
@@ -94,84 +76,94 @@ function App() {
   const fetchGitHubData = async () => {
     if (!githubUser) return;
 
+    setLoading(true);
+
     try {
       const res = await fetch(`https://api.github.com/users/${githubUser}`);
       const data = await res.json();
 
       if (data.message === "Not Found") {
         alert("User not found");
+        setLoading(false);
         return;
       }
 
       setGithubData(data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-  <Routes>
-    <Route
-      path="/"
-      element={
-        <div className="app-container">
-          <nav className="nav">
-            <Link to="/">Home</Link>
-            <Link to="/profile">Profile</Link>
-          </nav>
+    <div className="app-container">
+      <nav className="nav">
+        <Link to="/">Home</Link>
+        <Link to="/profile">Profile</Link>
+      </nav>
 
-          <div className="app-layout">
-            <Sidebar projects={projects} position="left" />
+      <div className="app-layout">
+        <main className="main-content">
+          <div className="main-inner">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <>
+                    <Header />
 
-            <main className="main-content">
-              <div className="main-inner">
-                <Header />
+                    <GitHubCard
+                      githubUser={githubUser}
+                      setGithubUser={setGithubUser}
+                      fetchGitHubData={fetchGitHubData}
+                      githubData={githubData}
+                      loading={loading}
+                    />
 
-                <GitHubCard
-                  githubUser={githubUser}
-                  setGithubUser={setGithubUser}
-                  fetchGitHubData={fetchGitHubData}
-                  githubData={githubData}
-                />
-
-                <div className="stats">
-                  <div className="stat-card">
-                    <h3>{entries.length}</h3>
-                    <p>Entries</p>
-                  </div>
-                  <div className="stat-card">
-                    <h3>{totalHours}</h3>
-                    <p>Total Hours</p>
-                  </div>
-                </div>
-
-                <EntryForm
-                  formData={formData}
-                  handleChange={handleChange}
-                  handleSubmit={handleSubmit}
-                />
-
-                <div className="grid">
-                  {entries.map((entry, index) => (
-                    <div key={index} className="card">
-                      <h3>{entry.topic}</h3>
-                      <p>{entry.hours} hrs</p>
-                      <span>{entry.notes}</span>
+                    <div className="stats">
+                      <div className="stat-card">
+                        <h3>{entries.length}</h3>
+                        <p>Entries</p>
+                      </div>
+                      <div className="stat-card">
+                        <h3>{totalHours}</h3>
+                        <p>Total Hours</p>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </main>
 
-            <Sidebar projects={projects} position="right" />
+                    <EntryForm
+                      formData={formData}
+                      handleChange={handleChange}
+                      handleSubmit={handleSubmit}
+                    />
+
+                    <div className="grid">
+                      {entries.length === 0 ? (
+                        <p style={{ textAlign: "center", opacity: 0.6 }}>
+                          No entries yet. Add your first learning session.
+                        </p>
+                      ) : (
+                        entries.map((entry) => (
+                          <div key={entry._id || entry.topic} className="card">
+                            <h3>{entry.topic}</h3>
+                            <p>{entry.hours} hrs</p>
+                            <span>{entry.notes}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
+                }
+              />
+
+              <Route path="/profile" element={<Profile />} />
+            </Routes>
           </div>
-        </div>
-      }
-    />
-
-    <Route path="/profile" element={<Profile />} />
-  </Routes>
-);
+        </main>
+      </div>
+    </div>
+  );
 }
 
 export default App;

@@ -5,6 +5,7 @@ function GitHubCard({
   setGithubUser,
   fetchGitHubData,
   githubData,
+  loading,
 }) {
   return (
     <>
@@ -15,7 +16,13 @@ function GitHubCard({
           value={githubUser}
           onChange={(e) => setGithubUser(e.target.value)}
         />
-        <button onClick={fetchGitHubData}>Fetch GitHub Data</button>
+        <button
+          className="primary-btn"
+          onClick={fetchGitHubData}
+          disabled={loading}
+        >
+          {loading ? "Loading..." : "Fetch GitHub Data"}
+        </button>
       </div>
 
       {githubData && (
