@@ -5,6 +5,7 @@ import "./App.css";
 import Header from "./components/Header/Header";
 import GitHubCard from "./components/GitHubCard/GitHubCard";
 import EntryForm from "./components/EntryForm/EntryForm";
+import Stats from "./components/Stats/Stats";
 
 function App() {
   const API_URL = "http://localhost:3001";
@@ -106,6 +107,14 @@ function App() {
       <div className="app-layout">
         <main className="main-content">
           <div className="main-inner">
+            <GitHubCard
+              githubUser={githubUser}
+              setGithubUser={setGithubUser}
+              fetchGitHubData={fetchGitHubData}
+              githubData={githubData}
+              loading={loading}
+            />
+
             <Routes>
               <Route
                 path="/"
@@ -113,24 +122,7 @@ function App() {
                   <>
                     <Header />
 
-                    <GitHubCard
-                      githubUser={githubUser}
-                      setGithubUser={setGithubUser}
-                      fetchGitHubData={fetchGitHubData}
-                      githubData={githubData}
-                      loading={loading}
-                    />
-
-                    <div className="stats">
-                      <div className="stat-card">
-                        <h3>{entries.length}</h3>
-                        <p>Entries</p>
-                      </div>
-                      <div className="stat-card">
-                        <h3>{totalHours}</h3>
-                        <p>Total Hours</p>
-                      </div>
-                    </div>
+                    <Stats entries={entries} totalHours={totalHours} />
 
                     <EntryForm
                       formData={formData}

@@ -58,34 +58,6 @@ body {
   min-width: 0;
 }
 
-.header {
-  position: relative;
-  text-align: center;
-  margin-bottom: 0.25rem;
-}
-
-.header::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle,
-    rgba(255, 90, 0, 0.08),
-    transparent 60%
-  );
-  z-index: -1;
-}
-
-.logo {
-  width: clamp(140px, 22vw, 220px);
-   filter: 
-    brightness(1.1)
-    drop-shadow(0 0 10px rgba(255, 90, 0, 0.8))
-    drop-shadow(0 0 30px rgba(255, 90, 0, 0.4));
-  display: block;
-  margin: 0 auto;
-}
-
 .main-content {
   display: flex;
   justify-content: center;
@@ -99,6 +71,7 @@ body {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+  align-items: center;
   margin-top: 0;  
   margin-bottom: 0;
   gap: 1.5rem;
@@ -136,66 +109,7 @@ button:disabled {
   transform: none;
 }
 
-.stats {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-}
 
-.stat-card {
-  background: rgba(20, 20, 20, 0.8);
-  padding: 1.5rem;
-  border-radius: 12px;
-  text-align: center;
-  min-width: 120px;
-  font-size: 1.1rem;
-}
-
-.stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0 20px var(--accent-glow);
-}
-
-.stat-card h3 {
-  font-size: 1.6rem;
-}
-
-.entry-form {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.entry-form button {
-  margin-top: 0.5rem;
-}
-
-.form-row {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.form-row input {
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid #333;
-  background: #111;
-  color: white;
-}
-
-.form-row input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 10px var(--accent-glow);
-}
-
-.add-btn {
-  padding: 1rem 2rem;
-}
 
 .grid {
   margin-top: 1rem;
@@ -216,49 +130,6 @@ button:disabled {
 .card:hover {
   transform: translateY(-6px);
   box-shadow: 0 0 20px var(--accent-glow);
-}
-
-.github-section {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: -0.5rem;
-  margin-bottom: 1rem;
-}
-
-.github-section input {
-  min-width: 240px;
-  padding: 1rem;
-  border-radius: 8px;
-  background: #111;
-  border: 1px solid #333;
-  color: white;
-}
-
-.github-section button {
-  min-width: 160px;
-  text-align: center;
-  color: #ffffff !important;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.github-section button:disabled {
-  background: #666;
-  box-shadow: none;
-  transform: none;
-}
-
-.github-card {
-  margin: 2rem auto;
-  padding: 1.5rem;
-  max-width: 300px;
-  text-align: center;
-  border: 1px solid rgba(255, 90, 0, 0.2);
-  border-radius: 12px;
-  background: #111;
 }
 
 @media (max-width: 900px) {

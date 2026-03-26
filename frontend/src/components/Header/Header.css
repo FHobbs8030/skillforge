@@ -1,0 +1,27 @@
+.header {
+  position: relative;
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+.header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle,
+    rgba(255, 90, 0, 0.08),
+    transparent 60%
+  );
+  z-index: -1;
+}
+
+.logo {
+  width: clamp(140px, 22vw, 220px);
+   filter: 
+    brightness(1.1)
+    drop-shadow(0 0 10px rgba(255, 90, 0, 0.8))
+    drop-shadow(0 0 30px rgba(255, 90, 0, 0.4));
+  display: block;
+  margin: 0 auto;
+}
