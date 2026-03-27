@@ -70,6 +70,26 @@ app.get("/entries", async (req, res) => {
   }
 });
 
+app.delete("/entries/:id", async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid ID format" });
+  }
+
+  try {
+    const deletedEntry = await Entry.findByIdAndDelete(id);
+
+    if (!deletedEntry) {
+      return res.status(404).json({ message: "Entry not found" });
+    }
+
+    res.json({ message: "Entry deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

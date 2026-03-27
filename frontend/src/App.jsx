@@ -7,9 +7,9 @@ import GitHubCard from "./components/GitHubCard/GitHubCard";
 import EntryForm from "./components/EntryForm/EntryForm";
 import Stats from "./components/Stats/Stats";
 
-function App() {
-  const API_URL = "http://localhost:3001";
+const API_URL = import.meta.env.VITE_API_URL;
 
+function App() {
   const [entries, setEntries] = useState([]);
   const [formData, setFormData] = useState({
     topic: "",
@@ -22,12 +22,13 @@ function App() {
   const [githubData, setGithubData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetch(`${API_URL}/entries`)
-      .then((res) => res.json())
-      .then((data) => setEntries(data))
-      .catch((err) => console.error(err));
-  }, []);
+
+ useEffect(() => {
+   fetch(`${API_URL}/entries`)
+     .then((res) => res.json())
+     .then((data) => setEntries(data))
+     .catch((err) => console.error(err));
+ }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -79,32 +80,29 @@ function App() {
 
     setLoading(true);
 
-    try {
-      const res = await fetch(`https://api.github.com/users/${githubUser}`);
-      const data = await res.json();
+ try {
+   const res = await fetch(`${API_URL}/github/${githubUser}`);
 
-      if (data.message === "Not Found") {
-        alert("User not found");
-        setLoading(false);
-        return;
-      }
+   if (!res.ok) {
+     alert("User not found");
+     setLoading(false);
+     return;
+   }
 
-      setGithubData(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+   const data = await res.json();
+   setGithubData(data);
+ } catch (err) {
+   console.error(err);
+ } finally {
+   setLoading(false);
+ }
   };
 
   return (
     <div className="app-container">
-      <nav className="nav">
-        <Link to="/">Home</Link>
-        <Link to="/profile">Profile</Link>
-      </nav>
-
       <div className="app-layout">
+        <Header />
+
         <main className="main-content">
           <div className="main-inner">
             <GitHubCard
@@ -120,8 +118,6 @@ function App() {
                 path="/"
                 element={
                   <>
-                    <Header />
-
                     <Stats entries={entries} totalHours={totalHours} />
 
                     <EntryForm
