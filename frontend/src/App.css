@@ -6,6 +6,9 @@
 
   --accent: #ff5a00;
   --accent-glow: rgba(255, 90, 0, 0.6);
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s ease;
+  --transition-slow: 0.35s ease;
 }
 
 html,
@@ -19,10 +22,13 @@ body {
   color: var(--text);
 
   background:
-    radial-gradient(circle at center top, rgba(255, 90, 0, 0.06), transparent 60%),
+    radial-gradient(
+      circle at center top,
+      rgba(255, 90, 0, 0.06),
+      transparent 60%
+    ),
     #050505;
 }
-
 
 .app-container {
   min-height: 100vh;
@@ -49,7 +55,7 @@ body {
   grid-template-columns: 1fr;
 
   max-width: 900px;
-  margin: 0 auto;   
+  margin: 0 auto;
 
   padding: 1rem;
 }
@@ -62,10 +68,11 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 0;   
+  padding: 0;
 }
 
 .main-inner {
+  position: relative;
   max-width: 900px;
   width: 100%;
   margin: 0 auto;
@@ -90,36 +97,38 @@ body {
 
 button {
   background: linear-gradient(135deg, #ff5a00, #ff7a18);
-  color: white;
   border: none;
 
   padding: 0.5rem 1.25rem;
   font-size: 0.85rem;
   font-weight: 600;
-  letter-spacing: 0.3px;
 
   border-radius: 999px;
 
-  box-shadow: 0 0 8px rgba(255, 90, 0, 0.4);
+  box-shadow: 0 0 8px rgba(255, 90, 0, 0.35);
   cursor: pointer;
 
-  transition: all 0.25s ease;
+  transition: all var(--transition-base);
 }
 
 button:hover {
+  background: linear-gradient(135deg, #ff6a1a, #ff8a2a);
   transform: translateY(-1px);
-  box-shadow: 0 0 18px rgba(255, 90, 0, 0.7);
+  box-shadow: 0 0 16px rgba(255, 90, 0, 0.6);
+  transition: all var(--transition-base);
 }
 
 button:active {
   transform: translateY(0);
+  box-shadow: 0 0 6px rgba(255, 90, 0, 0.3);
+  transition: all var(--transition-base);
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.75rem;
-  margin-top: 0.3rem;
+  margin-top: 1rem;
 }
 
 .card {
@@ -147,5 +156,15 @@ button:active {
 @media (max-width: 500px) {
   .github-section {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-inner {
+    padding: 1rem;
+  }
+
+  .card {
+    margin-bottom: 0.75rem;
   }
 }

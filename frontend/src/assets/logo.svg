@@ -1,0 +1,65 @@
+<svg viewBox="0 0 360 90" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Smooth shield gradient -->
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="30%" stop-color="#8b5cf6"/>
+      <stop offset="60%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#ff7a2f"/>
+    </linearGradient>
+
+    <!-- Enhanced text gradient -->
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="35%" stop-color="#ffffff"/>
+      <stop offset="65%" stop-color="#ff9a3c"/>
+      <stop offset="100%" stop-color="#ff3d00"/>
+    </linearGradient>
+
+    <!-- Glow effect -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Inner glow -->
+    <filter id="innerGlow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Shield -->
+  <path d="M45 8 L75 18 L68 58 L45 78 L22 58 L15 18 Z"
+        fill="none"
+        stroke="url(#shieldGrad)"
+        stroke-width="3"
+        filter="url(#glow)"/>
+
+  <!-- Anvil -->
+  <rect x="33" y="38" width="24" height="8" rx="2"
+        fill="url(#shieldGrad)"
+        filter="url(#innerGlow)"/>
+  <rect x="38" y="46" width="14" height="12" rx="2"
+        fill="url(#shieldGrad)"
+        filter="url(#innerGlow)"/>
+
+  <!-- Sparks -->
+  <circle cx="55" cy="28" r="2.2" fill="#ff9a3c"/>
+  <circle cx="60" cy="32" r="1.8" fill="#ff3d00"/>
+  <circle cx="50" cy="30" r="1.8" fill="#ffd166"/>
+  <circle cx="58" cy="26" r="1.2" fill="#ffffff"/>
+
+  <!-- Text -->
+  <text x="95" y="55"
+        font-size="30"
+        font-weight="600"
+        fill="url(#textGrad)"
+        font-family="Inter, Arial, sans-serif"
+        filter="url(#glow)">
+    SkillForge
+  </text>
+</svg>

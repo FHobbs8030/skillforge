@@ -1,4 +1,4 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Profile from "./pages/Profile";
 import { useState, useEffect } from "react";
 import "./App.css";
@@ -6,10 +6,16 @@ import Header from "./components/Header/Header";
 import GitHubCard from "./components/GitHubCard/GitHubCard";
 import EntryForm from "./components/EntryForm/EntryForm";
 import Stats from "./components/Stats/Stats";
+import userImage from "./assets/Fred.png";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 function App() {
+  const currentUser = {
+    username: "FHobbs8030",
+    image: userImage,
+  };
+
   const [entries, setEntries] = useState([]);
   const [formData, setFormData] = useState({
     topic: "",
@@ -22,13 +28,12 @@ function App() {
   const [githubData, setGithubData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-
- useEffect(() => {
-   fetch(`${API_URL}/entries`)
-     .then((res) => res.json())
-     .then((data) => setEntries(data))
-     .catch((err) => console.error(err));
- }, []);
+  useEffect(() => {
+    fetch(`${API_URL}/entries`)
+      .then((res) => res.json())
+      .then((data) => setEntries(data))
+      .catch((err) => console.error(err));
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -80,28 +85,29 @@ function App() {
 
     setLoading(true);
 
- try {
-   const res = await fetch(`${API_URL}/github/${githubUser}`);
+    try {
+      const res = await fetch(`${API_URL}/github/${githubUser}`);
 
-   if (!res.ok) {
-     alert("User not found");
-     setLoading(false);
-     return;
-   }
+      if (!res.ok) {
+        alert("User not found");
+        setLoading(false);
+        return;
+      }
 
-   const data = await res.json();
-   setGithubData(data);
- } catch (err) {
-   console.error(err);
- } finally {
-   setLoading(false);
- }
+      const data = await res.json();
+      setGithubData(data);
+      console.log(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="app-container">
       <div className="app-layout">
-        <Header />
+        <Header githubData={githubData} githubUser={githubUser} />
 
         <main className="main-content">
           <div className="main-inner">
@@ -111,6 +117,7 @@ function App() {
               fetchGitHubData={fetchGitHubData}
               githubData={githubData}
               loading={loading}
+              currentUser={currentUser}
             />
 
             <Routes>

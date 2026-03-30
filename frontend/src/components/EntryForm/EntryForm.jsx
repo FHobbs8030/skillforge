@@ -24,6 +24,9 @@ function EntryForm({ formData, handleChange, handleSubmit }) {
           value={formData.date}
           onChange={handleChange}
         />
+      </div>
+
+      <div className="form-row">
         <input
           type="text"
           name="notes"
