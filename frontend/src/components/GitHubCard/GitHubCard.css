@@ -7,19 +7,17 @@
   box-shadow: 0 0 6px rgba(255, 90, 0, 0.25);
 }
 
-.github-section {
+.github-card__controls {
   display: flex;
-  gap: 1rem;
-  justify-content: center;
+  gap: 0.75rem;
   align-items: center;
   margin-top: -0.5rem;
   margin-bottom: 0.2rem;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
-.github-section input {
-  flex: 1 1 auto;
-  width: 100%;
+.github-card__input {
+  flex: 1;
   min-width: 0;
   height: 44px;
   padding: 0 0.9rem;
@@ -30,14 +28,14 @@
   font-size: 0.9rem;
 }
 
-.primary-btn {
+.github-card__button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: auto;
+  white-space: nowrap;
 }
 
-.primary-btn:disabled {
+.button--primary:disabled {
   background: #666;
   box-shadow: none;
   transform: none;
@@ -96,7 +94,11 @@
 }
 
 @media (max-width: 480px) {
-  .primary-btn {
+  .github-card__controls {
+    flex-direction: column;
+  }
+
+  .github-card__button {
     width: 100%;
   }
 }

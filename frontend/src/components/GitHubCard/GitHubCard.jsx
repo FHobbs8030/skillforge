@@ -7,14 +7,19 @@ function GitHubCard({ githubUser, setGithubUser, fetchGitHubData, loading }) {
   };
 
   return (
-    <form className="github-section" onSubmit={handleSubmit}>
+    <form className="github-card__controls" onSubmit={handleSubmit}>
       <input
+        className="github-card__input"
         type="text"
         placeholder="Enter GitHub username"
         value={githubUser}
         onChange={(e) => setGithubUser(e.target.value)}
       />
-      <button className="primary-btn" type="submit" disabled={loading}>
+      <button
+        className="button button--primary github-card__button"
+        type="submit"
+        disabled={loading}
+      >
         {loading ? "Loading..." : "Fetch GitHub Data"}
       </button>
     </form>
