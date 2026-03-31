@@ -75,13 +75,13 @@ body {
   position: relative;
   max-width: 900px;
   width: 100%;
-  margin: 0 auto;
+  margin-top: clamp(0.6rem, 1.5vw, 1rem);
 
   display: flex;
   flex-direction: column;
 
   gap: 0.6rem;
-  padding: 0.9rem 1.2rem 1.1rem;
+  padding: clamp(0.9rem, 3vw, 1.2rem);
 
   background: #0e0e0e;
   border-radius: 16px;
@@ -105,7 +105,7 @@ button {
 
   border-radius: 999px;
 
-  box-shadow: 0 0 8px rgba(255, 90, 0, 0.35);
+  box-shadow: 0 0 6px rgba(255, 90, 0, 0.3);
   cursor: pointer;
 
   transition: all var(--transition-base);
@@ -166,5 +166,17 @@ button:active {
 
   .card {
     margin-bottom: 0.75rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .header__inner {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    row-gap: 0.4rem;
+  }
+
+  .header__nav {
+    justify-content: center;
   }
 }

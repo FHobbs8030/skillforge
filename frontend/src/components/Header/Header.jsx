@@ -8,7 +8,9 @@ function Header({ githubData }) {
       <div className="header__inner">
         <img src={logo} alt="SkillForge logo" className="header__logo" />
 
-        <Clock />
+        <div className="header__clock">
+          <Clock />
+        </div>
 
         <div className="header__right">
           <nav className="header__nav">

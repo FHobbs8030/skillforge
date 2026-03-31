@@ -5,37 +5,39 @@
   object-fit: cover;
   border: 1.5px solid rgba(255, 90, 0, 0.4);
   box-shadow: 0 0 6px rgba(255, 90, 0, 0.25);
-  margin-bottom: 0.3rem;
 }
 
 .github-section {
   display: flex;
   gap: 1rem;
   justify-content: center;
+  align-items: center;
   margin-top: -0.5rem;
   margin-bottom: 0.2rem;
+  flex-wrap: wrap;
 }
 
 .github-section input {
-  min-width: 240px;
-  padding: 1rem;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 0.9rem;
   border-radius: 8px;
   background: #111;
   border: 1px solid #333;
   color: white;
+  font-size: 0.9rem;
 }
 
-.github-section button {
-  min-width: 160px;
-  text-align: center;
-  color: #ffffff !important;
-  white-space: nowrap;
+.primary-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: auto;
 }
 
-.github-section button:disabled {
+.primary-btn:disabled {
   background: #666;
   box-shadow: none;
   transform: none;
@@ -47,22 +49,14 @@
   border-radius: 10px;
   background: #111;
   border: 1px solid rgba(255, 255, 255, 0.06);
-
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
-
   gap: 0.15rem;
-
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    border-color 0.25s ease;
-
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   animation: fadeInUp 0.3s ease;
 }
 
@@ -80,9 +74,7 @@
 .github-card:hover {
   border-color: rgba(255, 90, 0, 0.4);
   transform: translateY(-3px);
-  box-shadow:
-    0 0 10px rgba(255, 90, 0, 0.5),
-    0 0 20px rgba(255, 90, 0, 0.3);
+  box-shadow: 0 0 10px rgba(255, 90, 0, 0.5), 0 0 20px rgba(255, 90, 0, 0.3);
 }
 
 .github-wrapper {
@@ -101,4 +93,10 @@
   font-size: 0.65rem;
   opacity: 0.7;
   margin: 0;
+}
+
+@media (max-width: 480px) {
+  .primary-btn {
+    width: 100%;
+  }
 }
