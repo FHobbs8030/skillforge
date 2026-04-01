@@ -27,6 +27,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 @media (max-width: 1024px) {
   :root {
     font-size: 16px;
@@ -71,7 +77,6 @@ body {
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
 
 h1,

@@ -26,7 +26,7 @@ function Clock() {
     .replace("_", " ");
 
   return (
-    <div className="header__clock">
+    <div className="clock">
       <div className="clock__time">{time}</div>
 
       <div className="clock__meta">

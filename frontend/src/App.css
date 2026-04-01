@@ -6,6 +6,7 @@
 
   --accent: #ff5a00;
   --accent-glow: rgba(255, 90, 0, 0.6);
+
   --transition-fast: 0.15s ease;
   --transition-base: 0.25s ease;
   --transition-slow: 0.35s ease;
@@ -20,7 +21,6 @@ body {
 body {
   font-family: "Inter", sans-serif;
   color: var(--text);
-
   background:
     radial-gradient(
       circle at center top,
@@ -53,10 +53,8 @@ body {
 .app-layout {
   display: grid;
   grid-template-columns: 1fr;
-
   max-width: 900px;
   margin: 0 auto;
-
   padding: 1rem;
 }
 
@@ -79,8 +77,8 @@ body {
 
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
 
-  gap: 0.6rem;
   padding: clamp(0.9rem, 3vw, 1.2rem);
 
   background: #0e0e0e;
@@ -91,42 +89,48 @@ body {
     0 20px 60px rgba(0, 0, 0, 0.8),
     0 0 30px rgba(255, 90, 0, 0.05);
 
-  position: relative;
   z-index: 1;
 }
 
-button {
-  background: linear-gradient(135deg, #ff5a00, #ff7a18);
-  border: none;
-
-  padding: 0.5rem 1.25rem;
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
-
-  border-radius: 999px;
-
-  box-shadow: 0 0 6px rgba(255, 90, 0, 0.3);
   cursor: pointer;
-
+  border: none;
   transition: all var(--transition-base);
 }
 
-button:hover {
-  background: linear-gradient(135deg, #ff6a1a, #ff8a2a);
+.button--primary {
+  background: linear-gradient(135deg, #ff5a00, #ff7a18);
+  color: white;
+  box-shadow: 0 0 10px rgba(255, 90, 0, 0.4);
+}
+
+.button--primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 0 16px rgba(255, 90, 0, 0.6);
-  transition: all var(--transition-base);
 }
 
-button:active {
+.button--primary:active {
   transform: translateY(0);
   box-shadow: 0 0 6px rgba(255, 90, 0, 0.3);
-  transition: all var(--transition-base);
+}
+
+.button--primary:disabled {
+  background: #666;
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.75rem;
   margin-top: 1rem;
 }
@@ -134,12 +138,12 @@ button:active {
 .card {
   max-width: 100%;
   background: var(--card-bg);
-  padding: 0.55rem;
+  padding: 0.75rem;
   border-radius: 10px;
   border: 1px solid #1f1f1f;
   line-height: 1.4;
   font-size: 0.85rem;
-  transition: all 0.25s ease;
+  transition: all var(--transition-base);
 }
 
 .card:hover {
@@ -153,30 +157,8 @@ button:active {
   }
 }
 
-@media (max-width: 500px) {
-  .github-section {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .main-inner {
-    padding: 1rem;
-  }
-
-  .card {
-    margin-bottom: 0.75rem;
-  }
-}
-
-@media (max-width: 360px) {
-  .header__inner {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    row-gap: 0.4rem;
-  }
-
-  .header__nav {
-    justify-content: center;
+    gap: 0.7rem;
   }
 }

@@ -4,7 +4,7 @@ import Clock from "../Clock/Clock";
 
 function Header({ githubData }) {
   return (
-    <header className="header">
+    <header className={`header ${githubData?.user ? "header--user" : ""}`}>
       <div className="header__inner">
         <img src={logo} alt="SkillForge logo" className="header__logo" />
 

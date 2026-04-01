@@ -3,8 +3,9 @@ import "./EntryForm.css";
 function EntryForm({ formData, handleChange, handleSubmit }) {
   return (
     <form className="entry-form" onSubmit={handleSubmit}>
-      <div className="form-row">
+      <div className="entry-form__row">
         <input
+          className="entry-form__input"
           type="text"
           name="topic"
           placeholder="Topic"
@@ -12,6 +13,7 @@ function EntryForm({ formData, handleChange, handleSubmit }) {
           onChange={handleChange}
         />
         <input
+          className="entry-form__input"
           type="number"
           name="hours"
           placeholder="Hours"
@@ -19,6 +21,7 @@ function EntryForm({ formData, handleChange, handleSubmit }) {
           onChange={handleChange}
         />
         <input
+          className="entry-form__input"
           type="date"
           name="date"
           value={formData.date}
@@ -26,8 +29,9 @@ function EntryForm({ formData, handleChange, handleSubmit }) {
         />
       </div>
 
-      <div className="form-row">
+      <div className="entry-form__row">
         <input
+          className="entry-form__input entry-form__input--full"
           type="text"
           name="notes"
           placeholder="Notes"
@@ -36,7 +40,10 @@ function EntryForm({ formData, handleChange, handleSubmit }) {
         />
       </div>
 
-      <button type="submit" className="add-btn">
+      <button
+        type="submit"
+        className="button button--primary entry-form__button"
+      >
         Add Entry
       </button>
     </form>
