@@ -53,7 +53,7 @@ body {
 .app-layout {
   display: grid;
   grid-template-columns: 1fr;
-  max-width: 900px;
+  max-width: 1300px;
   margin: 0 auto;
   padding: 1rem;
 }
@@ -71,13 +71,12 @@ body {
 
 .main-inner {
   position: relative;
-  max-width: 900px;
   width: 100%;
-  margin-top: clamp(0.6rem, 1.5vw, 1rem);
+  max-width: 1200px;
+  margin: 0 auto;
 
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  justify-content: center;
 
   padding: clamp(0.9rem, 3vw, 1.2rem);
 
@@ -92,13 +91,33 @@ body {
   z-index: 1;
 }
 
+.dashboard-top {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.dashboard-grid > * {
+  width: 100%;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.6rem 1.4rem;
+  padding: 0.45rem 1rem;
   border-radius: 999px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   border: none;
@@ -129,36 +148,43 @@ body {
 }
 
 .grid {
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.75rem;
-  margin-top: 1rem;
+  gap: 1rem;
 }
 
 .card {
-  max-width: 100%;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+
   background: var(--card-bg);
-  padding: 0.75rem;
-  border-radius: 10px;
+  padding: 1rem;
+  border-radius: 12px;
   border: 1px solid #1f1f1f;
-  line-height: 1.4;
+
   font-size: 0.85rem;
   transition: all var(--transition-base);
 }
 
 .card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-4px);
   box-shadow: 0 0 20px var(--accent-glow);
 }
 
-@media (max-width: 900px) {
-  .app-layout {
-    grid-template-columns: 1fr;
-  }
+.card h2 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.card p {
+  font-size: 0.85rem;
+  margin: 0.25rem 0;
 }
 
 @media (max-width: 768px) {
   .main-inner {
-    gap: 0.7rem;
+    padding: 0.9rem;
   }
 }

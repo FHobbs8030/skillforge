@@ -96,7 +96,6 @@ function App() {
 
       const data = await res.json();
       setGithubData(data);
-      console.log(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -111,21 +110,23 @@ function App() {
 
         <main className="main-content">
           <div className="main-inner">
-            <GitHubCard
-              githubUser={githubUser}
-              setGithubUser={setGithubUser}
-              fetchGitHubData={fetchGitHubData}
-              githubData={githubData}
-              loading={loading}
-              currentUser={currentUser}
-            />
-
             <Routes>
               <Route
                 path="/"
                 element={
-                  <>
-                    <Stats entries={entries} totalHours={totalHours} />
+                  <div className="dashboard-grid">
+                    <div className="dashboard-top">
+                      <GitHubCard
+                        githubUser={githubUser}
+                        setGithubUser={setGithubUser}
+                        fetchGitHubData={fetchGitHubData}
+                        githubData={githubData}
+                        loading={loading}
+                        currentUser={currentUser}
+                      />
+
+                      <Stats entries={entries} totalHours={totalHours} />
+                    </div>
 
                     <EntryForm
                       formData={formData}
@@ -148,7 +149,7 @@ function App() {
                         ))
                       )}
                     </div>
-                  </>
+                  </div>
                 }
               />
 
