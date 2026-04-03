@@ -61,7 +61,6 @@ body {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-
   padding: clamp(0.6rem, 3vw, 2rem);
 }
 

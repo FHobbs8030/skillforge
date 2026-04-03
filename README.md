@@ -5,7 +5,7 @@
 ![Express](https://img.shields.io/badge/Server-Express-000000?logo=express&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?logo=mongodb&logoColor=white)
 ![GitHub API](https://img.shields.io/badge/API-GitHub-181717?logo=github)
-![Status](https://img.shields.io/badge/Status-Stage%201%20In%20Progress-orange)
+![Status](https://img.shields.io/badge/Status-Stage%201%20Complete-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
 ---
@@ -26,13 +26,22 @@ The application combines **manual learning entries** with **real GitHub data** t
 
 ## 🌐 Live Project
 
-<https://gleaming-meerkat-cfca2e.netlify.app/>
+https://gleaming-meerkat-cfca2e.netlify.app/
 
 ---
 
 ## 🗂️ Project Planning
 
 ![Trello Board](./frontend/src/assets/trello.png)
+
+---
+
+## ▶️ How to Use
+
+1. Enter a GitHub username (e.g. `octocat`)
+2. Click "Fetch GitHub Data"
+3. Add learning entries (topic, hours, notes)
+4. View total entries and total hours
 
 ---
 
@@ -43,6 +52,7 @@ The application combines **manual learning entries** with **real GitHub data** t
 - Add learning entries (topic, hours, notes)
 - Display entries in a clean dashboard UI
 - Track total entries and total hours
+- Fetch and display GitHub user data (username, avatar)
 - Responsive SaaS-style interface
 
 ### 🔄 Planned Features
@@ -54,7 +64,6 @@ The application combines **manual learning entries** with **real GitHub data** t
 
 #### 🐙 GitHub Integration
 
-- Fetch user profile data
 - Display repositories and activity
 - Analyze languages used
 
@@ -72,7 +81,7 @@ The application combines **manual learning entries** with **real GitHub data** t
 
 ## 🏗️ Architecture
 
-```text
+```
 User (Browser)
    ↓
 React Frontend (Vite)
@@ -93,14 +102,14 @@ GitHub API
 - React (Vite)
 - CSS / Responsive Design
 
-### Backend (Planned)
+### Backend
 
-- Node.js
-- Express.js
+- Node.js (in progress)
+- Express.js (basic routes implemented)
 
-### Database (Planned)
+### Database
 
-- MongoDB
+- MongoDB (integration in progress)
 
 ### External API
 
@@ -110,15 +119,14 @@ GitHub API
 
 ## 🔌 API Integration
 
-- GET /users/:username  
-- GET /users/:username/repos  
-- GET /users/:username/events  
+- Backend route: `GET /github/:username`
+- Fetches GitHub user data and repositories
 
 ---
 
 ## 📁 Project Structure
 
-```text
+```
 skillforge/
 ├── frontend/
 │   ├── src/
@@ -147,7 +155,7 @@ npm install
 npm run dev
 ```
 
-### Setup Backend (when implemented)
+### Setup Backend
 
 ```bash
 cd backend
@@ -163,6 +171,8 @@ npm run dev
 
 - React frontend initialized
 - Entry tracking UI built
+- GitHub API integration implemented
+- Responsive design completed
 - Deployment completed
 
 ### Stage 2
@@ -172,8 +182,8 @@ npm run dev
 
 ### Stage 3
 
-- GitHub API integration
 - Data visualization
+- Enhanced GitHub analytics
 
 ### Stage 4
 
@@ -193,11 +203,11 @@ npm run dev
 
 ## 📌 Status
 
-In Development – Stage 1
+Stage 1 Complete – Submitted for review
 
 ---
 
 ## 👨‍💻 Author
 
 Fred Hobbs  
-<https://github.com/FHobbs8030>
+https://github.com/FHobbs8030
