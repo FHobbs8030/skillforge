@@ -117,11 +117,19 @@
   }
 
   .header__username {
-    display: none;
+    font-size: 0.75rem;
+  }
+
+  .header__controls {
+    gap: 0.5rem;
+  }
+
+  .header__nav {
+    gap: 0.6rem;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 520px) {
   .header__inner {
     grid-template-columns: 1fr;
     gap: 0.5rem;
@@ -146,5 +154,15 @@
 
   .header__nav {
     gap: 0.6rem;
+  }
+
+  .header__user {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+  }
+
+  .header__username {
+    font-size: 0.7rem;
   }
 }
