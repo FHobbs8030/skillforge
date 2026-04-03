@@ -7,6 +7,7 @@ import GitHubCard from "./components/GitHubCard/GitHubCard";
 import EntryForm from "./components/EntryForm/EntryForm";
 import Stats from "./components/Stats/Stats";
 import userImage from "./assets/Fred.png";
+import Footer from "./components/Footer/Footer";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -157,6 +158,8 @@ function App() {
             </Routes>
           </div>
         </main>
+
+        <Footer />
       </div>
     </div>
   );

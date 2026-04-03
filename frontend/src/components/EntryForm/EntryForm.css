@@ -10,10 +10,12 @@
   display: flex;
   gap: 0.6rem;
   width: 100%;
+  justify-content: center;
 }
 
 .entry-form__input {
-  flex: 1 1 0;
+  flex: 1 1 180px;
+  max-width: 260px;
   min-width: 0;
   height: 40px;
   padding: 0 0.7rem;
@@ -35,6 +37,7 @@
 
 .entry-form__input--full {
   width: 100%;
+  max-width: 100%;
 }
 
 .entry-form__button {
@@ -48,13 +51,8 @@
     flex-wrap: wrap;
   }
 
-  .entry-form__input[name="topic"],
-  .entry-form__input[name="hours"] {
-    flex: 1 1 48%;
-  }
-
-  .entry-form__input[name="date"],
-  .entry-form__input--full {
+  .entry-form__input {
     flex: 1 1 100%;
+    max-width: 100%;
   }
 }
