@@ -35,6 +35,7 @@
 .header__clock {
   justify-self: center;
   min-width: 140px;
+  margin: 0.15rem 0;
 }
 
 .header__controls {
@@ -107,6 +108,10 @@
 }
 
 @media (max-width: 768px) {
+  .header__clock {
+    margin: 0.2rem 0;
+  }
+
   .header__nav a {
     font-size: 0.8rem;
   }
@@ -131,7 +136,15 @@
     order: 2;
   }
 
+  .header__controls {
+    gap: 0.4rem;
+  }
+
   .header__right {
     order: 3;
+  }
+
+  .header__nav {
+    gap: 0.6rem;
   }
 }
