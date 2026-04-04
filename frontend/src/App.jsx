@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { getEntries, addEntry, getGitHubUser } from "./utils/api";
 import Profile from "./pages/Profile";
 import { useState, useEffect } from "react";
 import "./App.css";
@@ -8,8 +9,6 @@ import EntryForm from "./components/EntryForm/EntryForm";
 import Stats from "./components/Stats/Stats";
 import userImage from "./assets/Fred.png";
 import Footer from "./components/Footer/Footer";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 function App() {
   const currentUser = {
@@ -30,10 +29,7 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_URL}/entries`)
-      .then((res) => res.json())
-      .then((data) => setEntries(data))
-      .catch((err) => console.error(err));
+    getEntries().then(setEntries).catch(console.error);
   }, []);
 
   const handleChange = (e) => {
@@ -44,36 +40,25 @@ function App() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     if (!formData.topic || !formData.hours) return;
 
-    try {
-      const res = await fetch(`${API_URL}/entries`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          hours: Number(formData.hours),
-        }),
-      });
-
-      const newEntry = await res.json();
-
-      setEntries((prev) => [newEntry, ...prev]);
-
-      setFormData({
-        topic: "",
-        hours: "",
-        notes: "",
-        date: "",
-      });
-    } catch (err) {
-      console.error(err);
-    }
+    addEntry({
+      ...formData,
+      hours: Number(formData.hours),
+    })
+      .then((newEntry) => {
+        setEntries((prev) => [newEntry, ...prev]);
+        setFormData({
+          topic: "",
+          hours: "",
+          notes: "",
+          date: "",
+        });
+      })
+      .catch(console.error);
   };
 
   const totalHours = entries.reduce(
@@ -81,27 +66,15 @@ function App() {
     0,
   );
 
-  const fetchGitHubData = async () => {
+  const fetchGitHubData = () => {
     if (!githubUser) return;
 
     setLoading(true);
 
-    try {
-      const res = await fetch(`${API_URL}/github/${githubUser}`);
-
-      if (!res.ok) {
-        alert("User not found");
-        setLoading(false);
-        return;
-      }
-
-      const data = await res.json();
-      setGithubData(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    getGitHubUser(githubUser)
+      .then((data) => setGithubData(data))
+      .catch(() => alert("User not found"))
+      .finally(() => setLoading(false));
   };
 
   return (
@@ -137,7 +110,7 @@ function App() {
 
                     <div className="grid">
                       {entries.length === 0 ? (
-                        <p style={{ textAlign: "center", opacity: 0.6 }}>
+                        <p className="dashboard__empty">
                           No entries yet. Add your first learning session.
                         </p>
                       ) : (

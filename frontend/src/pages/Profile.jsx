@@ -1,9 +1,9 @@
 function Profile() {
   return (
-    <div style={{ padding: "2rem", color: "white" }}>
+    <section className="profile">
       <h1>Profile Page</h1>
       <p>This is your second route.</p>
-    </div>
+    </section>
   );
 }
 

@@ -4,7 +4,7 @@
   width: 100%;
 }
 
-.stat-card {
+.stats__card {
   flex: 1 1 100%;     
   width: 100%;
   padding: 0.9rem;
@@ -19,17 +19,17 @@
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.stat-card:hover {
+.stats__card:hover {
   transform: translateY(-3px);
   box-shadow: 0 0 16px rgba(255, 90, 0, 0.4);
 }
 
-.stat-card h3 {
+.stats__card h3 {
   margin: 0;
   font-size: 1.4rem;
 }
 
-.stat-card p {
+.stats__card p {
   margin: 0;
   font-size: 0.8rem;
   color: var(--text-soft);
@@ -40,7 +40,7 @@
     flex-direction: column;
   }
 
-  .stat-card {
+  .stats__card {
     width: 100%;
   }
 }
