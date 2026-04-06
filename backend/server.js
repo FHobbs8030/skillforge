@@ -6,7 +6,7 @@ require("dotenv").config();
 const Entry = require("./models/Entry");
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 mongoose
   .connect(process.env.MONGO_URI)
@@ -95,6 +95,6 @@ app.delete("/entries/:id", async (req, res) => {
   }
 });
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(process.env.PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${process.env.PORT}`);
 });
