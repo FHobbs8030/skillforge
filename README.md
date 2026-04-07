@@ -12,34 +12,20 @@
 
 ## 📌 Overview
 
-**SkillForge** is a full-stack web application designed to help developers track their learning progress, monitor consistency, and visualize growth over time.
-
-The application combines **manual learning entries** with **real GitHub data** to provide a complete picture of developer activity and improvement.
-
----
-
-## 📊 Dashboard Preview
-
-![SkillForge Dashboard](./frontend/src/assets/app.png)
+**SkillForge** is a full-stack web application that helps developers track learning progress, log hours, and integrate GitHub data to visualize growth.
 
 ---
 
 ## 🌐 Live Project
 
-https://gleaming-meerkat-cfca2e.netlify.app/
-
----
-
-## 🗂️ Project Planning
-
-![Trello Board](./frontend/src/assets/trello.png)
+https://adorable-granita-db1df3.netlify.app/
 
 ---
 
 ## ▶️ How to Use
 
 1. Enter a GitHub username (e.g. `octocat`)
-2. Click "Fetch GitHub Data"
+2. Click **Fetch GitHub Data**
 3. Add learning entries (topic, hours, notes)
 4. View total entries and total hours
 
@@ -47,116 +33,60 @@ https://gleaming-meerkat-cfca2e.netlify.app/
 
 ## ✨ Features
 
-### ✅ Current (Stage 1)
-
 - Add learning entries (topic, hours, notes)
-- Display entries in a clean dashboard UI
 - Track total entries and total hours
-- Fetch and display GitHub user data (username, avatar)
-- Responsive SaaS-style interface
-
-### 🔄 Planned Features
-
-#### 📚 Learning Tracker
-
-- Edit and delete entries
-- Store data in a database
-
-#### 🐙 GitHub Integration
-
-- Display repositories and activity
-- Analyze languages used
-
-#### 📊 Progress Analytics
-
-- Track hours over time
-- Visualize learning trends with charts
-
-#### 🔐 Authentication
-
-- User login/signup
-- Secure data storage
+- Fetch GitHub user data
+- Responsive UI
 
 ---
 
 ## 🏗️ Architecture
 
-```
-User (Browser)
-   ↓
-React Frontend (Vite)
-   ↓
-Node.js / Express Backend
-   ↓
-MongoDB Database
-   ↓
-GitHub API
-```
+User → React (Vite) → Express API → MongoDB → GitHub API
 
 ---
 
 ## 🧰 Tech Stack
 
-### Frontend
-
+**Frontend**
 - React (Vite)
-- CSS / Responsive Design
+- CSS
 
-### Backend
+**Backend**
+- Node.js
+- Express
 
-- Node.js (in progress)
-- Express.js (basic routes implemented)
+**Database**
+- MongoDB
 
-### Database
-
-- MongoDB (integration in progress)
-
-### External API
-
+**API**
 - GitHub REST API
 
 ---
 
-## 🔌 API Integration
+## 🔌 API
 
-- Backend route: `GET /github/:username`
-- Fetches GitHub user data and repositories
-
----
-
-## 📁 Project Structure
-
-```
-skillforge/
-├── frontend/
-│   ├── src/
-│   └── dist/
-├── backend/
-├── README.md
-└── .gitignore
-```
+GET /github/:username  
+GET /entries  
+POST /entries  
 
 ---
 
-## ⚙️ Installation & Setup
-
-### Clone the repository
+## ⚙️ Installation
 
 ```bash
 git clone https://github.com/FHobbs8030/skillforge.git
 cd skillforge
 ```
 
-### Setup Frontend
-
+### Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### Setup Backend
-
+### Backend
 ```bash
 cd backend
 npm install
@@ -165,45 +95,19 @@ npm run dev
 
 ---
 
-## 📈 Roadmap
+## 🌱 Environment Variables
 
-### Stage 1
+Create a `.env` file in the frontend:
 
-- React frontend initialized
-- Entry tracking UI built
-- GitHub API integration implemented
-- Responsive design completed
-- Deployment completed
-
-### Stage 2
-
-- CRUD functionality for entries
-- MongoDB integration
-
-### Stage 3
-
-- Data visualization
-- Enhanced GitHub analytics
-
-### Stage 4
-
-- Authentication (JWT)
-- Full deployment
-
----
-
-## 🎯 Goals
-
-- Build a portfolio-quality full-stack application
-- Demonstrate third-party API integration
-- Showcase data-driven UI development
-- Strengthen backend architecture skills
+```
+VITE_API_URL=http://localhost:3001
+```
 
 ---
 
 ## 📌 Status
 
-Stage 1 Complete – Submitted for review
+Stage 1 Complete – Ready for Review
 
 ---
 
