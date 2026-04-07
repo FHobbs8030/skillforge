@@ -2,7 +2,9 @@ const BASE_URL = import.meta.env.VITE_API_URL;
 
 function _checkResponse(res) {
   if (!res.ok) {
-    return Promise.reject(`Error: ${res.status}`);
+    return res.json().then((err) => {
+      return Promise.reject(err.error || `Error: ${res.status}`);
+    });
   }
   return res.json();
 }
