@@ -1,4 +1,4 @@
-.github-card {
+.github__card {
   width: 100%;
   max-width: 100%;
   padding: 1rem;
@@ -18,14 +18,14 @@
     box-shadow 0.25s ease;
 }
 
-.github-card:hover {
+.github__card:hover {
   transform: translateY(-3px);
   box-shadow: 0 0 16px rgba(255, 90, 0, 0.4);
 }
 
 /* ===== CONTROLS ===== */
 
-.github-card__controls {
+.github__card-controls {
   display: flex;
   gap: 0.6rem;
   width: 100%;
@@ -33,7 +33,7 @@
   flex-wrap: wrap;
 }
 
-.github-card__input {
+.github__card-input {
   flex: 0 1 auto;
   width: clamp(250px, 60%, 500px);
 
@@ -47,12 +47,12 @@
   color: white;
 }
 
-.github-card__input:focus {
+.github__card-input:focus {
   border-color: #ff5a00;
   box-shadow: 0 0 0 2px rgba(255, 90, 0, 0.2);
 }
 
-.github-card__button {
+.github__card-button {
   flex: 0 0 auto;
   padding: 0.45rem 0.9rem;
   font-size: 0.8rem;
@@ -68,12 +68,12 @@
   border: 2px solid rgba(255, 90, 0, 0.4);
 }
 
-.github-card h3 {
+.github__card h3 {
   font-size: 0.9rem;
   margin: 0;
 }
 
-.github-card p {
+.github__card p {
   font-size: 0.75rem;
   opacity: 0.7;
   margin: 0;
@@ -82,31 +82,31 @@
 /* ===== MOBILE ===== */
 
 @media (max-width: 600px) {
-  .github-card__controls {
+  .github__card-controls {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .github-card__input {
-    width: 100%;          
+  .github__card-input {
+    width: 100%;
   }
 
-  .github-card__button {
+  .github__card-button {
     width: 100%;
   }
 }
 
 @media (max-width: 520px) {
-  .github-card__controls {
+  .github__card-controls {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .github-card__input {
+  .github__card-input {
     width: 100%;
   }
 
-  .github-card__button {
+  .github__card-button {
     width: 100%;
   }
 }
