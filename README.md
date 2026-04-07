@@ -20,7 +20,7 @@ The application combines **manual learning entries** with **real GitHub data** t
 
 ## 📊 Dashboard Preview
 
-![SkillForge Dashboard](https://raw.githubusercontent.com/FHobbs8030/skillforge/main/frontend/src/assets/app.png)
+![SkillForge Dashboard](https://raw.githubusercontent.com/FHobbs8030/skillforge/stage-1-resubmit/frontend/src/assets/app.png)
 
 ---
 
@@ -32,7 +32,7 @@ https://adorable-granita-db1df3.netlify.app/
 
 ## 🗂️ Project Planning
 
-![Trello Board](https://raw.githubusercontent.com/FHobbs8030/skillforge/main/frontend/src/assets/trello.png)
+![Trello Board](https://raw.githubusercontent.com/FHobbs8030/skillforge/stage-1-resubmit/frontend/src/assets/trello.png)
 
 ---
 
