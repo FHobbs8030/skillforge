@@ -12,13 +12,27 @@
 
 ## 📌 Overview
 
-**SkillForge** is a full-stack web application that helps developers track learning progress, log hours, and integrate GitHub data to visualize growth.
+**SkillForge** is a full-stack web application designed to help developers track their learning progress, monitor consistency, and visualize growth over time.
+
+The application combines **manual learning entries** with **real GitHub data** to provide a complete picture of developer activity.
+
+---
+
+## 📊 Dashboard Preview
+
+![SkillForge Dashboard](https://raw.githubusercontent.com/FHobbs8030/skillforge/main/frontend/src/assets/app.png)
 
 ---
 
 ## 🌐 Live Project
 
 https://adorable-granita-db1df3.netlify.app/
+
+---
+
+## 🗂️ Project Planning
+
+![Trello Board](https://raw.githubusercontent.com/FHobbs8030/skillforge/main/frontend/src/assets/trello.png)
 
 ---
 
@@ -33,7 +47,7 @@ https://adorable-granita-db1df3.netlify.app/
 
 ## ✨ Features
 
-- Add learning entries (topic, hours, notes)
+- Add learning entries
 - Track total entries and total hours
 - Fetch GitHub user data
 - Responsive UI
@@ -48,31 +62,31 @@ User → React (Vite) → Express API → MongoDB → GitHub API
 
 ## 🧰 Tech Stack
 
-**Frontend**
+### Frontend
 - React (Vite)
 - CSS
 
-**Backend**
+### Backend
 - Node.js
 - Express
 
-**Database**
+### Database
 - MongoDB
 
-**API**
+### External API
 - GitHub REST API
 
 ---
 
-## 🔌 API
+## 🔌 API Integration
 
-GET /github/:username  
-GET /entries  
-POST /entries  
+- GET /github/:username
+- GET /entries
+- POST /entries
 
 ---
 
-## ⚙️ Installation
+## ⚙️ Installation & Setup
 
 ```bash
 git clone https://github.com/FHobbs8030/skillforge.git
