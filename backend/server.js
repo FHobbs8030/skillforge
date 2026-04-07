@@ -4,16 +4,32 @@ const cors = require("cors");
 require("dotenv").config();
 
 const Entry = require("./models/Entry");
+const fetch = require("node-fetch");
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3001;
 
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error(err));
 
-app.use(cors());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      if (origin.includes("localhost:5173") || origin.includes("netlify.app")) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "DELETE", "PUT", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -28,19 +44,26 @@ app.get("/github/:username", async (req, res) => {
   const { username } = req.params;
 
   try {
-    const userRes = await fetch(`https://api.github.com/users/${username}`);
+    const headers = {
+      Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+    };
+
+    const userRes = await fetch(`https://api.github.com/users/${username}`, {
+      headers,
+    });
+    const data = await userRes.json();
 
     if (!userRes.ok) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(userRes.status).json({
+        error: data.message || "GitHub API error",
+      });
     }
 
-    const userData = await userRes.json();
-
-    const repoRes = await fetch(userData.repos_url);
+    const repoRes = await fetch(data.repos_url, { headers });
     const repoData = await repoRes.json();
 
     res.json({
-      user: userData,
+      user: data,
       repos: repoData.slice(0, 5),
     });
   } catch (err) {
@@ -95,6 +118,6 @@ app.delete("/entries/:id", async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${process.env.PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
 });
