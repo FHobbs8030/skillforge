@@ -11,6 +11,8 @@ import userImage from "./assets/Fred.png";
 import Footer from "./components/Footer/Footer";
 
 function App() {
+  console.log("API URL:", import.meta.env.VITE_API_URL);
+
   const currentUser = {
     username: "FHobbs8030",
     image: userImage,
@@ -66,16 +68,24 @@ function App() {
     0,
   );
 
-  const fetchGitHubData = () => {
-    if (!githubUser) return;
+const fetchGitHubData = () => {
+  console.log("FETCH FUNCTION CALLED");
 
-    setLoading(true);
+  if (!githubUser) return;
 
-    getGitHubUser(githubUser)
-      .then((data) => setGithubData(data))
-      .catch(() => alert("User not found"))
-      .finally(() => setLoading(false));
-  };
+  setLoading(true);
+
+  getGitHubUser(githubUser)
+    .then((data) => {
+      console.log("SUCCESS:", data);
+      setGithubData(data);
+    })
+    .catch((err) => {
+      console.error("FETCH ERROR:", err);
+      alert("User not found or server error");
+    })
+    .finally(() => setLoading(false));
+};
 
   return (
     <div className="app-container">

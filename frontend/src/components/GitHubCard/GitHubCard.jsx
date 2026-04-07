@@ -3,6 +3,7 @@ import "./GitHubCard.css";
 function GitHubCard({ githubUser, setGithubUser, fetchGitHubData, loading }) {
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log("SUBMIT FIRED");
     fetchGitHubData();
   };
 
@@ -15,9 +16,10 @@ function GitHubCard({ githubUser, setGithubUser, fetchGitHubData, loading }) {
         value={githubUser}
         onChange={(e) => setGithubUser(e.target.value)}
       />
+
       <button
-        className="button button--primary github__card-button"
         type="submit"
+        className="button button--primary github__card-button"
         disabled={loading}
       >
         {loading ? "Loading..." : "Fetch GitHub Data"}
