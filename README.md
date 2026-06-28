@@ -26,7 +26,9 @@ The application combines **manual learning entries** with **real GitHub data** t
 
 ## 🌐 Live Project
 
-https://adorable-granita-db1df3.netlify.app/
+**Frontend:** https://adorable-granita-db1df3.netlify.app/
+
+**Backend:** https://skillforge-api-cuw0.onrender.com
 
 ---
 
