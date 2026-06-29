@@ -221,6 +221,47 @@ body {
   color: #888;
 }
 
+.card__delete-button {
+  align-self: flex-start;
+  width: auto;
+  margin-top: 12px;
+  padding: 8px 16px;
+
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 8px;
+
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.card__delete-button:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.75);
+  color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+.card__delete-button:active {
+  transform: translateY(0);
+}
+
+.card__delete-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
 input:focus {
   outline: none;
   border-color: rgba(255, 90, 0, 0.6);

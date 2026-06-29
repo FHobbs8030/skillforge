@@ -1,14 +1,18 @@
 import { Routes, Route } from "react-router-dom";
-import { getEntries, addEntry, getGitHubUser } from "./utils/api";
+import { useEffect, useState } from "react";
+
+import { getEntries, addEntry, deleteEntry, getGitHubUser } from "./utils/api";
+
 import Profile from "./pages/Profile";
-import { useState, useEffect } from "react";
-import "./App.css";
 import Header from "./components/Header/Header";
 import GitHubCard from "./components/GitHubCard/GitHubCard";
 import EntryForm from "./components/EntryForm/EntryForm";
 import Stats from "./components/Stats/Stats";
-import userImage from "./assets/Fred.png";
 import Footer from "./components/Footer/Footer";
+
+import userImage from "./assets/Fred.png";
+
+import "./App.css";
 
 function App() {
   console.log("API URL:", import.meta.env.VITE_API_URL);
@@ -19,6 +23,7 @@ function App() {
   };
 
   const [entries, setEntries] = useState([]);
+
   const [formData, setFormData] = useState({
     topic: "",
     hours: "",
@@ -28,7 +33,9 @@ function App() {
 
   const [githubUser, setGithubUser] = useState("");
   const [githubData, setGithubData] = useState(null);
+
   const [loading, setLoading] = useState(false);
+  const [deletingEntryId, setDeletingEntryId] = useState(null);
 
   useEffect(() => {
     getEntries().then(setEntries).catch(console.error);
@@ -36,8 +43,9 @@ function App() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
+
+    setFormData((currentFormData) => ({
+      ...currentFormData,
       [name]: value,
     }));
   };
@@ -52,7 +60,8 @@ function App() {
       hours: Number(formData.hours),
     })
       .then((newEntry) => {
-        setEntries((prev) => [newEntry, ...prev]);
+        setEntries((currentEntries) => [newEntry, ...currentEntries]);
+
         setFormData({
           topic: "",
           hours: "",
@@ -60,32 +69,62 @@ function App() {
           date: "",
         });
       })
-      .catch(console.error);
+      .catch((err) => {
+        console.error("ADD ENTRY ERROR:", err);
+        alert("Unable to add the learning entry. Please try again.");
+      });
+  };
+
+  const handleDelete = async (entryId) => {
+    if (!entryId) return;
+
+    const shouldDelete = window.confirm(
+      "Are you sure you want to delete this learning entry?",
+    );
+
+    if (!shouldDelete) return;
+
+    try {
+      setDeletingEntryId(entryId);
+
+      await deleteEntry(entryId);
+
+      setEntries((currentEntries) =>
+        currentEntries.filter((entry) => entry._id !== entryId),
+      );
+    } catch (err) {
+      console.error("DELETE ENTRY ERROR:", err);
+      alert("Unable to delete the learning entry. Please try again.");
+    } finally {
+      setDeletingEntryId(null);
+    }
+  };
+
+  const fetchGitHubData = () => {
+    console.log("FETCH FUNCTION CALLED");
+
+    if (!githubUser.trim()) return;
+
+    setLoading(true);
+
+    getGitHubUser(githubUser.trim())
+      .then((data) => {
+        console.log("SUCCESS:", data);
+        setGithubData(data);
+      })
+      .catch((err) => {
+        console.error("FETCH ERROR:", err);
+        alert("User not found or server error");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const totalHours = entries.reduce(
     (sum, entry) => sum + Number(entry.hours),
     0,
   );
-
-const fetchGitHubData = () => {
-  console.log("FETCH FUNCTION CALLED");
-
-  if (!githubUser) return;
-
-  setLoading(true);
-
-  getGitHubUser(githubUser)
-    .then((data) => {
-      console.log("SUCCESS:", data);
-      setGithubData(data);
-    })
-    .catch((err) => {
-      console.error("FETCH ERROR:", err);
-      alert("User not found or server error");
-    })
-    .finally(() => setLoading(false));
-};
 
   return (
     <div className="app-container">
@@ -127,8 +166,23 @@ const fetchGitHubData = () => {
                         entries.map((entry) => (
                           <div key={entry._id || entry.topic} className="card">
                             <h3>{entry.topic}</h3>
+
                             <p>{entry.hours} hrs</p>
+
                             <span>{entry.notes}</span>
+
+                            <button
+                              className="card__delete-button"
+                              type="button"
+                              onClick={() => handleDelete(entry._id)}
+                              disabled={
+                                !entry._id || deletingEntryId === entry._id
+                              }
+                            >
+                              {deletingEntryId === entry._id
+                                ? "Deleting..."
+                                : "Delete"}
+                            </button>
                           </div>
                         ))
                       )}

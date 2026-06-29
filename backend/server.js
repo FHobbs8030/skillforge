@@ -14,16 +14,26 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error(err));
 
+const allowedOrigins = ["https://adorable-granita-db1df3.netlify.app"];
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-
-      if (origin.includes("localhost:5173") || origin.includes("netlify.app")) {
+      if (!origin) {
         return callback(null, true);
       }
 
-      return callback(new Error("Not allowed by CORS"));
+      const isLocalDevelopment =
+        /^http:\/\/localhost:\d+$/.test(origin) ||
+        /^http:\/\/127\.0\.0\.1:\d+$/.test(origin);
+
+      const isAllowedDeployment = allowedOrigins.includes(origin);
+
+      if (isLocalDevelopment || isAllowedDeployment) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked origin: ${origin}`));
     },
     methods: ["GET", "POST", "DELETE", "PUT", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],

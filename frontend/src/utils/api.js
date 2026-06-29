@@ -27,6 +27,12 @@ export function addEntry(data) {
   }).then(_checkResponse);
 }
 
+export function deleteEntry(entryId) {
+  return fetch(`${BASE_URL}/entries/${entryId}`, {
+    method: "DELETE",
+  }).then(_checkResponse);
+}
+
 export function getGitHubUser(username) {
   console.log("GITHUB FETCH:", `${BASE_URL}/github/${username}`);
   return fetch(`${BASE_URL}/github/${username}`).then(_checkResponse);
