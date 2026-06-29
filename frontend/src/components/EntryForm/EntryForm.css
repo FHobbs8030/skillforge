@@ -31,8 +31,13 @@
 }
 
 .entry-form__input:focus {
-  border-color: #ff5a00;
-  box-shadow: 0 0 0 2px rgba(255, 90, 0, 0.2);
+  outline: none;
+
+  border-color: rgba(20, 184, 166, 0.8);
+
+  box-shadow:
+    0 0 0 2px rgba(20, 184, 166, 0.16),
+    0 0 12px rgba(56, 189, 248, 0.14);
 }
 
 .entry-form__input--full {
