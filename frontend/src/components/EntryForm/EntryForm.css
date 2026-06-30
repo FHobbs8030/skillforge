@@ -1,43 +1,52 @@
 .entry-form {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+
+  gap: var(--space-form-gap);
+
   width: 100%;
+
   grid-column: 1 / -1;
 }
 
 .entry-form__row {
   display: flex;
-  gap: 0.6rem;
-  width: 100%;
   justify-content: center;
+
+  gap: var(--space-form-gap);
+
+  width: 100%;
 }
 
 .entry-form__input {
   flex: 1 1 180px;
+
+  width: auto;
   max-width: 260px;
   min-width: 0;
-  height: 40px;
-  padding: 0 0.7rem;
-  border-radius: 8px;
-  background: #111;
-  border: 1px solid #333;
-  color: white;
-  font-size: 0.85rem;
+  height: var(--control-height);
+
+  padding: 0 var(--space-input-x);
+
+  background: var(--color-surface-input);
+  color: var(--color-text-inverse);
+
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+
+  font-size: var(--font-size-input);
 }
 
 .entry-form__input::placeholder {
-  color: #6b7280;
+  color: var(--color-text-placeholder);
 }
 
 .entry-form__input:focus {
   outline: none;
 
-  border-color: rgba(20, 184, 166, 0.8);
+  border-color: var(--border-focus-strong);
 
-  box-shadow:
-    0 0 0 2px rgba(20, 184, 166, 0.16),
-    0 0 12px rgba(56, 189, 248, 0.14);
+  box-shadow: var(--shadow-input-focus-strong);
 }
 
 .entry-form__input--full {
@@ -47,8 +56,12 @@
 
 .entry-form__button {
   align-self: center;
-  padding: 0.45rem 1rem;
-  font-size: 0.8rem;
+
+  padding:
+    var(--space-button-y)
+    var(--space-4);
+
+  font-size: var(--font-size-sm);
 }
 
 @media (max-width: 520px) {
@@ -58,6 +71,7 @@
 
   .entry-form__input {
     flex: 1 1 100%;
+
     max-width: 100%;
   }
 }

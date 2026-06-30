@@ -1,13 +1,25 @@
 :root {
-  --bg: #0a0d10;
-  --card-bg: #11161b;
+  /* =========================
+     COLOR SYSTEM
+  ========================= */
 
-  --text: #f8fafc;
-  --text-soft: #a7b0ba;
+  --color-bg-canvas: #0a0d10;
+  --color-surface-card: #11161b;
+  --color-surface-input: #111111;
+
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #a7b0ba;
+  --color-text-muted: #888888;
+  --color-text-subtle: #b3b3b3;
+  --color-text-inverse: #ffffff;
+  --color-text-placeholder: #6b7280;
+
+  --color-disabled: #555555;
 
   --brand-blue: #38bdf8;
   --brand-teal: #14b8a6;
   --brand-orange: #ff6b00;
+  --color-brand-cyan-light: #67e8f9;
 
   --brand-gradient: linear-gradient(
     90deg,
@@ -41,16 +53,181 @@
     rgba(10, 22, 29, 0.98)
   );
 
+  --gradient-footer-link: linear-gradient(
+    135deg,
+    rgba(8, 145, 178, 0.3) 0%,
+    rgba(20, 184, 166, 0.27) 62%,
+    rgba(249, 115, 22, 0.22) 100%
+  );
+
+  --color-danger-background: rgba(239, 68, 68, 0.1);
+  --color-danger-background-hover: rgba(239, 68, 68, 0.18);
+  --color-danger-border: rgba(239, 68, 68, 0.45);
+  --color-danger-border-hover: rgba(239, 68, 68, 0.75);
+  --color-danger-text: #f87171;
+  --color-danger-text-hover: #fca5a5;
+
   --accent: var(--brand-teal);
   --accent-glow: rgba(20, 184, 166, 0.3);
 
+  /* Backward-compatible aliases used by component files */
+
+  --bg: var(--color-bg-canvas);
+  --card-bg: var(--color-surface-card);
+  --text: var(--color-text-primary);
+  --text-soft: var(--color-text-secondary);
+
+  /* =========================
+     SPACING SYSTEM
+  ========================= */
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.2rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --space-card-gap: 0.4rem;
+  --space-button-y: 0.45rem;
+  --space-footer-link-gap: 0.3rem;
+  --space-footer-nav-gap: 0.6rem;
+  --space-footer-link-x: 0.8rem;
+  --space-footer-mobile-gap: 0.9rem;
+  --space-header-clock-y: 0.15rem;
+  --space-header-clock-mobile-y: 0.2rem;
+  --space-header-controls-mobile: 0.4rem;
+  --space-header-responsive-gap: 0.6rem;
+  --space-header-user-mobile-gap: 0.2rem;
+  --space-form-gap: 0.6rem;
+  --space-input-x: 0.7rem;
+  --space-button-x-compact: 0.9rem;
+  --space-card-padding-compact: 0.9rem;
+  --space-card-content-gap: 0.3rem;
+  /* =========================
+     TYPOGRAPHY SYSTEM
+  ========================= */
+
+  --font-family-sans: "Inter", sans-serif;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8rem;
+  --font-size-control: 0.875rem;
+  --font-size-md: 0.95rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.3rem;
+  --font-size-xl: 1.5rem;
+  --font-size-input: 0.85rem;
+
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-size-2xs: 0.7rem;
+  --font-size-header-user: 0.9rem;
+  --font-size-caption: 0.78rem;
+  --font-size-stat-value: 1.4rem;
+
+  /* =========================
+     BORDER SYSTEM
+  ========================= */
+
   --border-brand: rgba(56, 189, 248, 0.28);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-card: rgba(148, 163, 184, 0.14);
+  --border-card-hover: rgba(20, 184, 166, 0.3);
+  --border-focus: rgba(20, 184, 166, 0.75);
+  --border-header: rgba(56, 189, 248, 0.2);
+  --border-footer: rgba(56, 189, 248, 0.18);
+  --border-inverse-hover: rgba(255, 255, 255, 0.24);
+  --border-input: #333333;
+  --border-focus-strong: rgba(20, 184, 166, 0.8);
+  --border-card-subtle: rgba(255, 255, 255, 0.06);
+  --border-avatar: 2px solid rgba(255, 90, 0, 0.4);
 
+  /* =========================
+     BORDER-RADIUS SYSTEM
+  ========================= */
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-card: 14px;
   --radius-shell: 16px;
+  --radius-pill: 999px;
+  --radius-round: 50%;
 
-  --transition-fast: 0.15s ease;
-  --transition-base: 0.25s ease;
-  --transition-slow: 0.35s ease;
+  /* =========================
+     SHADOW SYSTEM
+  ========================= */
+
+  --shadow-workspace:
+    0 18px 45px rgba(0, 0, 0, 0.38), 0 0 28px rgba(56, 189, 248, 0.08);
+
+  --shadow-card-hover:
+    0 10px 24px rgba(0, 0, 0, 0.35), 0 0 18px rgba(20, 184, 166, 0.15);
+
+  --shadow-button:
+    0 6px 18px rgba(8, 145, 178, 0.22), 0 3px 10px rgba(255, 107, 0, 0.18);
+
+  --shadow-button-hover:
+    0 8px 24px rgba(20, 184, 166, 0.3), 0 5px 14px rgba(255, 107, 0, 0.24);
+
+  --shadow-button-active:
+    0 4px 12px rgba(20, 184, 166, 0.2), 0 2px 8px rgba(255, 107, 0, 0.14);
+
+  --shadow-input-focus:
+    0 0 0 2px rgba(20, 184, 166, 0.16), 0 0 12px rgba(56, 189, 248, 0.12);
+
+  --shadow-header:
+    0 10px 28px rgba(0, 0, 0, 0.3), 0 0 18px rgba(20, 184, 166, 0.06);
+
+  --shadow-header-link-hover:
+    0 0 8px rgba(56, 189, 248, 0.35), 0 0 14px rgba(20, 184, 166, 0.2);
+
+  --shadow-footer:
+    0 -8px 24px rgba(0, 0, 0, 0.26), 0 0 18px rgba(20, 184, 166, 0.05);
+
+  --shadow-footer-link-hover:
+    0 6px 16px rgba(8, 145, 178, 0.2), 0 3px 10px rgba(249, 115, 22, 0.14);
+
+  --shadow-input-focus-strong:
+    0 0 0 2px rgba(20, 184, 166, 0.16), 0 0 12px rgba(56, 189, 248, 0.14);
+
+  --shadow-orange-hover: 0 0 16px rgba(255, 90, 0, 0.4);
+
+  /* =========================
+     TRANSITION SYSTEM
+  ========================= */
+
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 350ms;
+
+  --ease-standard: ease;
+
+  --transition-fast: var(--duration-fast) var(--ease-standard);
+  --transition-base: var(--duration-base) var(--ease-standard);
+  --transition-slow: var(--duration-slow) var(--ease-standard);
+  --transition-header-link: 180ms ease-out;
+  --transition-header-underline: 200ms ease-out;
+
+  /* =========================
+   LAYOUT AND EFFECT SYSTEM
+     ========================= */
+
+  --layout-content-max-width: 1200px;
+
+  --blur-surface: 10px;
+  --opacity-brand-rule: 0.75;
+
+  --opacity-footer-rule: 0.7;
+
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 3px;
+  --control-height: 40px;
+  --opacity-secondary-content: 0.7;
 }
 
 html,
@@ -59,8 +236,8 @@ body {
 }
 
 body {
-  font-family: "Inter", sans-serif;
-  color: var(--text);
+  font-family: var(--font-family-sans);
+  color: var(--color-text-primary);
 
   background:
     radial-gradient(
@@ -73,17 +250,19 @@ body {
       rgba(20, 184, 166, 0.05),
       transparent 34%
     ),
-    var(--bg);
+    var(--color-bg-canvas);
 }
 
 .app {
   min-height: 100vh;
+
   display: flex;
   flex-direction: column;
 }
 
 .app-container {
   min-height: 100vh;
+
   display: flex;
   flex-direction: column;
 }
@@ -91,16 +270,18 @@ body {
 .nav {
   display: flex;
   justify-content: center;
-  gap: 2rem;
-  padding: 1rem 0;
 
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  gap: var(--space-8);
+  padding: var(--space-4) 0;
+
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .nav a {
-  color: white;
+  color: var(--color-text-inverse);
+
+  font-weight: var(--font-weight-semibold);
   text-decoration: none;
-  font-weight: 600;
 }
 
 .app-layout {
@@ -113,7 +294,7 @@ body {
   min-height: 100vh;
 
   margin: 0 auto;
-  padding: clamp(0.6rem, 3vw, 2rem);
+  padding: clamp(0.6rem, 3vw, var(--space-8));
 
   box-sizing: border-box;
 }
@@ -133,7 +314,7 @@ body {
   justify-content: center;
   align-items: flex-start;
 
-  padding: 0 1.5rem 2rem;
+  padding: 0 var(--space-6) var(--space-8);
 }
 
 .main-inner {
@@ -143,8 +324,8 @@ body {
   max-width: 900px;
   min-width: 0;
 
-  margin-top: 1.5rem;
-  padding: clamp(0.9rem, 3vw, 1.2rem);
+  margin-top: var(--space-6);
+  padding: clamp(0.9rem, 3vw, var(--space-5));
 
   display: flex;
   overflow: visible;
@@ -154,9 +335,7 @@ body {
   border: 1px solid var(--border-brand);
   border-radius: var(--radius-shell);
 
-  box-shadow:
-    0 18px 45px rgba(0, 0, 0, 0.38),
-    0 0 28px rgba(56, 189, 248, 0.08);
+  box-shadow: var(--shadow-workspace);
 
   z-index: 1;
 }
@@ -169,7 +348,7 @@ body {
   display: flex;
   flex-direction: column;
 
-  gap: 1rem;
+  gap: var(--space-4);
 
   width: 100%;
   min-width: 0;
@@ -186,7 +365,7 @@ body {
   display: flex;
   flex-direction: column;
 
-  gap: 1rem;
+  gap: var(--space-4);
 
   width: 100%;
   min-width: 0;
@@ -203,48 +382,45 @@ body {
   align-items: center;
   justify-content: center;
 
-  padding: 0.45rem 1rem;
+  padding: var(--space-button-y) var(--space-4);
 
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
 
   cursor: pointer;
 
-  transition: all var(--transition-base);
+  transition:
+    background var(--transition-base),
+    box-shadow var(--transition-base),
+    transform var(--transition-base);
 }
 
 .button--primary {
   background: var(--button-gradient);
-  color: white;
+  color: var(--color-text-inverse);
 
-  box-shadow:
-    0 6px 18px rgba(8, 145, 178, 0.22),
-    0 3px 10px rgba(255, 107, 0, 0.18);
+  box-shadow: var(--shadow-button);
 }
 
 .button--primary:hover {
   transform: translateY(-1px);
 
-  box-shadow:
-    0 8px 24px rgba(20, 184, 166, 0.3),
-    0 5px 14px rgba(255, 107, 0, 0.24);
+  box-shadow: var(--shadow-button-hover);
 }
 
 .button--primary:active {
   transform: translateY(0);
 
-  box-shadow:
-    0 4px 12px rgba(20, 184, 166, 0.2),
-    0 2px 8px rgba(255, 107, 0, 0.14);
+  box-shadow: var(--shadow-button-active);
 }
 
 .button--primary:disabled {
-  background: #555;
-  box-shadow: none;
+  background: var(--color-disabled);
 
+  box-shadow: none;
   transform: none;
 
   cursor: not-allowed;
@@ -260,7 +436,7 @@ body {
   max-width: 1100px;
 
   margin: 0 auto;
-  gap: 1.2rem;
+  gap: var(--space-5);
 }
 
 .card {
@@ -268,56 +444,58 @@ body {
   flex-direction: column;
   justify-content: center;
 
-  gap: 0.4rem;
+  gap: var(--space-card-gap);
 
   width: 100%;
+
   margin: 0;
-  padding: 1.2rem;
+  padding: var(--space-5);
 
-  background: var(--card-bg);
+  background: var(--color-surface-card);
 
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  border-radius: 14px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
 
-  transition: all var(--transition-base);
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    transform var(--transition-base);
 }
 
 .card:hover {
+  border-color: var(--border-card-hover);
+
+  box-shadow: var(--shadow-card-hover);
+
   transform: translateY(-3px);
-
-  border-color: rgba(20, 184, 166, 0.3);
-
-  box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.35),
-    0 0 18px rgba(20, 184, 166, 0.15);
 }
 
 .card h2 {
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
 
-  font-size: 1rem;
+  font-size: var(--font-size-base);
 }
 
 .card h3 {
-  color: var(--text-soft);
+  color: var(--color-text-secondary);
 
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
 }
 
 .card p {
-  margin: 0.2rem 0;
+  margin: var(--space-1) 0;
 
-  color: var(--text);
+  color: var(--color-text-primary);
 
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
 }
 
 .card span {
-  color: #888;
+  color: var(--color-text-muted);
 
-  font-size: 0.8rem;
+  font-size: var(--font-size-sm);
 }
 
 .card__delete-button {
@@ -325,32 +503,32 @@ body {
 
   width: auto;
 
-  margin-top: 12px;
-  padding: 8px 16px;
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-4);
 
-  background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
+  background: var(--color-danger-background);
+  color: var(--color-danger-text);
 
-  border: 1px solid rgba(239, 68, 68, 0.45);
-  border-radius: 8px;
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-sm);
 
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-size-control);
+  font-weight: var(--font-weight-semibold);
 
   cursor: pointer;
 
   transition:
-    background 150ms ease,
-    border-color 150ms ease,
-    color 150ms ease,
-    transform 150ms ease;
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .card__delete-button:hover {
-  background: rgba(239, 68, 68, 0.18);
-  color: #fca5a5;
+  background: var(--color-danger-background-hover);
+  color: var(--color-danger-text-hover);
 
-  border-color: rgba(239, 68, 68, 0.75);
+  border-color: var(--color-danger-border-hover);
 
   transform: translateY(-1px);
 }
@@ -370,11 +548,9 @@ body {
 input:focus {
   outline: none;
 
-  border-color: rgba(20, 184, 166, 0.75);
+  border-color: var(--border-focus);
 
-  box-shadow:
-    0 0 0 2px rgba(20, 184, 166, 0.16),
-    0 0 12px rgba(56, 189, 248, 0.12);
+  box-shadow: var(--shadow-input-focus);
 }
 
 @media (max-width: 768px) {
@@ -389,6 +565,6 @@ input:focus {
   }
 
   .main-inner {
-    padding: 1rem;
+    padding: var(--space-4);
   }
 }
