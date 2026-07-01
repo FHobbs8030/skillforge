@@ -1,9 +1,10 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import { getEntries, addEntry, deleteEntry, getGitHubUser } from "./utils/api";
 
 import Profile from "./pages/Profile";
+import HostDashboard from "./pages/HostDashboard/HostDashboard";
 import Header from "./components/Header/Header";
 import GitHubCard from "./components/GitHubCard/GitHubCard";
 import EntryForm from "./components/EntryForm/EntryForm";
@@ -15,6 +16,9 @@ import userImage from "./assets/Fred.png";
 import "./App.css";
 
 function App() {
+    const location = useLocation();
+
+    const isHostPreview = location.pathname === "/host-preview";
   console.log("API URL:", import.meta.env.VITE_API_URL);
 
   const currentUser = {
@@ -128,11 +132,23 @@ function App() {
 
   return (
     <div className="app-container">
-      <div className="app-layout">
+      <div
+        className={`app-layout${
+          isHostPreview ? " app-layout--host-preview" : ""
+        }`}
+      >
         <Header githubData={githubData} githubUser={githubUser} />
 
-        <main className="main-content">
-          <div className="main-inner">
+        <main
+          className={`main-content${
+            isHostPreview ? " main-content--host-preview" : ""
+          }`}
+        >
+          <div
+            className={`main-inner${
+              isHostPreview ? " main-inner--host-preview" : ""
+            }`}
+          >
             <Routes>
               <Route
                 path="/"
@@ -192,6 +208,7 @@ function App() {
               />
 
               <Route path="/profile" element={<Profile />} />
+              <Route path="/host-preview" element={<HostDashboard />} />
             </Routes>
           </div>
         </main>

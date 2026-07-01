@@ -552,19 +552,3 @@ input:focus {
 
   box-shadow: var(--shadow-input-focus);
 }
-
-@media (max-width: 768px) {
-  .main-inner {
-    padding: 0.9rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .main-inner {
-    padding: var(--space-4);
-  }
-}
