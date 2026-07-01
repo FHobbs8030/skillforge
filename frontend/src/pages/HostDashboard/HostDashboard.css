@@ -75,6 +75,12 @@
   min-width: 0;
 }
 
+.host-dashboard__section-summary {
+  grid-column: 1 / -1;
+
+  min-width: 0;
+}
+
 @media (min-width: 1200px) {
   .main-inner.main-inner--host-preview {
     width: min(1200px, 100%);

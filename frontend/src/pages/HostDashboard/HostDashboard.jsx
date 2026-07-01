@@ -1,7 +1,11 @@
 import ProjectOverviewWidget from "../../components/host/ProjectOverviewWidget/ProjectOverviewWidget";
 import CreateWorkSectionWidget from "../../components/host/CreateWorkSectionWidget/CreateWorkSectionWidget";
+import SectionSummaryWidget from "../../components/host/SectionSummaryWidget/SectionSummaryWidget";
 
-import { mockHostProject } from "../../data/mockHostData";
+import {
+  mockHostProject,
+  mockHostSectionSummary,
+} from "../../data/mockHostData";
 
 import "./HostDashboard.css";
 
@@ -27,6 +31,10 @@ function HostDashboard() {
         <ProjectOverviewWidget project={mockHostProject} />
 
         <CreateWorkSectionWidget />
+
+        <div className="host-dashboard__section-summary">
+          <SectionSummaryWidget summary={mockHostSectionSummary} />
+        </div>
       </div>
     </section>
   );
