@@ -31,15 +31,26 @@ function HostDashboard() {
       </header>
 
       <div className="host-dashboard__grid">
-        <ProjectOverviewWidget project={mockHostProject} />
+        <div
+          className="host-dashboard__project-setup host-dashboard__section-anchor"
+          id="project-setup"
+        >
+          <ProjectOverviewWidget project={mockHostProject} />
 
-        <CreateWorkSectionWidget />
+          <CreateWorkSectionWidget />
+        </div>
 
-        <div className="host-dashboard__section-summary">
+        <div
+          className="host-dashboard__section-anchor host-dashboard__section-summary"
+          id="section-summary"
+        >
           <SectionSummaryWidget summary={mockHostSectionSummary} />
         </div>
 
-        <div className="host-dashboard__team-local-times">
+        <div
+          className="host-dashboard__section-anchor host-dashboard__team-local-times"
+          id="team-local-times"
+        >
           <TeamLocalTimesWidget collaborators={mockCollaborators} />
         </div>
       </div>

@@ -137,7 +137,11 @@ function App() {
           isHostPreview ? " app-layout--host-preview" : ""
         }`}
       >
-        <Header githubData={githubData} githubUser={githubUser} />
+        <Header
+          githubData={githubData}
+          githubUser={githubUser}
+          isHostPreview={isHostPreview}
+        />
 
         <main
           className={`main-content${
