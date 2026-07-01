@@ -1,10 +1,11 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 
-import { getEntries, addEntry, deleteEntry, getGitHubUser } from "./utils/api";
+import { addEntry, deleteEntry, getEntries, getGitHubUser } from "./utils/api";
 
-import Profile from "./pages/Profile";
 import HostDashboard from "./pages/HostDashboard/HostDashboard";
+import CollaboratorDashboard from "./pages/CollaboratorDashboard/CollaboratorDashboard";
+
 import Header from "./components/Header/Header";
 import GitHubCard from "./components/GitHubCard/GitHubCard";
 import EntryForm from "./components/EntryForm/EntryForm";
@@ -16,9 +17,35 @@ import userImage from "./assets/Fred.png";
 import "./App.css";
 
 function App() {
-    const location = useLocation();
+  const location = useLocation();
 
-    const isHostPreview = location.pathname === "/host-preview";
+  const isHostPreview = location.pathname === "/host-preview";
+  const isCollaboratorPreview = location.pathname === "/collaborator-preview";
+
+  const appLayoutClassName = [
+    "app-layout",
+    isHostPreview && "app-layout--host-preview",
+    isCollaboratorPreview && "app-layout--collaborator-preview",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const mainContentClassName = [
+    "main-content",
+    isHostPreview && "main-content--host-preview",
+    isCollaboratorPreview && "main-content--collaborator-preview",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const mainInnerClassName = [
+    "main-inner",
+    isHostPreview && "main-inner--host-preview",
+    isCollaboratorPreview && "main-inner--collaborator-preview",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   console.log("API URL:", import.meta.env.VITE_API_URL);
 
   const currentUser = {
@@ -45,8 +72,8 @@ function App() {
     getEntries().then(setEntries).catch(console.error);
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
     setFormData((currentFormData) => ({
       ...currentFormData,
@@ -54,10 +81,12 @@ function App() {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (event) => {
+    event.preventDefault();
 
-    if (!formData.topic || !formData.hours) return;
+    if (!formData.topic || !formData.hours) {
+      return;
+    }
 
     addEntry({
       ...formData,
@@ -73,20 +102,25 @@ function App() {
           date: "",
         });
       })
-      .catch((err) => {
-        console.error("ADD ENTRY ERROR:", err);
+      .catch((error) => {
+        console.error("ADD ENTRY ERROR:", error);
+
         alert("Unable to add the learning entry. Please try again.");
       });
   };
 
   const handleDelete = async (entryId) => {
-    if (!entryId) return;
+    if (!entryId) {
+      return;
+    }
 
     const shouldDelete = window.confirm(
       "Are you sure you want to delete this learning entry?",
     );
 
-    if (!shouldDelete) return;
+    if (!shouldDelete) {
+      return;
+    }
 
     try {
       setDeletingEntryId(entryId);
@@ -96,8 +130,9 @@ function App() {
       setEntries((currentEntries) =>
         currentEntries.filter((entry) => entry._id !== entryId),
       );
-    } catch (err) {
-      console.error("DELETE ENTRY ERROR:", err);
+    } catch (error) {
+      console.error("DELETE ENTRY ERROR:", error);
+
       alert("Unable to delete the learning entry. Please try again.");
     } finally {
       setDeletingEntryId(null);
@@ -107,17 +142,21 @@ function App() {
   const fetchGitHubData = () => {
     console.log("FETCH FUNCTION CALLED");
 
-    if (!githubUser.trim()) return;
+    if (!githubUser.trim()) {
+      return;
+    }
 
     setLoading(true);
 
     getGitHubUser(githubUser.trim())
       .then((data) => {
         console.log("SUCCESS:", data);
+
         setGithubData(data);
       })
-      .catch((err) => {
-        console.error("FETCH ERROR:", err);
+      .catch((error) => {
+        console.error("FETCH ERROR:", error);
+
         alert("User not found or server error");
       })
       .finally(() => {
@@ -132,27 +171,15 @@ function App() {
 
   return (
     <div className="app-container">
-      <div
-        className={`app-layout${
-          isHostPreview ? " app-layout--host-preview" : ""
-        }`}
-      >
+      <div className={appLayoutClassName}>
         <Header
           githubData={githubData}
-          githubUser={githubUser}
           isHostPreview={isHostPreview}
+          isCollaboratorPreview={isCollaboratorPreview}
         />
 
-        <main
-          className={`main-content${
-            isHostPreview ? " main-content--host-preview" : ""
-          }`}
-        >
-          <div
-            className={`main-inner${
-              isHostPreview ? " main-inner--host-preview" : ""
-            }`}
-          >
+        <main className={mainContentClassName}>
+          <div className={mainInnerClassName}>
             <Routes>
               <Route
                 path="/"
@@ -211,8 +238,17 @@ function App() {
                 }
               />
 
-              <Route path="/profile" element={<Profile />} />
+              <Route
+                path="/profile"
+                element={<Navigate to="/collaborator-preview" replace />}
+              />
+
               <Route path="/host-preview" element={<HostDashboard />} />
+
+              <Route
+                path="/collaborator-preview"
+                element={<CollaboratorDashboard />}
+              />
             </Routes>
           </div>
         </main>

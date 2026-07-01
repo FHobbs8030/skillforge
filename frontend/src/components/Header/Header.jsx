@@ -22,19 +22,56 @@ const hostSectionLinks = [
   },
 ];
 
+const collaboratorSectionLinks = [
+  {
+    id: "collaborator-overview",
+    label: "Overview",
+  },
+  {
+    id: "work-sections",
+    label: "Work Sections",
+  },
+  {
+    id: "communication",
+    label: "Communication",
+  },
+];
+
+const emptySectionLinks = [];
+
 const getPrimaryNavClassName = ({ isActive }) => {
   return `header__nav-link${isActive ? " header__nav-link--active" : ""}`;
 };
 
-function Header({ githubData, isHostPreview = false }) {
-  const [activeSection, setActiveSection] = useState("project-setup");
+function Header({
+  githubData,
+  isHostPreview = false,
+  isCollaboratorPreview = false,
+}) {
+  const [activeSection, setActiveSection] = useState("");
+
+  let sectionLinks = emptySectionLinks;
+
+  if (isHostPreview) {
+    sectionLinks = hostSectionLinks;
+  } else if (isCollaboratorPreview) {
+    sectionLinks = collaboratorSectionLinks;
+  }
+
+  const activeSectionExists = sectionLinks.some(
+    (section) => section.id === activeSection,
+  );
+
+  const resolvedActiveSection = activeSectionExists
+    ? activeSection
+    : (sectionLinks[0]?.id ?? "");
 
   useEffect(() => {
-    if (!isHostPreview) {
+    if (sectionLinks.length === 0) {
       return undefined;
     }
 
-    const sections = hostSectionLinks
+    const sections = sectionLinks
       .map((section) => document.getElementById(section.id))
       .filter(Boolean);
 
@@ -70,10 +107,18 @@ function Header({ githubData, isHostPreview = false }) {
     return () => {
       observer.disconnect();
     };
-  }, [isHostPreview]);
+  }, [sectionLinks]);
+
+  const sectionNavigationLabel = isHostPreview
+    ? "Host dashboard sections"
+    : "Collaborator dashboard sections";
 
   return (
-    <header className={`header${isHostPreview ? " header--host-preview" : ""}`}>
+    <header
+      className={`header${
+        sectionLinks.length > 0 ? " header--workspace-preview" : ""
+      }`}
+    >
       <div className="header__inner">
         <div className="header__left">
           <Link
@@ -100,8 +145,12 @@ function Header({ githubData, isHostPreview = false }) {
               Host Dashboard
             </NavLink>
 
-            <NavLink to="/profile" end className={getPrimaryNavClassName}>
-              Profile
+            <NavLink
+              to="/collaborator-preview"
+              end
+              className={getPrimaryNavClassName}
+            >
+              Collaborator
             </NavLink>
           </nav>
 
@@ -119,14 +168,14 @@ function Header({ githubData, isHostPreview = false }) {
         </div>
       </div>
 
-      {isHostPreview && (
+      {sectionLinks.length > 0 && (
         <nav
           className="header__section-nav"
-          aria-label="Host dashboard sections"
+          aria-label={sectionNavigationLabel}
         >
           <div className="header__section-nav-inner">
-            {hostSectionLinks.map((section) => {
-              const isActive = activeSection === section.id;
+            {sectionLinks.map((section) => {
+              const isActive = resolvedActiveSection === section.id;
 
               return (
                 <a
