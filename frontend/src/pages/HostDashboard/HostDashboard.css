@@ -75,7 +75,8 @@
   min-width: 0;
 }
 
-.host-dashboard__section-summary {
+.host-dashboard__section-summary,
+.host-dashboard__team-local-times {
   grid-column: 1 / -1;
 
   min-width: 0;
