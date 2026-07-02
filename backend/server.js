@@ -1,10 +1,9 @@
 const mongoose = require("mongoose");
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
-
-const Entry = require("./models/Entry");
 const fetch = require("node-fetch");
+
+require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,7 +11,9 @@ const PORT = process.env.PORT || 3001;
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error(err));
+  .catch((error) => {
+    console.error("MongoDB connection error:", error);
+  });
 
 const allowedOrigins = ["https://adorable-granita-db1df3.netlify.app"];
 
@@ -47,84 +48,58 @@ app.get("/", (req, res) => {
 });
 
 app.get("/health", (req, res) => {
-  res.send({ status: "OK" });
+  res.json({ status: "OK" });
 });
 
 app.get("/github/:username", async (req, res) => {
-  const { username } = req.params;
+  const username = req.params.username.trim();
+
+  if (!username) {
+    return res.status(400).json({
+      error: "A GitHub username is required.",
+    });
+  }
 
   try {
     const headers = {
       Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
     };
 
-    const userRes = await fetch(`https://api.github.com/users/${username}`, {
-      headers,
-    });
-    const data = await userRes.json();
+    const userResponse = await fetch(
+      `https://api.github.com/users/${encodeURIComponent(username)}`,
+      { headers },
+    );
 
-    if (!userRes.ok) {
-      return res.status(userRes.status).json({
-        error: data.message || "GitHub API error",
+    const userData = await userResponse.json();
+
+    if (!userResponse.ok) {
+      return res.status(userResponse.status).json({
+        error: userData.message || "GitHub API error",
       });
     }
 
-    const repoRes = await fetch(data.repos_url, { headers });
-    const repoData = await repoRes.json();
-
-    res.json({
-      user: data,
-      repos: repoData.slice(0, 5),
+    const repositoryResponse = await fetch(userData.repos_url, {
+      headers,
     });
-  } catch (err) {
-    res.status(500).json({ error: "Server error" });
-  }
-});
 
-app.post("/entries", async (req, res) => {
-  try {
-    const { topic, hours } = req.body;
+    const repositoryData = await repositoryResponse.json();
 
-    if (!topic || topic.trim() === "" || typeof hours !== "number") {
-      return res.status(400).json({ error: "Invalid input data" });
+    if (!repositoryResponse.ok) {
+      return res.status(repositoryResponse.status).json({
+        error: repositoryData.message || "Unable to fetch repositories",
+      });
     }
 
-    const entry = await Entry.create(req.body);
-    res.status(201).json(entry);
-  } catch (err) {
-    res.status(400).json({
-      error: "Failed to create entry",
-      details: err.message,
+    return res.json({
+      user: userData,
+      repos: repositoryData.slice(0, 5),
     });
-  }
-});
+  } catch (error) {
+    console.error("GitHub route error:", error);
 
-app.get("/entries", async (req, res) => {
-  try {
-    const entries = await Entry.find().sort({ date: -1 });
-    res.json(entries);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch entries" });
-  }
-});
-
-app.delete("/entries/:id", async (req, res) => {
-  const { id } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ message: "Invalid ID format" });
-  }
-
-  try {
-    const deletedEntry = await Entry.findByIdAndDelete(id);
-
-    if (!deletedEntry) {
-      return res.status(404).json({ message: "Entry not found" });
-    }
-
-    res.json({ message: "Entry deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({
+      error: "Server error",
+    });
   }
 });
 

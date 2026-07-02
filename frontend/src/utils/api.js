@@ -1,39 +1,25 @@
 const BASE_URL = import.meta.env.VITE_API_URL;
 
-console.log("BASE_URL:", BASE_URL);
-
-function _checkResponse(res) {
-  if (!res.ok) {
-    return res.text().then((text) => {
+function checkResponse(response) {
+  if (!response.ok) {
+    return response.text().then((text) => {
       console.error("SERVER ERROR:", text);
-      return Promise.reject(`Error: ${res.status}`);
+
+      throw new Error(`Request failed with status ${response.status}`);
     });
   }
-  return res.json();
-}
- 
-export function getEntries() {
-  console.log("GET ENTRIES:", BASE_URL);
-  return fetch(`${BASE_URL}/entries`).then(_checkResponse);
-}
 
-export function addEntry(data) {
-  return fetch(`${BASE_URL}/entries`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  }).then(_checkResponse);
-}
-
-export function deleteEntry(entryId) {
-  return fetch(`${BASE_URL}/entries/${entryId}`, {
-    method: "DELETE",
-  }).then(_checkResponse);
+  return response.json();
 }
 
 export function getGitHubUser(username) {
-  console.log("GITHUB FETCH:", `${BASE_URL}/github/${username}`);
-  return fetch(`${BASE_URL}/github/${username}`).then(_checkResponse);
+  const normalizedUsername = username.trim();
+
+  if (!normalizedUsername) {
+    return Promise.reject(new Error("A GitHub username is required."));
+  }
+
+  return fetch(
+    `${BASE_URL}/github/${encodeURIComponent(normalizedUsername)}`,
+  ).then(checkResponse);
 }

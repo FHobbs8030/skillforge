@@ -44,7 +44,8 @@ const getPrimaryNavClassName = ({ isActive }) => {
 };
 
 function Header({
-  githubData,
+  isWelcomePage = false,
+  isDemoMission = false,
   isHostPreview = false,
   isCollaboratorPreview = false,
 }) {
@@ -117,6 +118,8 @@ function Header({
     <header
       className={`header${
         sectionLinks.length > 0 ? " header--workspace-preview" : ""
+      }${isWelcomePage ? " header--welcome" : ""}${
+        isDemoMission ? " header--demo" : ""
       }`}
     >
       <div className="header__inner">
@@ -131,39 +134,87 @@ function Header({
           </Link>
         </div>
 
-        <div className="header__clock">
-          <Clock />
-        </div>
+        {!isWelcomePage && !isDemoMission && (
+          <div className="header__clock">
+            <Clock />
+          </div>
+        )}
 
         <div className="header__right">
-          <nav className="header__nav" aria-label="Primary navigation">
-            <NavLink to="/" end className={getPrimaryNavClassName}>
-              Home
-            </NavLink>
-
-            <NavLink to="/host-preview" end className={getPrimaryNavClassName}>
-              Host Dashboard
-            </NavLink>
-
-            <NavLink
-              to="/collaborator-preview"
-              end
-              className={getPrimaryNavClassName}
+          {isWelcomePage ? (
+            <nav
+              className="header__nav header__nav--public"
+              aria-label="Public navigation"
             >
-              Collaborator
-            </NavLink>
-          </nav>
+              <a
+                className="header__nav-link header__nav-link--welcome-secondary"
+                href="#about"
+              >
+                About
+              </a>
 
-          {githubData?.user && (
-            <div className="header__user">
-              <img
-                src={githubData.user.avatar_url}
-                alt={`${githubData.user.login} avatar`}
-                className="header__avatar"
-              />
+              <a
+                className="header__nav-link header__nav-link--welcome-secondary"
+                href="#how-it-works"
+              >
+                How It Works
+              </a>
 
-              <span className="header__username">{githubData.user.login}</span>
-            </div>
+              <a
+                className="header__nav-link header__nav-link--welcome-secondary"
+                href="#memberships"
+              >
+                Memberships
+              </a>
+
+              <Link className="header__nav-link" to="/host-preview">
+                Host Demo
+              </Link>
+
+              <Link className="header__nav-link" to="/collaborator-preview">
+                Collaborator Demo
+              </Link>
+
+              <Link
+                className="header__nav-link header__nav-link--cta"
+                to="/demo"
+              >
+                Try SkillForge
+              </Link>
+            </nav>
+          ) : isDemoMission ? (
+            <nav
+              className="header__nav header__nav--demo"
+              aria-label="Demo navigation"
+            >
+              <span className="header__demo-label">Mission Simulation</span>
+
+              <Link className="header__nav-link header__nav-link--cta" to="/">
+                Exit Demo
+              </Link>
+            </nav>
+          ) : (
+            <nav className="header__nav" aria-label="Primary navigation">
+              <NavLink to="/" end className={getPrimaryNavClassName}>
+                Home
+              </NavLink>
+
+              <NavLink
+                to="/host-preview"
+                end
+                className={getPrimaryNavClassName}
+              >
+                Host Dashboard
+              </NavLink>
+
+              <NavLink
+                to="/collaborator-preview"
+                end
+                className={getPrimaryNavClassName}
+              >
+                Collaborator
+              </NavLink>
+            </nav>
           )}
         </div>
       </div>
@@ -185,7 +236,18 @@ function Header({
                   }`}
                   href={`#${section.id}`}
                   aria-current={isActive ? "location" : undefined}
-                  onClick={() => setActiveSection(section.id)}
+                  onClick={(event) => {
+                    event.preventDefault();
+
+                    const targetSection = document.getElementById(section.id);
+
+                    targetSection?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+
+                    setActiveSection(section.id);
+                  }}
                 >
                   {section.label}
                 </a>
