@@ -1,0 +1,247 @@
+.signup-form {
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--space-4);
+
+  width: 100%;
+}
+
+.signup-form__field {
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--space-2);
+}
+
+.signup-form__field label {
+  color: var(--color-text-primary);
+
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.signup-form__field input,
+.signup-form__field select {
+  width: 100%;
+  min-height: 48px;
+
+  padding: var(--space-3) var(--space-4);
+
+  background: rgba(5, 12, 17, 0.82);
+  color: var(--color-text-primary);
+
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+
+  font: inherit;
+  font-size: var(--font-size-base);
+
+  box-sizing: border-box;
+
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.signup-form__field input::placeholder {
+  color: var(--color-text-muted);
+
+  opacity: 0.8;
+}
+
+.signup-form__field input:hover,
+.signup-form__field select:hover {
+  border-color: var(--border-card-hover);
+}
+
+.signup-form__field input:focus,
+.signup-form__field select:focus {
+  outline: none;
+
+  background: rgba(7, 16, 22, 0.96);
+
+  border-color: var(--border-focus-strong);
+
+  box-shadow: var(--shadow-input-focus-strong);
+}
+
+.signup-form__field input[aria-invalid="true"] {
+  border-color: rgba(248, 113, 113, 0.8);
+
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1);
+}
+
+.signup-form__field select {
+  appearance: none;
+
+  padding-right: 3rem;
+
+  background-image:
+    linear-gradient(
+      45deg,
+      transparent 50%,
+      var(--color-text-secondary) 50%
+    ),
+    linear-gradient(
+      135deg,
+      var(--color-text-secondary) 50%,
+      transparent 50%
+    );
+
+  background-position:
+    calc(100% - 19px) 50%,
+    calc(100% - 13px) 50%;
+
+  background-size:
+    6px 6px,
+    6px 6px;
+
+  background-repeat: no-repeat;
+
+  cursor: pointer;
+}
+
+.signup-form__field select option {
+  background: var(--color-surface-card);
+  color: var(--color-text-primary);
+}
+
+.signup-form__error {
+  color: #fca5a5;
+
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.45;
+}
+
+.signup-form__submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 50px;
+
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+
+  background: var(--button-gradient);
+  color: var(--color-text-inverse);
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-pill);
+
+  font: inherit;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+
+  cursor: pointer;
+
+  box-shadow: var(--shadow-button);
+
+  transition:
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.signup-form__submit:hover {
+  box-shadow: var(--shadow-button-hover);
+
+  transform: translateY(-2px);
+}
+
+.signup-form__submit:focus-visible {
+  outline: none;
+
+  box-shadow: var(--shadow-input-focus-strong);
+}
+
+.signup-form__submit:active {
+  box-shadow: var(--shadow-button-active);
+
+  transform: translateY(0);
+}
+
+.signup-form__submit:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.6;
+
+  transform: none;
+}
+
+.signup-form__message {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+
+  background: rgba(20, 184, 166, 0.09);
+  color: var(--color-brand-cyan-light);
+
+  border: 1px solid rgba(20, 184, 166, 0.24);
+  border-radius: var(--radius-md);
+
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+}
+
+.signup-form__footer {
+  margin: 0;
+
+  color: var(--color-text-secondary);
+
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+
+  text-align: center;
+}
+
+.signup-form__footer a {
+  color: var(--color-brand-cyan-light);
+
+  font-weight: var(--font-weight-bold);
+
+  text-decoration: none;
+}
+
+.signup-form__footer a:hover {
+  text-decoration: underline;
+}
+
+.signup-form__footer a:focus-visible {
+  outline: none;
+
+  border-radius: var(--radius-sm);
+
+  box-shadow: var(--shadow-input-focus-strong);
+}
+
+@media (max-width: 620px) {
+  .signup-form {
+    gap: var(--space-4);
+  }
+
+  .signup-form__field input,
+  .signup-form__field select {
+    min-height: 50px;
+
+    font-size: 1rem;
+  }
+
+  .signup-form__submit {
+    min-height: 52px;
+  }
+}
+
+@media (max-width: 380px) {
+  .signup-form__field input,
+  .signup-form__field select {
+    padding-right: var(--space-3);
+    padding-left: var(--space-3);
+  }
+
+  .signup-form__field select {
+    padding-right: 2.75rem;
+  }
+}

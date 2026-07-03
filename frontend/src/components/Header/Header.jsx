@@ -176,6 +176,13 @@ function Header({
               </Link>
 
               <Link
+                className="header__nav-link header__nav-link--signin"
+                to="/signin"
+              >
+                Sign In
+              </Link>
+
+              <Link
                 className="header__nav-link header__nav-link--cta"
                 to="/demo"
               >

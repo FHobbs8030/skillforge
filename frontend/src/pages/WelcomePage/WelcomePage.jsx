@@ -41,6 +41,7 @@ const collaboratorBenefits = [
 
 const membershipPlans = [
   {
+    id: "free",
     name: "Free",
     description:
       "A practical starting point for individual developers and small projects.",
@@ -56,6 +57,7 @@ const membershipPlans = [
     action: "Start with Free",
   },
   {
+    id: "pro",
     name: "Pro",
     description:
       "More capacity and project-management tools for active builders.",
@@ -73,6 +75,7 @@ const membershipPlans = [
     featured: true,
   },
   {
+    id: "team",
     name: "Team",
     description:
       "Expanded administration and collaboration controls for larger teams.",
@@ -376,16 +379,16 @@ function WelcomePage() {
                 ))}
               </ul>
 
-              <a
+              <Link
                 className={`welcome-button ${
                   plan.featured
                     ? "welcome-button--primary"
                     : "welcome-button--secondary"
                 }`}
-                href="#get-started"
+                to={`/signup?plan=${plan.id}`}
               >
                 {plan.action}
-              </a>
+              </Link>
             </article>
           ))}
         </div>
