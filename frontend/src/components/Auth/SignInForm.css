@@ -229,6 +229,12 @@
   line-height: 1.55;
 }
 
+.signin-form__message--error {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+}
+
 .signin-form__footer {
   margin: 0;
 

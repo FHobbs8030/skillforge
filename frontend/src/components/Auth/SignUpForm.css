@@ -186,6 +186,13 @@
   line-height: 1.55;
 }
 
+.signup-form__message--error {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger-text-hover);
+
+  border-color: var(--color-danger-border);
+}
+
 .signup-form__footer {
   margin: 0;
 

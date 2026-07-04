@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
+import { signUpUser } from "../../utils/api";
+
 import "./SignUpForm.css";
 
 const MEMBERSHIP_OPTIONS = ["free", "pro", "team"];
@@ -24,6 +26,8 @@ function SignUpForm() {
 
   const [errors, setErrors] = useState({});
   const [formMessage, setFormMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -39,18 +43,22 @@ function SignUpForm() {
     }));
 
     setFormMessage("");
+    setMessageType("");
   };
 
   const validateForm = () => {
     const nextErrors = {};
 
-    if (formData.fullName.trim().length < 2) {
+    const normalizedFullName = formData.fullName.trim();
+    const normalizedEmail = formData.email.trim();
+
+    if (normalizedFullName.length < 2) {
       nextErrors.fullName = "Enter your full name.";
     }
 
-    if (!formData.email.trim()) {
+    if (!normalizedEmail) {
       nextErrors.email = "Enter your email address.";
-    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+    } else if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
       nextErrors.email = "Enter a valid email address.";
     }
 
@@ -65,7 +73,7 @@ function SignUpForm() {
     return nextErrors;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const nextErrors = validateForm();
@@ -73,17 +81,55 @@ function SignUpForm() {
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       setFormMessage("");
+      setMessageType("");
       return;
     }
 
     setErrors({});
-    setFormMessage(
-      "Signup validation passed. Account creation will be connected to the backend in the next checkpoint.",
-    );
+    setFormMessage("");
+    setMessageType("");
+    setIsSubmitting(true);
+
+    try {
+      const response = await signUpUser({
+        fullName: formData.fullName.trim(),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        membership: formData.membership,
+      });
+
+      setFormMessage(
+        response?.message ||
+          "Account created successfully. You can now sign in.",
+      );
+      setMessageType("success");
+
+      setFormData((currentData) => ({
+        ...currentData,
+        password: "",
+        confirmPassword: "",
+      }));
+    } catch (error) {
+      if (error.fields && Object.keys(error.fields).length > 0) {
+        setErrors(error.fields);
+      }
+
+      setFormMessage(
+        error.message || "Unable to create your account. Please try again.",
+      );
+      setMessageType("error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <form className="signup-form" onSubmit={handleSubmit} noValidate>
+    <form
+      className="signup-form"
+      onSubmit={handleSubmit}
+      noValidate
+      aria-busy={isSubmitting}
+    >
       <div className="signup-form__field">
         <label htmlFor="signup-full-name">Full name</label>
 
@@ -95,6 +141,7 @@ function SignUpForm() {
           onChange={handleChange}
           autoComplete="name"
           placeholder="Fred Hobbs"
+          disabled={isSubmitting}
           aria-invalid={Boolean(errors.fullName)}
           aria-describedby={
             errors.fullName ? "signup-full-name-error" : undefined
@@ -119,6 +166,7 @@ function SignUpForm() {
           onChange={handleChange}
           autoComplete="email"
           placeholder="name@example.com"
+          disabled={isSubmitting}
           aria-invalid={Boolean(errors.email)}
           aria-describedby={errors.email ? "signup-email-error" : undefined}
         />
@@ -141,6 +189,7 @@ function SignUpForm() {
           onChange={handleChange}
           autoComplete="new-password"
           placeholder="At least 8 characters"
+          disabled={isSubmitting}
           aria-invalid={Boolean(errors.password)}
           aria-describedby={
             errors.password ? "signup-password-error" : undefined
@@ -165,6 +214,7 @@ function SignUpForm() {
           onChange={handleChange}
           autoComplete="new-password"
           placeholder="Enter your password again"
+          disabled={isSubmitting}
           aria-invalid={Boolean(errors.confirmPassword)}
           aria-describedby={
             errors.confirmPassword ? "signup-confirm-password-error" : undefined
@@ -189,6 +239,7 @@ function SignUpForm() {
           name="membership"
           value={formData.membership}
           onChange={handleChange}
+          disabled={isSubmitting}
         >
           <option value="free">Free</option>
           <option value="pro">Pro</option>
@@ -196,12 +247,21 @@ function SignUpForm() {
         </select>
       </div>
 
-      <button className="signup-form__submit" type="submit">
-        Create Account
+      <button
+        className="signup-form__submit"
+        type="submit"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? "Creating Account..." : "Create Account"}
       </button>
 
       {formMessage && (
-        <p className="signup-form__message" role="status">
+        <p
+          className={`signup-form__message${
+            messageType === "error" ? " signup-form__message--error" : ""
+          }`}
+          role={messageType === "error" ? "alert" : "status"}
+        >
           {formMessage}
         </p>
       )}
