@@ -1,197 +1,225 @@
-import { Routes, Route } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { useLayoutEffect } from "react";
+import WelcomePage from "./pages/WelcomePage/WelcomePage";
+import DemoMission from "./pages/DemoMission/DemoMission";
+import HostDashboard from "./pages/HostDashboard/HostDashboard";
+import CollaboratorDashboard from "./pages/CollaboratorDashboard/CollaboratorDashboard";
+import AppDashboard from "./pages/AppDashboard/AppDashboard";
+import ProfilePage from "./pages/ProfilePage/ProfilePage";
+import AuthPage from "./pages/AuthPage/AuthPage";
 
-import { getEntries, addEntry, deleteEntry, getGitHubUser } from "./utils/api";
-
-import Profile from "./pages/Profile";
 import Header from "./components/Header/Header";
-import GitHubCard from "./components/GitHubCard/GitHubCard";
-import EntryForm from "./components/EntryForm/EntryForm";
-import Stats from "./components/Stats/Stats";
 import Footer from "./components/Footer/Footer";
 
-import userImage from "./assets/Fred.png";
+import useAuth from "./contexts/useAuth";
 
 import "./App.css";
 
-function App() {
-  console.log("API URL:", import.meta.env.VITE_API_URL);
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, isAuthLoading } = useAuth();
+  const location = useLocation();
 
-  const currentUser = {
-    username: "FHobbs8030",
-    image: userImage,
-  };
+  if (isAuthLoading) {
+    return null;
+  }
 
-  const [entries, setEntries] = useState([]);
-
-  const [formData, setFormData] = useState({
-    topic: "",
-    hours: "",
-    notes: "",
-    date: "",
-  });
-
-  const [githubUser, setGithubUser] = useState("");
-  const [githubData, setGithubData] = useState(null);
-
-  const [loading, setLoading] = useState(false);
-  const [deletingEntryId, setDeletingEntryId] = useState(null);
-
-  useEffect(() => {
-    getEntries().then(setEntries).catch(console.error);
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setFormData((currentFormData) => ({
-      ...currentFormData,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (!formData.topic || !formData.hours) return;
-
-    addEntry({
-      ...formData,
-      hours: Number(formData.hours),
-    })
-      .then((newEntry) => {
-        setEntries((currentEntries) => [newEntry, ...currentEntries]);
-
-        setFormData({
-          topic: "",
-          hours: "",
-          notes: "",
-          date: "",
-        });
-      })
-      .catch((err) => {
-        console.error("ADD ENTRY ERROR:", err);
-        alert("Unable to add the learning entry. Please try again.");
-      });
-  };
-
-  const handleDelete = async (entryId) => {
-    if (!entryId) return;
-
-    const shouldDelete = window.confirm(
-      "Are you sure you want to delete this learning entry?",
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to="/signin"
+        replace
+        state={{
+          from: location,
+        }}
+      />
     );
+  }
 
-    if (!shouldDelete) return;
+  return children;
+}
 
-    try {
-      setDeletingEntryId(entryId);
+function PublicOnlyRoute({ children }) {
+  const { isAuthenticated, isAuthLoading } = useAuth();
 
-      await deleteEntry(entryId);
+  if (isAuthLoading) {
+    return null;
+  }
 
-      setEntries((currentEntries) =>
-        currentEntries.filter((entry) => entry._id !== entryId),
-      );
-    } catch (err) {
-      console.error("DELETE ENTRY ERROR:", err);
-      alert("Unable to delete the learning entry. Please try again.");
-    } finally {
-      setDeletingEntryId(null);
-    }
-  };
+  if (isAuthenticated) {
+    return <Navigate to="/app" replace />;
+  }
 
-  const fetchGitHubData = () => {
-    console.log("FETCH FUNCTION CALLED");
+  return children;
+}
 
-    if (!githubUser.trim()) return;
+function App() {
+  const location = useLocation();
+  const { isAuthLoading } = useAuth();
 
-    setLoading(true);
-
-    getGitHubUser(githubUser.trim())
-      .then((data) => {
-        console.log("SUCCESS:", data);
-        setGithubData(data);
-      })
-      .catch((err) => {
-        console.error("FETCH ERROR:", err);
-        alert("User not found or server error");
-      })
-      .finally(() => {
-        setLoading(false);
+  useLayoutEffect(() => {
+    const resetScrollPosition = () => {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "auto",
       });
-  };
 
-  const totalHours = entries.reduce(
-    (sum, entry) => sum + Number(entry.hours),
-    0,
-  );
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    resetScrollPosition();
+
+    const animationFrameId = window.requestAnimationFrame(resetScrollPosition);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [location.pathname]);
+
+  const isWelcomePage = location.pathname === "/";
+  const isSignUpPage = location.pathname === "/signup";
+  const isSignInPage = location.pathname === "/signin";
+  const isAuthPage = isSignUpPage || isSignInPage;
+
+  /*
+   * Authentication routes retain the Welcome Page layout because the
+   * authentication interface appears over the Welcome Page on desktop.
+   */
+  const isWelcomeExperience = isWelcomePage || isAuthPage;
+
+  const isDemoMission = location.pathname === "/demo";
+  const isHostPreview = location.pathname === "/host-preview";
+  const isCollaboratorPreview = location.pathname === "/collaborator-preview";
+  const isAppDashboard = location.pathname === "/app";
+  const isProfilePage = location.pathname === "/profile";
+
+  const appLayoutClassName = [
+    "app-layout",
+    isWelcomeExperience && "app-layout--welcome",
+    isAuthPage && "app-layout--auth",
+    isDemoMission && "app-layout--demo",
+    isHostPreview && "app-layout--host-preview",
+    isCollaboratorPreview && "app-layout--collaborator-preview",
+    isAppDashboard && "app-layout--app-dashboard",
+    isProfilePage && "app-layout--profile",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const mainContentClassName = [
+    "main-content",
+    isWelcomeExperience && "main-content--welcome",
+    isAuthPage && "main-content--auth",
+    isDemoMission && "main-content--demo",
+    isHostPreview && "main-content--host-preview",
+    isCollaboratorPreview && "main-content--collaborator-preview",
+    isAppDashboard && "main-content--app-dashboard",
+    isProfilePage && "main-content--profile",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const mainInnerClassName = [
+    "main-inner",
+    isWelcomeExperience && "main-inner--welcome",
+    isAuthPage && "main-inner--auth",
+    isDemoMission && "main-inner--demo",
+    isHostPreview && "main-inner--host-preview",
+    isCollaboratorPreview && "main-inner--collaborator-preview",
+    isAppDashboard && "main-inner--app-dashboard",
+    isProfilePage && "main-inner--profile",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  if (isAuthLoading) {
+    return (
+      <div className="app-container" aria-busy="true">
+        <div className="app-layout">
+          <main className="main-content">
+            <div className="main-inner">
+              <div
+                className="auth-loading-state"
+                role="status"
+                aria-live="polite"
+              >
+                Restoring your SkillForge session...
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
-      <div className="app-layout">
-        <Header githubData={githubData} githubUser={githubUser} />
+      <div className={appLayoutClassName}>
+        <Header
+          isWelcomePage={isWelcomeExperience}
+          isDemoMission={isDemoMission}
+          isHostPreview={isHostPreview}
+          isCollaboratorPreview={isCollaboratorPreview}
+        />
 
-        <main className="main-content">
-          <div className="main-inner">
+        <main className={mainContentClassName}>
+          <div className={mainInnerClassName}>
             <Routes>
+              <Route path="/" element={<WelcomePage />} />
+
               <Route
-                path="/"
+                path="/signup"
                 element={
-                  <div className="dashboard-grid">
-                    <div className="dashboard-top">
-                      <GitHubCard
-                        githubUser={githubUser}
-                        setGithubUser={setGithubUser}
-                        fetchGitHubData={fetchGitHubData}
-                        githubData={githubData}
-                        loading={loading}
-                        currentUser={currentUser}
-                      />
-
-                      <Stats entries={entries} totalHours={totalHours} />
-                    </div>
-
-                    <EntryForm
-                      formData={formData}
-                      handleChange={handleChange}
-                      handleSubmit={handleSubmit}
-                    />
-
-                    <div className="grid">
-                      {entries.length === 0 ? (
-                        <p className="dashboard__empty">
-                          No entries yet. Add your first learning session.
-                        </p>
-                      ) : (
-                        entries.map((entry) => (
-                          <div key={entry._id || entry.topic} className="card">
-                            <h3>{entry.topic}</h3>
-
-                            <p>{entry.hours} hrs</p>
-
-                            <span>{entry.notes}</span>
-
-                            <button
-                              className="card__delete-button"
-                              type="button"
-                              onClick={() => handleDelete(entry._id)}
-                              disabled={
-                                !entry._id || deletingEntryId === entry._id
-                              }
-                            >
-                              {deletingEntryId === entry._id
-                                ? "Deleting..."
-                                : "Delete"}
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
+                  <PublicOnlyRoute>
+                    <>
+                      <WelcomePage />
+                      <AuthPage mode="signup" />
+                    </>
+                  </PublicOnlyRoute>
                 }
               />
 
-              <Route path="/profile" element={<Profile />} />
+              <Route
+                path="/signin"
+                element={
+                  <PublicOnlyRoute>
+                    <>
+                      <WelcomePage />
+                      <AuthPage mode="signin" />
+                    </>
+                  </PublicOnlyRoute>
+                }
+              />
+
+              <Route path="/demo" element={<DemoMission />} />
+
+              <Route path="/host-preview" element={<HostDashboard />} />
+
+              <Route
+                path="/collaborator-preview"
+                element={<CollaboratorDashboard />}
+              />
+
+              <Route
+                path="/app"
+                element={
+                  <ProtectedRoute>
+                    <AppDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
         </main>

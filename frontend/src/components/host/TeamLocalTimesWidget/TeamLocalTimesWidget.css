@@ -1,0 +1,323 @@
+.team-local-times-widget {
+  --team-working: #34d399;
+  --team-off-hours: #94a3b8;
+  --team-weekend: #fbbf24;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--space-3);
+
+  width: 100%;
+  min-width: 0;
+
+  padding: var(--space-4);
+
+  background: var(--color-surface-input);
+
+  border: 1px solid var(--border-card-subtle);
+  border-radius: var(--radius-card);
+
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.team-local-times-widget:hover {
+  border-color: var(--border-card-hover);
+
+  box-shadow: var(--shadow-card-hover);
+}
+
+.team-local-times-widget__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: var(--space-4);
+}
+
+.team-local-times-widget__eyebrow {
+  margin: 0 0 var(--space-1);
+
+  color: var(--brand-teal);
+
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.team-local-times-widget__title {
+  margin: 0;
+
+  color: var(--color-text-primary);
+
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.team-local-times-widget__badge {
+  flex: 0 0 auto;
+
+  padding: var(--space-1) var(--space-3);
+
+  background: rgba(56, 189, 248, 0.1);
+  color: var(--color-brand-cyan-light);
+
+  border: 1px solid var(--border-brand);
+  border-radius: var(--radius-pill);
+
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.team-local-times-widget__description {
+  max-width: 760px;
+
+  margin: 0;
+
+  color: var(--color-text-secondary);
+
+  font-size: var(--font-size-control);
+  line-height: 1.5;
+}
+
+.team-local-times-widget__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  gap: var(--space-3);
+}
+
+.team-local-times-widget__member {
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--space-3);
+
+  min-width: 0;
+
+  padding: var(--space-3);
+
+  background: var(--color-surface-card);
+
+  border: 1px solid var(--border-card-subtle);
+  border-radius: var(--radius-md);
+
+  transition:
+    border-color var(--transition-base),
+    transform var(--transition-base);
+}
+
+.team-local-times-widget__member:hover {
+  border-color: var(--border-card-hover);
+
+  transform: translateY(-2px);
+}
+
+.team-local-times-widget__member-header {
+  display: flex;
+  align-items: center;
+
+  gap: var(--space-3);
+
+  min-width: 0;
+}
+
+.team-local-times-widget__avatar {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  flex: 0 0 auto;
+
+  width: 42px;
+  height: 42px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(34, 211, 238, 0.22),
+      rgba(167, 139, 250, 0.18)
+    ),
+    var(--color-surface-input);
+
+  color: var(--color-brand-cyan-light);
+
+  border: 1px solid var(--border-brand);
+  border-radius: 50%;
+
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.team-local-times-widget__identity {
+  min-width: 0;
+}
+
+.team-local-times-widget__identity h3 {
+  margin: 0;
+
+  overflow: hidden;
+
+  color: var(--color-text-primary);
+
+  font-size: var(--font-size-control);
+  font-weight: var(--font-weight-bold);
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-local-times-widget__identity p {
+  margin: var(--space-1) 0 0;
+
+  overflow: hidden;
+
+  color: var(--color-text-muted);
+
+  font-size: var(--font-size-xs);
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-local-times-widget__clock {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+
+  gap: var(--space-2);
+}
+
+.team-local-times-widget__clock strong {
+  color: var(--color-text-primary);
+
+  font-size: var(--font-size-xl);
+  line-height: 1;
+}
+
+.team-local-times-widget__clock span {
+  color: var(--color-brand-cyan-light);
+
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.team-local-times-widget__details {
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--space-1);
+
+  color: var(--color-text-secondary);
+
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+
+.team-local-times-widget__member-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: var(--space-2);
+
+  margin-top: auto;
+  padding-top: var(--space-2);
+
+  border-top: 1px solid var(--border-card-subtle);
+}
+
+.team-local-times-widget__availability {
+  display: inline-flex;
+  align-items: center;
+
+  gap: var(--space-2);
+
+  color: var(--color-text-secondary);
+
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.team-local-times-widget__availability-dot {
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+}
+
+.team-local-times-widget__availability--working
+  .team-local-times-widget__availability-dot {
+  background: var(--team-working);
+
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.45);
+}
+
+.team-local-times-widget__availability--off-hours
+  .team-local-times-widget__availability-dot {
+  background: var(--team-off-hours);
+}
+
+.team-local-times-widget__availability--weekend
+  .team-local-times-widget__availability-dot {
+  background: var(--team-weekend);
+}
+
+.team-local-times-widget__work-window {
+  color: var(--color-text-muted);
+
+  font-size: var(--font-size-xs);
+}
+
+.team-local-times-widget__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: var(--space-3);
+
+  padding-top: var(--space-2);
+
+  color: var(--color-text-muted);
+
+  border-top: 1px solid var(--border-card-subtle);
+
+  font-size: var(--font-size-xs);
+}
+
+@media (max-width: 1000px) {
+  .team-local-times-widget__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .team-local-times-widget__header {
+    flex-direction: column;
+  }
+
+  .team-local-times-widget__badge {
+    align-self: flex-start;
+  }
+
+  .team-local-times-widget__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 400px) {
+  .team-local-times-widget {
+    padding: var(--space-3);
+  }
+
+  .team-local-times-widget__footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

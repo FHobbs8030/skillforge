@@ -1,39 +1,107 @@
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, "");
 
-console.log("BASE_URL:", BASE_URL);
-
-function _checkResponse(res) {
-  if (!res.ok) {
-    return res.text().then((text) => {
-      console.error("SERVER ERROR:", text);
-      return Promise.reject(`Error: ${res.status}`);
-    });
+function getApiUrl(path) {
+  if (!BASE_URL) {
+    throw new Error(
+      "VITE_API_URL is not configured. Add it to the frontend environment file.",
+    );
   }
-  return res.json();
-}
- 
-export function getEntries() {
-  console.log("GET ENTRIES:", BASE_URL);
-  return fetch(`${BASE_URL}/entries`).then(_checkResponse);
+
+  return `${BASE_URL}${path}`;
 }
 
-export function addEntry(data) {
-  return fetch(`${BASE_URL}/entries`, {
-    method: "POST",
+async function checkResponse(response) {
+  const contentType = response.headers.get("content-type") || "";
+
+  let responseData = null;
+
+  if (response.status !== 204) {
+    if (contentType.includes("application/json")) {
+      responseData = await response.json();
+    } else {
+      const responseText = await response.text();
+
+      responseData = responseText
+        ? {
+            error: responseText,
+          }
+        : null;
+    }
+  }
+
+  if (!response.ok) {
+    const requestError = new Error(
+      responseData?.error || `Request failed with status ${response.status}.`,
+    );
+
+    requestError.status = response.status;
+    requestError.fields = responseData?.fields || {};
+
+    throw requestError;
+  }
+
+  return responseData;
+}
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(getApiUrl(path), {
+    ...options,
+
     headers: {
       "Content-Type": "application/json",
+      ...options.headers,
     },
-    body: JSON.stringify(data),
-  }).then(_checkResponse);
+  });
+
+  return checkResponse(response);
 }
 
-export function deleteEntry(entryId) {
-  return fetch(`${BASE_URL}/entries/${entryId}`, {
-    method: "DELETE",
-  }).then(_checkResponse);
+export function signUpUser({ fullName, email, password, membership }) {
+  return apiRequest("/auth/signup", {
+    method: "POST",
+
+    body: JSON.stringify({
+      fullName,
+      email,
+      password,
+      membership,
+    }),
+  });
+}
+
+export function signInUser({ email, password }) {
+  return apiRequest("/auth/signin", {
+    method: "POST",
+
+    body: JSON.stringify({
+      email,
+      password,
+    }),
+  });
+}
+
+export function getCurrentUser(token) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/auth/me", {
+    method: "GET",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 }
 
 export function getGitHubUser(username) {
-  console.log("GITHUB FETCH:", `${BASE_URL}/github/${username}`);
-  return fetch(`${BASE_URL}/github/${username}`).then(_checkResponse);
+  const normalizedUsername = username.trim();
+
+  if (!normalizedUsername) {
+    return Promise.reject(new Error("A GitHub username is required."));
+  }
+
+  return apiRequest(`/github/${encodeURIComponent(normalizedUsername)}`, {
+    method: "GET",
+  });
 }

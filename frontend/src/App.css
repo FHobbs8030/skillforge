@@ -16,38 +16,61 @@
 
   --color-disabled: #555555;
 
-  --brand-blue: #38bdf8;
-  --brand-teal: #14b8a6;
-  --brand-orange: #ff6b00;
-  --color-brand-cyan-light: #67e8f9;
+--brand-blue: #38bdf8;
+--brand-teal: #14b8a6;
+--brand-purple: #7c3aed;
+--brand-orange: #f97316;
 
-  --brand-gradient: linear-gradient(
-    90deg,
-    var(--brand-blue) 0%,
-    var(--brand-teal) 52%,
-    var(--brand-orange) 100%
-  );
+--color-brand-cyan-light: #67e8f9;
+--color-brand-purple-light: #a78bfa;
 
-  --button-gradient: linear-gradient(
-    135deg,
-    #0891b2 0%,
-    #14b8a6 62%,
-    #f97316 100%
-  );
+--brand-gradient: linear-gradient(
+  100deg,
+  var(--brand-blue) 0%,
+  var(--brand-teal) 38%,
+  var(--brand-purple) 70%,
+  var(--brand-orange) 100%
+);
 
-  --surface-header: linear-gradient(
+--button-gradient: linear-gradient(
+  120deg,
+  #0891b2 0%,
+  #14b8a6 45%,
+  #7c3aed 75%,
+  #f97316 100%
+);
+
+ --surface-header:
+  radial-gradient(
+    circle at 10% 0%,
+    rgba(124, 58, 237, 0.12),
+    transparent 34%
+  ),
+  linear-gradient(
     135deg,
     rgba(24, 43, 54, 0.98),
     rgba(13, 27, 35, 0.98)
   );
 
-  --surface-workspace: linear-gradient(
+--surface-workspace:
+  radial-gradient(
+    circle at 100% 0%,
+    rgba(124, 58, 237, 0.08),
+    transparent 32%
+  ),
+  linear-gradient(
     180deg,
     rgba(43, 72, 88, 0.98),
     rgba(26, 50, 64, 0.98)
   );
 
-  --surface-footer: linear-gradient(
+--surface-footer:
+  radial-gradient(
+    circle at 80% 100%,
+    rgba(124, 58, 237, 0.1),
+    transparent 34%
+  ),
+  linear-gradient(
     135deg,
     rgba(18, 35, 44, 0.98),
     rgba(10, 22, 29, 0.98)
@@ -111,7 +134,7 @@
      TYPOGRAPHY SYSTEM
   ========================= */
 
-  --font-family-sans: "Inter", sans-serif;
+  --font-family-sans: "Inter", "Roboto", "Open Sans", Arial, sans-serif;
 
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.8rem;
@@ -169,10 +192,14 @@
     0 10px 24px rgba(0, 0, 0, 0.35), 0 0 18px rgba(20, 184, 166, 0.15);
 
   --shadow-button:
-    0 6px 18px rgba(8, 145, 178, 0.22), 0 3px 10px rgba(255, 107, 0, 0.18);
+  0 6px 18px rgba(8, 145, 178, 0.22),
+  0 4px 14px rgba(124, 58, 237, 0.16),
+  0 3px 10px rgba(249, 115, 22, 0.16);
 
-  --shadow-button-hover:
-    0 8px 24px rgba(20, 184, 166, 0.3), 0 5px 14px rgba(255, 107, 0, 0.24);
+--shadow-button-hover:
+  0 8px 24px rgba(20, 184, 166, 0.3),
+  0 6px 18px rgba(124, 58, 237, 0.22),
+  0 5px 14px rgba(249, 115, 22, 0.22);
 
   --shadow-button-active:
     0 4px 12px rgba(20, 184, 166, 0.2), 0 2px 8px rgba(255, 107, 0, 0.14);
@@ -239,19 +266,23 @@ body {
   font-family: var(--font-family-sans);
   color: var(--color-text-primary);
 
-  background:
-    radial-gradient(
-      circle at 50% 0%,
-      rgba(56, 189, 248, 0.08),
-      transparent 42%
-    ),
-    radial-gradient(
-      circle at 85% 18%,
-      rgba(20, 184, 166, 0.05),
-      transparent 34%
-    ),
-    var(--color-bg-canvas);
-}
+background:
+  radial-gradient(
+    circle at 15% 0%,
+    rgba(124, 58, 237, 0.09),
+    transparent 36%
+  ),
+  radial-gradient(
+    circle at 50% 0%,
+    rgba(56, 189, 248, 0.08),
+    transparent 42%
+  ),
+  radial-gradient(
+    circle at 85% 18%,
+    rgba(249, 115, 22, 0.05),
+    transparent 34%
+  ),
+  var(--color-bg-canvas);
 
 .app {
   min-height: 100vh;
@@ -342,39 +373,6 @@ body {
 
 .main-inner > * {
   min-width: 0;
-}
-
-.dashboard-top {
-  display: flex;
-  flex-direction: column;
-
-  gap: var(--space-4);
-
-  width: 100%;
-  min-width: 0;
-
-  overflow: visible;
-}
-
-.dashboard-top > * {
-  width: 100%;
-  min-width: 0;
-}
-
-.dashboard-grid {
-  display: flex;
-  flex-direction: column;
-
-  gap: var(--space-4);
-
-  width: 100%;
-  min-width: 0;
-
-  overflow: visible;
-}
-
-.dashboard-grid > * {
-  width: 100%;
 }
 
 .button {
@@ -498,53 +496,6 @@ body {
   font-size: var(--font-size-sm);
 }
 
-.card__delete-button {
-  align-self: flex-start;
-
-  width: auto;
-
-  margin-top: var(--space-3);
-  padding: var(--space-2) var(--space-4);
-
-  background: var(--color-danger-background);
-  color: var(--color-danger-text);
-
-  border: 1px solid var(--color-danger-border);
-  border-radius: var(--radius-sm);
-
-  font-size: var(--font-size-control);
-  font-weight: var(--font-weight-semibold);
-
-  cursor: pointer;
-
-  transition:
-    background var(--transition-fast),
-    border-color var(--transition-fast),
-    color var(--transition-fast),
-    transform var(--transition-fast);
-}
-
-.card__delete-button:hover {
-  background: var(--color-danger-background-hover);
-  color: var(--color-danger-text-hover);
-
-  border-color: var(--color-danger-border-hover);
-
-  transform: translateY(-1px);
-}
-
-.card__delete-button:active {
-  transform: translateY(0);
-}
-
-.card__delete-button:disabled {
-  opacity: 0.55;
-
-  cursor: not-allowed;
-
-  transform: none;
-}
-
 input:focus {
   outline: none;
 
@@ -553,18 +504,57 @@ input:focus {
   box-shadow: var(--shadow-input-focus);
 }
 
-@media (max-width: 768px) {
-  .main-inner {
-    padding: 0.9rem;
+.app-layout--welcome {
+  max-width: 1600px;
+}
+
+.main-content--welcome {
+  padding: 0 0 var(--space-8);
+}
+
+.main-inner--welcome {
+  display: block;
+
+  max-width: none;
+
+  margin-top: var(--space-4);
+  padding: 0;
+
+  background: transparent;
+
+  border: 0;
+  border-radius: 0;
+
+  box-shadow: none;
+}
+
+@media (max-width: 520px) {
+  .main-inner--welcome {
+    margin-top: var(--space-3);
   }
 }
 
-@media (max-width: 480px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
+/* =========================
+   DEMO MISSION LAYOUT
+========================= */
 
-  .main-inner {
-    padding: var(--space-4);
-  }
+.main-content--demo {
+  padding-top: var(--space-4);
+}
+
+.main-inner--demo {
+  display: block;
+
+  max-width: none;
+
+  margin-top: 0;
+  padding: 0;
+
+  background: transparent;
+
+  border: 0;
+  border-radius: 0;
+
+  box-shadow: none;
+}
 }
