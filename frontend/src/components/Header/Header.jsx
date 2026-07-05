@@ -39,6 +39,25 @@ const collaboratorSectionLinks = [
   },
 ];
 
+const appSectionLinks = [
+  {
+    id: "app-overview",
+    label: "Overview",
+  },
+  {
+    id: "app-workspace",
+    label: "Workspace",
+  },
+  {
+    id: "app-activity",
+    label: "Activity",
+  },
+  {
+    id: "app-account",
+    label: "Account",
+  },
+];
+
 const emptySectionLinks = [];
 
 const getPrimaryNavClassName = ({ isActive }) => {
@@ -165,6 +184,8 @@ function Header({
     sectionLinks = hostSectionLinks;
   } else if (isCollaboratorPreview) {
     sectionLinks = collaboratorSectionLinks;
+  } else if (isAppRoute) {
+    sectionLinks = appSectionLinks;
   }
 
   const activeSectionExists = sectionLinks.some(
@@ -288,11 +309,15 @@ function Header({
     });
   };
 
-  const sectionNavigationLabel = isHostPreview
-    ? "Host dashboard sections"
-    : isAppRoute
-      ? "Application dashboard sections"
-      : "Collaborator dashboard sections";
+  let sectionNavigationLabel = "Dashboard sections";
+
+  if (isHostPreview) {
+    sectionNavigationLabel = "Host dashboard sections";
+  } else if (isCollaboratorPreview) {
+    sectionNavigationLabel = "Collaborator dashboard sections";
+  } else if (isAppRoute) {
+    sectionNavigationLabel = "Application dashboard sections";
+  }
 
   const logoDestination = isAuthenticated ? "/app" : "/";
 
