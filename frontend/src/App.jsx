@@ -4,6 +4,7 @@ import WelcomePage from "./pages/WelcomePage/WelcomePage";
 import DemoMission from "./pages/DemoMission/DemoMission";
 import HostDashboard from "./pages/HostDashboard/HostDashboard";
 import CollaboratorDashboard from "./pages/CollaboratorDashboard/CollaboratorDashboard";
+import AppDashboard from "./pages/AppDashboard/AppDashboard";
 import AuthPage from "./pages/AuthPage/AuthPage";
 
 import Header from "./components/Header/Header";
@@ -67,14 +68,8 @@ function App() {
 
   const isDemoMission = location.pathname === "/demo";
   const isHostPreview = location.pathname === "/host-preview";
-
-  /*
-   * The existing collaborator dashboard serves as the first protected
-   * application workspace until a dedicated /app dashboard is introduced.
-   */
-  const isCollaboratorWorkspace =
-    location.pathname === "/collaborator-preview" ||
-    location.pathname === "/app";
+  const isCollaboratorPreview = location.pathname === "/collaborator-preview";
+  const isAppDashboard = location.pathname === "/app";
 
   const appLayoutClassName = [
     "app-layout",
@@ -82,7 +77,8 @@ function App() {
     isAuthPage && "app-layout--auth",
     isDemoMission && "app-layout--demo",
     isHostPreview && "app-layout--host-preview",
-    isCollaboratorWorkspace && "app-layout--collaborator-preview",
+    isCollaboratorPreview && "app-layout--collaborator-preview",
+    isAppDashboard && "app-layout--app-dashboard",
   ]
     .filter(Boolean)
     .join(" ");
@@ -93,7 +89,8 @@ function App() {
     isAuthPage && "main-content--auth",
     isDemoMission && "main-content--demo",
     isHostPreview && "main-content--host-preview",
-    isCollaboratorWorkspace && "main-content--collaborator-preview",
+    isCollaboratorPreview && "main-content--collaborator-preview",
+    isAppDashboard && "main-content--app-dashboard",
   ]
     .filter(Boolean)
     .join(" ");
@@ -104,7 +101,8 @@ function App() {
     isAuthPage && "main-inner--auth",
     isDemoMission && "main-inner--demo",
     isHostPreview && "main-inner--host-preview",
-    isCollaboratorWorkspace && "main-inner--collaborator-preview",
+    isCollaboratorPreview && "main-inner--collaborator-preview",
+    isAppDashboard && "main-inner--app-dashboard",
   ]
     .filter(Boolean)
     .join(" ");
@@ -136,7 +134,7 @@ function App() {
           isWelcomePage={isWelcomeExperience}
           isDemoMission={isDemoMission}
           isHostPreview={isHostPreview}
-          isCollaboratorPreview={isCollaboratorWorkspace}
+          isCollaboratorPreview={isCollaboratorPreview}
         />
 
         <main className={mainContentClassName}>
@@ -181,7 +179,7 @@ function App() {
                 path="/app"
                 element={
                   <ProtectedRoute>
-                    <CollaboratorDashboard />
+                    <AppDashboard />
                   </ProtectedRoute>
                 }
               />
