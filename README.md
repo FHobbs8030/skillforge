@@ -1,29 +1,45 @@
-# 🚀 SkillForge – Developer Learning Tracker
+# 🚀 SkillForge – Developer Learning & Collaboration Workspace
 
-[![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![React 19](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![Vite 8](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
+[![React Router 7](https://img.shields.io/badge/React_Router-7-CA4245?logo=reactrouter&logoColor=white)](https://reactrouter.com/)
 [![Node.js](https://img.shields.io/badge/Node.js-Backend-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Express 5](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)](https://expressjs.com/)
 [![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
+[![JWT](https://img.shields.io/badge/Auth-JWT-000000?logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 [![GitHub API](https://img.shields.io/badge/API-GitHub-181717?logo=github&logoColor=white)](https://docs.github.com/en/rest)
 [![Netlify](https://img.shields.io/badge/Frontend-Netlify-00C7B7?logo=netlify&logoColor=white)](https://adorable-granita-db1df3.netlify.app/)
 [![Render](https://img.shields.io/badge/Backend-Render-46E3B7?logo=render&logoColor=white)](https://skillforge-api-cuw0.onrender.com)
 ![Status](https://img.shields.io/badge/Status-Production%20Live-brightgreen)
-![Phase](https://img.shields.io/badge/Phase-2.3%20Design%20Tokens-blue)
+![Phase](https://img.shields.io/badge/Phase-Authenticated%20Workspace-blue)
 
 ---
 
 ## 📌 Overview
 
-**SkillForge** is a full-stack developer learning tracker built to help software developers record study sessions, measure time invested, monitor consistency, and connect learning progress with real GitHub activity.
+**SkillForge** is a full-stack developer learning and collaboration workspace designed for individual developers, project hosts, and distributed collaborators.
 
-The application combines manual learning entries with GitHub profile and repository data. Entries are stored in MongoDB Atlas and loaded through a deployed Express API, providing real persistence across sessions and devices.
+The project began as a developer learning tracker and has evolved into a broader product experience with:
+
+- a public welcome and product-introduction flow
+- an interactive demo mission
+- host and collaborator workspace previews
+- secure account registration and sign-in
+- persistent authenticated sessions
+- a protected member dashboard
+- a protected account profile
+- GitHub API integration
+- responsive layouts for desktop, tablet, and mobile
+
+The current milestone establishes the foundation for user-owned projects, learning activity, team work sections, progress tracking, and profile management.
 
 ---
 
-## 📊 Dashboard Preview
+## 📊 Application Preview
 
 ![SkillForge Dashboard](https://raw.githubusercontent.com/FHobbs8030/skillforge/main/frontend/src/assets/app.png)
+
+> Replace `frontend/src/assets/app.png` with an updated screenshot to refresh this preview without changing the README image path.
 
 ---
 
@@ -40,94 +56,165 @@ Production data flow:
 
 ```text
 Netlify frontend
-      ↓
+      ↓ HTTPS
 Render Express API
       ├── MongoDB Atlas
       └── GitHub REST API
 ```
 
-Netlify is connected to the repository and automatically deploys the `main` branch.
+Netlify deploys the frontend from the `main` branch. Render hosts the Express API and connects it to MongoDB Atlas and the GitHub REST API.
 
 ---
 
-## ✨ Core Features
+## ✨ Current Features
 
-- Create learning entries with a topic, hours, date, and notes
-- Save entries permanently in MongoDB Atlas
-- Load saved entries from the deployed backend
-- Delete entries with confirmation and a temporary loading state
-- Calculate total entries and total learning hours
-- Fetch a GitHub user profile and up to five repositories
-- Display GitHub profile information in the application
-- Navigate between Home and Profile routes
-- Access the repository, LinkedIn, portfolio, and contact links from the footer
-- Use the application across desktop, tablet, and mobile screen sizes
-- View clear empty, loading, and error feedback states
+### Public Product Experience
+
+- Responsive welcome page with product messaging and navigation
+- Interactive demo mission for exploring the SkillForge concept
+- Host workspace preview
+- Collaborator workspace preview
+- Responsive header and footer
+- Active navigation states
+- External GitHub, LinkedIn, portfolio, and contact links
+
+### Host Workspace Preview
+
+- Project overview widget
+- Work-section creation interface
+- Create-work-section modal
+- Section summary widget
+- Distributed team local-time widget
+- Responsive host dashboard layout
+- Mock project data for product validation
+
+### Collaborator Workspace Preview
+
+- Collaborator-focused project overview
+- Work-section visibility
+- Team communication interface
+- Responsive collaborator dashboard layout
+- Mock collaborator data for product validation
+
+### Authentication
+
+- Account registration with full-name, email, password, and membership validation
+- Free, Pro, and Team membership options
+- Duplicate-email protection
+- Password hashing with `bcryptjs`
+- JWT-based sign-in
+- Protected current-user endpoint
+- Persistent browser session restoration
+- Sign-out support
+- Public-only sign-in and sign-up routes
+- Protected `/app` and `/profile` routes
+- Redirect-to-sign-in behavior for unauthenticated users
+
+### Authenticated Dashboard
+
+- Dedicated member workspace at `/app`
+- Overview section
+- Workspace section
+- Activity section
+- Account section
+- Header section navigation
+- Authenticated user identity display
+- Responsive dashboard cards and status panels
+- Mobile navigation support
+
+### Authenticated Profile
+
+- Dedicated protected profile at `/profile`
+- Member identity card
+- Full name and email display
+- Membership information
+- Account creation date
+- Account security summary
+- Development connection status
+- Planned profile and account controls
+- Responsive single-column mobile layout
+- Verified behavior down to 320px
+- Automatic scroll reset during route navigation
+
+### Backend and Integration
+
+- Express 5 API
+- MongoDB Atlas connection
+- Mongoose user model
+- Unique normalized email addresses
+- JWT authentication middleware
+- Controlled CORS configuration
+- Environment-based token expiration
+- GitHub profile and repository lookup
+- API health endpoint
+- Structured validation and error responses
 
 ---
 
-## 🆕 Latest Upgrades
+## 🆕 Authenticated Workspace Milestone
 
-### Phase 2.3 — Centralized Design Tokens
+The current `main` branch includes the complete authenticated-workspace foundation.
 
-The visual system is now controlled through shared CSS custom properties in `App.css`.
+| Milestone | Status |
+| --- | --- |
+| Welcome experience | Complete |
+| Demo mission | Complete |
+| Host workspace preview | Complete |
+| Collaborator workspace preview | Complete |
+| Authentication session foundation | Complete |
+| Protected route foundation | Complete |
+| Authenticated dashboard foundation | Complete |
+| Dashboard section navigation | Complete |
+| Authenticated profile foundation | Complete |
+| Responsive validation through 320px | Complete |
+| Profile editing | Planned next |
 
-The centralized token system covers:
+### Recent Engineering Improvements
 
-- colors and gradients
-- spacing
-- typography
-- borders
-- border radii
-- shadows
-- focus states
-- transitions
-- shared layout values
-
-The following component styles were migrated to the shared system:
-
-- `Header.css`
-- `Footer.css`
-- `EntryForm.css`
-- `GitHubCard.css`
-- `Stats.css`
-
-This refactor preserves the current appearance while making future visual changes faster, safer, and more consistent.
-
-### Deployment and Integration Improvements
-
-- Linked the existing Netlify project to GitHub
-- Configured automatic production deployments from `main`
-- Added the production `VITE_API_URL` build variable
-- Verified the Netlify frontend communicates with the Render backend
-- Verified persistent entry data in MongoDB Atlas
-- Verified GitHub API integration through the deployed backend
-- Confirmed production API health and CORS behavior
-- Added external repository, LinkedIn, portfolio, and contact links
-
-### Responsive Validation
-
-The current interface has been visually checked at desktop and responsive widths including:
-
-- 700px
-- 600px
-- 520px
-- 500px
-- 480px
-- 375px
+- Replaced the original single-page tracker interface with a routed product experience
+- Added authentication context and centralized session state
+- Added protected and public-only route guards
+- Added JWT restoration through `/auth/me`
+- Added dedicated sign-up and sign-in interfaces
+- Added responsive authenticated navigation
+- Added a dedicated member dashboard
+- Added route-aware section navigation
+- Added a protected profile experience
+- Consolidated and reorganized responsive header styles
+- Added route-change scroll restoration
+- Removed obsolete entry-tracker components and the original entry model
+- Added collaboration planning documentation
+- Validated successful Vite production builds after each milestone
 
 ---
 
-## ▶️ How to Use SkillForge
+## ▶️ How to Explore SkillForge
+
+### Public Experience
 
 1. Open the [live application](https://adorable-granita-db1df3.netlify.app/).
-2. Enter a GitHub username, such as `octocat`.
-3. Select **Fetch GitHub Data**.
-4. Enter a learning topic, number of hours, date, and optional notes.
-5. Select **Add Entry**.
-6. Review the updated entry count and total hours.
-7. Use **Delete** to remove an entry after confirming the action.
-8. Refresh the page to confirm that saved data persists.
+2. Review the welcome page and product overview.
+3. Open the demo mission.
+4. Explore the Host Demo workspace.
+5. Explore the Collaborator Demo workspace.
+
+### Create an Account
+
+1. Select **Sign Up**.
+2. Enter a full name and valid email address.
+3. Create a password with at least eight characters.
+4. Select a Free, Pro, or Team membership.
+5. Submit the registration form.
+6. Sign in with the new account credentials.
+
+### Authenticated Experience
+
+1. Sign in to restore the authenticated SkillForge session.
+2. Explore the member dashboard at `/app`.
+3. Use the dashboard section links to navigate between Overview, Workspace, Activity, and Account.
+4. Open the protected profile at `/profile`.
+5. Review account, membership, security, and development-connection information.
+6. Sign out when finished.
 
 ---
 
@@ -135,18 +222,53 @@ The current interface has been visually checked at desktop and responsive widths
 
 ```text
 Browser
-  └── React 19 + Vite 8
-        ├── React Router
-        ├── Responsive component styles
-        └── Centralized design tokens
-              ↓ HTTPS
+└── React 19 + Vite 8
+    ├── React Router
+    ├── AuthProvider / AuthContext
+    ├── Public-only route guards
+    ├── Protected route guards
+    ├── Welcome and demo experiences
+    ├── Host and collaborator previews
+    ├── Authenticated dashboard
+    ├── Authenticated profile
+    └── Responsive CSS system
+            ↓ HTTPS / JSON
 Render
-  └── Node.js + Express 5 API
-        ├── Entry validation
-        ├── CORS controls
-        ├── Error handling
-        ├── MongoDB Atlas
-        └── GitHub REST API
+└── Node.js + Express 5
+    ├── Request validation
+    ├── CORS controls
+    ├── Authentication routes
+    ├── JWT middleware
+    ├── Password hashing
+    ├── Error handling
+    ├── MongoDB Atlas
+    └── GitHub REST API
+```
+
+### Authentication Flow
+
+```text
+Sign Up
+  ↓
+Validate account fields
+  ↓
+Hash password with bcrypt
+  ↓
+Store user in MongoDB Atlas
+
+Sign In
+  ↓
+Validate credentials
+  ↓
+Compare password hash
+  ↓
+Issue signed JWT
+  ↓
+Store authenticated session
+  ↓
+Restore current user through GET /auth/me
+  ↓
+Allow access to /app and /profile
 ```
 
 ---
@@ -156,8 +278,9 @@ Render
 ### Frontend
 
 - React 19
+- React DOM 19
 - Vite 8
-- React Router
+- React Router 7
 - JavaScript
 - CSS custom properties
 - Responsive CSS
@@ -168,9 +291,11 @@ Render
 - Node.js
 - Express 5
 - Mongoose
+- `bcryptjs`
+- `jsonwebtoken`
 - CORS
-- dotenv
-- node-fetch
+- `dotenv`
+- `node-fetch`
 
 ### Database and APIs
 
@@ -187,14 +312,39 @@ Render
 
 ## 🔌 API Endpoints
 
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `GET` | `/` | Confirms that the SkillForge API is running |
-| `GET` | `/health` | Returns the API health status |
-| `GET` | `/entries` | Retrieves all learning entries |
-| `POST` | `/entries` | Creates a learning entry |
-| `DELETE` | `/entries/:id` | Deletes a learning entry |
-| `GET` | `/github/:username` | Retrieves GitHub profile and repository data |
+| Method | Endpoint | Authentication | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/` | Public | Confirms that the SkillForge API is running |
+| `GET` | `/health` | Public | Returns the API health status |
+| `POST` | `/auth/signup` | Public | Creates a SkillForge user account |
+| `POST` | `/auth/signin` | Public | Validates credentials and returns a JWT |
+| `GET` | `/auth/me` | Bearer token | Returns the authenticated user |
+| `GET` | `/github/:username` | Public | Retrieves a GitHub profile and up to five repositories |
+
+### Authorization Header
+
+Protected API requests use:
+
+```http
+Authorization: Bearer <jwt-token>
+```
+
+---
+
+## 🔐 Security Foundation
+
+- Passwords are never stored in plain text
+- Passwords are hashed with bcrypt
+- Duplicate email addresses are rejected
+- Email addresses are normalized before storage
+- JWTs use the `HS256` algorithm
+- JWT expiration is controlled through environment configuration
+- Protected requests are validated by authentication middleware
+- Password hashes are excluded from normal user responses
+- Production CORS access is restricted to the deployed frontend
+- Localhost origins are permitted during development
+- Secrets are stored in environment variables
+- `.env` files and credentials must never be committed
 
 ---
 
@@ -203,25 +353,43 @@ Render
 ```text
 skillforge/
 ├── backend/
+│   ├── middleware/
+│   │   └── auth.js
 │   ├── models/
-│   │   └── Entry.js
+│   │   └── User.js
 │   ├── package.json
 │   └── server.js
 ├── frontend/
+│   ├── docs/
+│   │   └── SKILLFORGE_COLLABORATION_PLAN.md
 │   ├── src/
 │   │   ├── assets/
 │   │   ├── components/
+│   │   │   ├── Auth/
 │   │   │   ├── Clock/
-│   │   │   ├── EntryForm/
 │   │   │   ├── Footer/
-│   │   │   ├── GitHubCard/
 │   │   │   ├── Header/
-│   │   │   └── Stats/
+│   │   │   └── host/
+│   │   ├── contexts/
+│   │   │   ├── AuthContext.js
+│   │   │   ├── AuthProvider.jsx
+│   │   │   └── useAuth.js
+│   │   ├── data/
+│   │   │   ├── mockCollaboratorData.js
+│   │   │   └── mockHostData.js
 │   │   ├── pages/
+│   │   │   ├── AppDashboard/
+│   │   │   ├── AuthPage/
+│   │   │   ├── CollaboratorDashboard/
+│   │   │   ├── DemoMission/
+│   │   │   ├── HostDashboard/
+│   │   │   ├── ProfilePage/
+│   │   │   └── WelcomePage/
 │   │   ├── utils/
 │   │   │   └── api.js
 │   │   ├── App.css
-│   │   └── App.jsx
+│   │   ├── App.jsx
+│   │   └── main.jsx
 │   ├── package.json
 │   └── vite.config.js
 └── README.md
@@ -262,7 +430,7 @@ npm install
 npm run dev
 ```
 
-Vite will display the local frontend URL in the terminal.
+Vite will display and open the local frontend URL.
 
 ---
 
@@ -280,15 +448,17 @@ Create `backend/.env`:
 PORT=3001
 MONGO_URI=your_mongodb_connection_string
 GITHUB_TOKEN=your_github_token
+JWT_SECRET=your_long_random_jwt_secret
+JWT_EXPIRES_IN=1h
 ```
-
-Never commit `.env` files, MongoDB credentials, or GitHub tokens.
 
 The deployed Netlify frontend uses:
 
 ```env
 VITE_API_URL=https://skillforge-api-cuw0.onrender.com
 ```
+
+Never commit `.env` files, MongoDB credentials, GitHub tokens, JWT secrets, or user passwords.
 
 ---
 
@@ -300,38 +470,72 @@ Frontend quality checks:
 cd frontend
 npm run lint
 npm run build
+git diff --check
 ```
 
-The current production release has been verified for:
+Backend startup check:
 
-- successful ESLint validation
-- successful Vite production build
-- responsive layout behavior
+```bash
+cd backend
+npm run dev
+```
+
+The authenticated-workspace milestone has been verified for:
+
+- successful Vite production builds
+- clean whitespace validation
+- public route access
+- protected route redirects
+- account registration
+- account sign-in
+- persistent session restoration
+- current-user authentication
+- authenticated dashboard access
+- authenticated profile access
+- sign-out behavior
+- route navigation and active states
+- route-change scroll restoration
+- responsive desktop, tablet, and mobile layouts
+- 320px profile and authenticated-header behavior
 - Netlify-to-Render API communication
-- MongoDB Atlas persistence
+- MongoDB Atlas connectivity
 - GitHub API responses
-- entry creation and deletion
-- production health endpoint availability
+- API health endpoint availability
 
 ---
 
-## 🗂️ Project Planning
+## 🖼️ Screenshots and Project Planning
+
+### Application Screenshot
+
+![SkillForge Dashboard](https://raw.githubusercontent.com/FHobbs8030/skillforge/main/frontend/src/assets/app.png)
+
+### Trello Planning Board
 
 ![Trello Board](https://raw.githubusercontent.com/FHobbs8030/skillforge/stage-1-resubmit/frontend/src/assets/trello.png)
+
+The existing image paths are intentionally preserved. Updated screenshots can replace the existing image files without requiring README changes.
 
 ---
 
 ## 🛣️ Roadmap
 
-Planned future improvements include:
+Planned improvements include:
 
-- edit existing learning entries
-- authentication and user-specific data
-- skill categories and filtering
-- learning streaks and progress charts
+- functional profile editing
+- protected profile-update API
+- password-change workflow
+- account deletion safeguards
+- GitHub account connection controls
+- user-owned projects
+- persistent work sections
+- collaborator invitations
+- role-based project permissions
+- learning activity records
+- progress analytics and streaks
 - repository activity summaries
-- expanded profile analytics
-- automated frontend and backend testing
+- notification and activity systems
+- automated frontend and backend tests
 - accessibility audits
 - improved production logging
 - custom domain support
@@ -340,9 +544,11 @@ Planned future improvements include:
 
 ## 📍 Project Status
 
-### Phase 2.3 — Design Tokens: Complete
+### Authenticated Workspace Foundation — Complete
 
-SkillForge is a real, deployed full-stack application. The frontend, backend, database, and GitHub API integration are connected and operational in production.
+SkillForge now provides a connected public experience and a protected authenticated-member foundation. The frontend, backend, database, authentication system, deployment services, and GitHub API integration are connected and operational.
+
+The next development phase is the **Profile Editing Foundation**.
 
 ---
 
