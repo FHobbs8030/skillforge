@@ -1,10 +1,11 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-
+import { useLayoutEffect } from "react";
 import WelcomePage from "./pages/WelcomePage/WelcomePage";
 import DemoMission from "./pages/DemoMission/DemoMission";
 import HostDashboard from "./pages/HostDashboard/HostDashboard";
 import CollaboratorDashboard from "./pages/CollaboratorDashboard/CollaboratorDashboard";
 import AppDashboard from "./pages/AppDashboard/AppDashboard";
+import ProfilePage from "./pages/ProfilePage/ProfilePage";
 import AuthPage from "./pages/AuthPage/AuthPage";
 
 import Header from "./components/Header/Header";
@@ -55,6 +56,27 @@ function App() {
   const location = useLocation();
   const { isAuthLoading } = useAuth();
 
+  useLayoutEffect(() => {
+    const resetScrollPosition = () => {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "auto",
+      });
+
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    resetScrollPosition();
+
+    const animationFrameId = window.requestAnimationFrame(resetScrollPosition);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [location.pathname]);
+
   const isWelcomePage = location.pathname === "/";
   const isSignUpPage = location.pathname === "/signup";
   const isSignInPage = location.pathname === "/signin";
@@ -70,6 +92,7 @@ function App() {
   const isHostPreview = location.pathname === "/host-preview";
   const isCollaboratorPreview = location.pathname === "/collaborator-preview";
   const isAppDashboard = location.pathname === "/app";
+  const isProfilePage = location.pathname === "/profile";
 
   const appLayoutClassName = [
     "app-layout",
@@ -79,6 +102,7 @@ function App() {
     isHostPreview && "app-layout--host-preview",
     isCollaboratorPreview && "app-layout--collaborator-preview",
     isAppDashboard && "app-layout--app-dashboard",
+    isProfilePage && "app-layout--profile",
   ]
     .filter(Boolean)
     .join(" ");
@@ -91,6 +115,7 @@ function App() {
     isHostPreview && "main-content--host-preview",
     isCollaboratorPreview && "main-content--collaborator-preview",
     isAppDashboard && "main-content--app-dashboard",
+    isProfilePage && "main-content--profile",
   ]
     .filter(Boolean)
     .join(" ");
@@ -103,6 +128,7 @@ function App() {
     isHostPreview && "main-inner--host-preview",
     isCollaboratorPreview && "main-inner--collaborator-preview",
     isAppDashboard && "main-inner--app-dashboard",
+    isProfilePage && "main-inner--profile",
   ]
     .filter(Boolean)
     .join(" ");
@@ -188,7 +214,7 @@ function App() {
                 path="/profile"
                 element={
                   <ProtectedRoute>
-                    <Navigate to="/app" replace />
+                    <ProfilePage />
                   </ProtectedRoute>
                 }
               />

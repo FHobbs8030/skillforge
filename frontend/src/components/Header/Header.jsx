@@ -366,6 +366,10 @@ function Header({
                   <NavLink to="/app" end className={getPrimaryNavClassName}>
                     Dashboard
                   </NavLink>
+
+                  <NavLink to="/profile" end className={getPrimaryNavClassName}>
+                    Profile
+                  </NavLink>
                 </nav>
 
                 <AuthenticatedAccount
@@ -446,20 +450,32 @@ function Header({
                   Dashboard
                 </NavLink>
 
+                <NavLink to="/profile" end className={getPrimaryNavClassName}>
+                  Profile
+                </NavLink>
+
                 <NavLink
                   to="/host-preview"
                   end
                   className={getPrimaryNavClassName}
+                  aria-label="Host Demo"
                 >
-                  Host Demo
+                  <span className="header__nav-label--full">Host Demo</span>
+                  <span className="header__nav-label--compact">Host</span>
                 </NavLink>
 
                 <NavLink
                   to="/collaborator-preview"
                   end
                   className={getPrimaryNavClassName}
+                  aria-label="Collaborator Demo"
                 >
-                  Collaborator Demo
+                  <span className="header__nav-label--full">
+                    Collaborator Demo
+                  </span>
+                  <span className="header__nav-label--compact">
+                    Collaborator
+                  </span>
                 </NavLink>
               </nav>
 
