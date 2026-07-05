@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import Clock from "../Clock/Clock";
+
+import useAuth from "../../contexts/useAuth";
 
 import logo from "../../assets/logo.png";
 
@@ -43,13 +45,119 @@ const getPrimaryNavClassName = ({ isActive }) => {
   return `header__nav-link${isActive ? " header__nav-link--active" : ""}`;
 };
 
+function getUserDisplayName(user) {
+  if (!user) {
+    return "SkillForge Member";
+  }
+
+  const combinedName = [user.firstName, user.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return (
+    user.fullName ||
+    user.name ||
+    combinedName ||
+    user.username ||
+    user.email ||
+    "SkillForge Member"
+  );
+}
+
+function getUserInitials(user) {
+  const displayName = getUserDisplayName(user);
+
+  if (displayName.includes("@")) {
+    return displayName.charAt(0).toUpperCase();
+  }
+
+  const nameParts = displayName.trim().split(/\s+/).filter(Boolean);
+
+  if (nameParts.length === 0) {
+    return "SF";
+  }
+
+  if (nameParts.length === 1) {
+    return nameParts[0].slice(0, 2).toUpperCase();
+  }
+
+  return `${nameParts[0][0]}${
+    nameParts[nameParts.length - 1][0]
+  }`.toUpperCase();
+}
+
+function getUserAvatarUrl(user) {
+  if (!user) {
+    return "";
+  }
+
+  return (
+    user.avatarUrl ||
+    user.avatarURL ||
+    user.avatar_url ||
+    user.profileImage ||
+    user.profileImageUrl ||
+    user.image ||
+    user.photoUrl ||
+    user.githubAvatarUrl ||
+    ""
+  );
+}
+
+function AuthenticatedAccount({ currentUser, onSignOut }) {
+  const displayName = getUserDisplayName(currentUser);
+  const initials = getUserInitials(currentUser);
+  const avatarUrl = getUserAvatarUrl(currentUser);
+
+  return (
+    <div className="header__account">
+      <div className="header__user" title={currentUser?.email || displayName}>
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={`${displayName} avatar`}
+            className="header__avatar"
+          />
+        ) : (
+          <span
+            className="header__avatar header__avatar--fallback"
+            aria-hidden="true"
+          >
+            {initials}
+          </span>
+        )}
+
+        <span className="header__username">{displayName}</span>
+      </div>
+
+      <button
+        className="header__nav-link header__nav-link--signout"
+        type="button"
+        onClick={onSignOut}
+      >
+        Sign Out
+      </button>
+    </div>
+  );
+}
+
 function Header({
   isWelcomePage = false,
   isDemoMission = false,
   isHostPreview = false,
   isCollaboratorPreview = false,
 }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const { currentUser, isAuthenticated, signOut } = useAuth();
+
+  const headerRef = useRef(null);
+
   const [activeSection, setActiveSection] = useState("");
+
+  const isAppRoute = location.pathname === "/app";
 
   let sectionLinks = emptySectionLinks;
 
@@ -72,63 +180,145 @@ function Header({
       return undefined;
     }
 
-    const sections = sectionLinks
-      .map((section) => document.getElementById(section.id))
-      .filter(Boolean);
+    let animationFrameId = null;
 
-    if (sections.length === 0) {
-      return undefined;
-    }
+    const updateActiveSection = () => {
+      animationFrameId = null;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleSections = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort(
-            (firstEntry, secondEntry) =>
-              firstEntry.boundingClientRect.top -
-              secondEntry.boundingClientRect.top,
-          );
+      const availableSections = sectionLinks
+        .map((section) => ({
+          ...section,
+          element: document.getElementById(section.id),
+        }))
+        .filter((section) => section.element);
 
-        if (visibleSections.length > 0) {
-          setActiveSection(visibleSections[0].target.id);
-        }
-      },
-      {
-        root: null,
-        rootMargin: "-150px 0px -60% 0px",
-        threshold: 0,
-      },
-    );
+      if (availableSections.length === 0) {
+        return;
+      }
 
-    sections.forEach((section) => {
-      observer.observe(section);
+      const headerBottom =
+        headerRef.current?.getBoundingClientRect().bottom || 0;
+
+      const activationLine = headerBottom + 32;
+
+      const documentElement = document.documentElement;
+
+      const isAtPageBottom =
+        window.scrollY > 0 &&
+        window.innerHeight + window.scrollY >= documentElement.scrollHeight - 4;
+
+      let nextActiveSection = availableSections[0].id;
+
+      if (isAtPageBottom) {
+        nextActiveSection = availableSections[availableSections.length - 1].id;
+      } else {
+        availableSections.forEach((section) => {
+          const sectionTop = section.element.getBoundingClientRect().top;
+
+          if (sectionTop <= activationLine) {
+            nextActiveSection = section.id;
+          }
+        });
+      }
+
+      setActiveSection((currentSection) =>
+        currentSection === nextActiveSection
+          ? currentSection
+          : nextActiveSection,
+      );
+    };
+
+    const scheduleActiveSectionUpdate = () => {
+      if (animationFrameId !== null) {
+        return;
+      }
+
+      animationFrameId = window.requestAnimationFrame(updateActiveSection);
+    };
+
+    updateActiveSection();
+
+    window.addEventListener("scroll", scheduleActiveSectionUpdate, {
+      passive: true,
     });
 
+    window.addEventListener("resize", scheduleActiveSectionUpdate);
+
     return () => {
-      observer.disconnect();
+      window.removeEventListener("scroll", scheduleActiveSectionUpdate);
+
+      window.removeEventListener("resize", scheduleActiveSectionUpdate);
+
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
     };
   }, [sectionLinks]);
 
+  const handleSignOut = () => {
+    signOut();
+
+    navigate("/", {
+      replace: true,
+    });
+  };
+
+  const handleSectionNavigation = (event, sectionId) => {
+    event.preventDefault();
+
+    const targetSection = document.getElementById(sectionId);
+
+    if (!targetSection) {
+      return;
+    }
+
+    const headerBottom = headerRef.current?.getBoundingClientRect().bottom || 0;
+
+    const targetTop =
+      window.scrollY +
+      targetSection.getBoundingClientRect().top -
+      headerBottom -
+      16;
+
+    setActiveSection(sectionId);
+
+    window.scrollTo({
+      top: Math.max(targetTop, 0),
+      behavior: "smooth",
+    });
+  };
+
   const sectionNavigationLabel = isHostPreview
     ? "Host dashboard sections"
-    : "Collaborator dashboard sections";
+    : isAppRoute
+      ? "Application dashboard sections"
+      : "Collaborator dashboard sections";
+
+  const logoDestination = isAuthenticated ? "/app" : "/";
+
+  const logoLabel = isAuthenticated
+    ? "Return to the SkillForge dashboard"
+    : "Return to the SkillForge home page";
+
+  const headerClassName = [
+    "header",
+    sectionLinks.length > 0 && "header--workspace-preview",
+    isWelcomePage && "header--welcome",
+    isDemoMission && "header--demo",
+    isAuthenticated && "header--authenticated",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <header
-      className={`header${
-        sectionLinks.length > 0 ? " header--workspace-preview" : ""
-      }${isWelcomePage ? " header--welcome" : ""}${
-        isDemoMission ? " header--demo" : ""
-      }`}
-    >
+    <header ref={headerRef} className={headerClassName}>
       <div className="header__inner">
         <div className="header__left">
           <Link
-            to="/"
+            to={logoDestination}
             className="header__logo-link"
-            aria-label="Return to the SkillForge home page"
-            title="Return to Home"
+            aria-label={logoLabel}
+            title={isAuthenticated ? "Return to Dashboard" : "Return to Home"}
           >
             <img src={logo} alt="SkillForge" className="header__logo" />
           </Link>
@@ -142,53 +332,71 @@ function Header({
 
         <div className="header__right">
           {isWelcomePage ? (
-            <nav
-              className="header__nav header__nav--public"
-              aria-label="Public navigation"
-            >
-              <a
-                className="header__nav-link header__nav-link--welcome-secondary"
-                href="#about"
+            isAuthenticated ? (
+              <div className="header__authenticated-controls">
+                <nav
+                  className="header__nav"
+                  aria-label="Authenticated navigation"
+                >
+                  <NavLink to="/app" end className={getPrimaryNavClassName}>
+                    Dashboard
+                  </NavLink>
+                </nav>
+
+                <AuthenticatedAccount
+                  currentUser={currentUser}
+                  onSignOut={handleSignOut}
+                />
+              </div>
+            ) : (
+              <nav
+                className="header__nav header__nav--public"
+                aria-label="Public navigation"
               >
-                About
-              </a>
+                <a
+                  className="header__nav-link header__nav-link--welcome-secondary"
+                  href="#about"
+                >
+                  About
+                </a>
 
-              <a
-                className="header__nav-link header__nav-link--welcome-secondary"
-                href="#how-it-works"
-              >
-                How It Works
-              </a>
+                <a
+                  className="header__nav-link header__nav-link--welcome-secondary"
+                  href="#how-it-works"
+                >
+                  How It Works
+                </a>
 
-              <a
-                className="header__nav-link header__nav-link--welcome-secondary"
-                href="#memberships"
-              >
-                Memberships
-              </a>
+                <a
+                  className="header__nav-link header__nav-link--welcome-secondary"
+                  href="#memberships"
+                >
+                  Memberships
+                </a>
 
-              <Link className="header__nav-link" to="/host-preview">
-                Host Demo
-              </Link>
+                <Link className="header__nav-link" to="/host-preview">
+                  Host Demo
+                </Link>
 
-              <Link className="header__nav-link" to="/collaborator-preview">
-                Collaborator Demo
-              </Link>
+                <Link className="header__nav-link" to="/collaborator-preview">
+                  Collaborator Demo
+                </Link>
 
-              <Link
-                className="header__nav-link header__nav-link--signin"
-                to="/signin"
-              >
-                Sign In
-              </Link>
+                <Link
+                  className="header__nav-link header__nav-link--signin"
+                  to="/signin"
+                >
+                  Sign In
+                </Link>
 
-              <Link
-                className="header__nav-link header__nav-link--cta"
-                to="/demo"
-              >
-                Try SkillForge
-              </Link>
-            </nav>
+                <Link
+                  className="header__nav-link header__nav-link--cta"
+                  to="/demo"
+                >
+                  Try SkillForge
+                </Link>
+              </nav>
+            )
           ) : isDemoMission ? (
             <nav
               className="header__nav header__nav--demo"
@@ -196,10 +404,45 @@ function Header({
             >
               <span className="header__demo-label">Mission Simulation</span>
 
-              <Link className="header__nav-link header__nav-link--cta" to="/">
+              <Link
+                className="header__nav-link header__nav-link--cta"
+                to={isAuthenticated ? "/app" : "/"}
+              >
                 Exit Demo
               </Link>
             </nav>
+          ) : isAuthenticated ? (
+            <div className="header__authenticated-controls">
+              <nav
+                className="header__nav header__nav--authenticated"
+                aria-label="Primary navigation"
+              >
+                <NavLink to="/app" end className={getPrimaryNavClassName}>
+                  Dashboard
+                </NavLink>
+
+                <NavLink
+                  to="/host-preview"
+                  end
+                  className={getPrimaryNavClassName}
+                >
+                  Host Demo
+                </NavLink>
+
+                <NavLink
+                  to="/collaborator-preview"
+                  end
+                  className={getPrimaryNavClassName}
+                >
+                  Collaborator Demo
+                </NavLink>
+              </nav>
+
+              <AuthenticatedAccount
+                currentUser={currentUser}
+                onSignOut={handleSignOut}
+              />
+            </div>
           ) : (
             <nav className="header__nav" aria-label="Primary navigation">
               <NavLink to="/" end className={getPrimaryNavClassName}>
@@ -220,6 +463,10 @@ function Header({
                 className={getPrimaryNavClassName}
               >
                 Collaborator
+              </NavLink>
+
+              <NavLink to="/signin" end className={getPrimaryNavClassName}>
+                Sign In
               </NavLink>
             </nav>
           )}
@@ -243,18 +490,9 @@ function Header({
                   }`}
                   href={`#${section.id}`}
                   aria-current={isActive ? "location" : undefined}
-                  onClick={(event) => {
-                    event.preventDefault();
-
-                    const targetSection = document.getElementById(section.id);
-
-                    targetSection?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-
-                    setActiveSection(section.id);
-                  }}
+                  onClick={(event) =>
+                    handleSectionNavigation(event, section.id)
+                  }
                 >
                   {section.label}
                 </a>

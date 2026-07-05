@@ -1,34 +1,16 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { signInUser } from "../../utils/api";
+import useAuth from "../../contexts/useAuth";
 
 import "./SignInForm.css";
 
-const AUTH_TOKEN_KEY = "skillforgeAuthToken";
-const AUTH_USER_KEY = "skillforgeAuthUser";
-
-function storeAuthSession({ token, user }, rememberMe) {
-  const selectedStorage = rememberMe
-    ? window.localStorage
-    : window.sessionStorage;
-
-  const unusedStorage = rememberMe
-    ? window.sessionStorage
-    : window.localStorage;
-
-  /*
-   * Prevent an older session from remaining in the other
-   * browser-storage location.
-   */
-  unusedStorage.removeItem(AUTH_TOKEN_KEY);
-  unusedStorage.removeItem(AUTH_USER_KEY);
-
-  selectedStorage.setItem(AUTH_TOKEN_KEY, token);
-  selectedStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-}
-
 function SignInForm() {
+  const { signIn } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -74,6 +56,20 @@ function SignInForm() {
     return nextErrors;
   };
 
+  const getPostSignInDestination = () => {
+    const requestedLocation = location.state?.from;
+
+    if (!requestedLocation?.pathname) {
+      return "/app";
+    }
+
+    return [
+      requestedLocation.pathname,
+      requestedLocation.search || "",
+      requestedLocation.hash || "",
+    ].join("");
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -103,21 +99,15 @@ function SignInForm() {
         );
       }
 
-      storeAuthSession(
-        {
-          token: response.token,
-          user: response.user,
-        },
-        formData.rememberMe,
-      );
+      signIn({
+        token: response.token,
+        user: response.user,
+        rememberMe: formData.rememberMe,
+      });
 
-      setFormData((currentData) => ({
-        ...currentData,
-        password: "",
-      }));
-
-      setFormMessage(response.message || "Signed in successfully.");
-      setMessageType("success");
+      navigate(getPostSignInDestination(), {
+        replace: true,
+      });
     } catch (error) {
       if (error.fields && Object.keys(error.fields).length > 0) {
         setErrors(error.fields);
@@ -127,7 +117,6 @@ function SignInForm() {
         error.message || "Unable to sign in. Please check your credentials.",
       );
       setMessageType("error");
-    } finally {
       setIsSubmitting(false);
     }
   };

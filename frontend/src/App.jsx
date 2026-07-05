@@ -9,10 +9,50 @@ import AuthPage from "./pages/AuthPage/AuthPage";
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
 
+import useAuth from "./contexts/useAuth";
+
 import "./App.css";
+
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, isAuthLoading } = useAuth();
+  const location = useLocation();
+
+  if (isAuthLoading) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to="/signin"
+        replace
+        state={{
+          from: location,
+        }}
+      />
+    );
+  }
+
+  return children;
+}
+
+function PublicOnlyRoute({ children }) {
+  const { isAuthenticated, isAuthLoading } = useAuth();
+
+  if (isAuthLoading) {
+    return null;
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/app" replace />;
+  }
+
+  return children;
+}
 
 function App() {
   const location = useLocation();
+  const { isAuthLoading } = useAuth();
 
   const isWelcomePage = location.pathname === "/";
   const isSignUpPage = location.pathname === "/signup";
@@ -27,7 +67,14 @@ function App() {
 
   const isDemoMission = location.pathname === "/demo";
   const isHostPreview = location.pathname === "/host-preview";
-  const isCollaboratorPreview = location.pathname === "/collaborator-preview";
+
+  /*
+   * The existing collaborator dashboard serves as the first protected
+   * application workspace until a dedicated /app dashboard is introduced.
+   */
+  const isCollaboratorWorkspace =
+    location.pathname === "/collaborator-preview" ||
+    location.pathname === "/app";
 
   const appLayoutClassName = [
     "app-layout",
@@ -35,7 +82,7 @@ function App() {
     isAuthPage && "app-layout--auth",
     isDemoMission && "app-layout--demo",
     isHostPreview && "app-layout--host-preview",
-    isCollaboratorPreview && "app-layout--collaborator-preview",
+    isCollaboratorWorkspace && "app-layout--collaborator-preview",
   ]
     .filter(Boolean)
     .join(" ");
@@ -46,7 +93,7 @@ function App() {
     isAuthPage && "main-content--auth",
     isDemoMission && "main-content--demo",
     isHostPreview && "main-content--host-preview",
-    isCollaboratorPreview && "main-content--collaborator-preview",
+    isCollaboratorWorkspace && "main-content--collaborator-preview",
   ]
     .filter(Boolean)
     .join(" ");
@@ -57,10 +104,30 @@ function App() {
     isAuthPage && "main-inner--auth",
     isDemoMission && "main-inner--demo",
     isHostPreview && "main-inner--host-preview",
-    isCollaboratorPreview && "main-inner--collaborator-preview",
+    isCollaboratorWorkspace && "main-inner--collaborator-preview",
   ]
     .filter(Boolean)
     .join(" ");
+
+  if (isAuthLoading) {
+    return (
+      <div className="app-container" aria-busy="true">
+        <div className="app-layout">
+          <main className="main-content">
+            <div className="main-inner">
+              <div
+                className="auth-loading-state"
+                role="status"
+                aria-live="polite"
+              >
+                Restoring your SkillForge session...
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
@@ -69,7 +136,7 @@ function App() {
           isWelcomePage={isWelcomeExperience}
           isDemoMission={isDemoMission}
           isHostPreview={isHostPreview}
-          isCollaboratorPreview={isCollaboratorPreview}
+          isCollaboratorPreview={isCollaboratorWorkspace}
         />
 
         <main className={mainContentClassName}>
@@ -80,20 +147,24 @@ function App() {
               <Route
                 path="/signup"
                 element={
-                  <>
-                    <WelcomePage />
-                    <AuthPage mode="signup" />
-                  </>
+                  <PublicOnlyRoute>
+                    <>
+                      <WelcomePage />
+                      <AuthPage mode="signup" />
+                    </>
+                  </PublicOnlyRoute>
                 }
               />
 
               <Route
                 path="/signin"
                 element={
-                  <>
-                    <WelcomePage />
-                    <AuthPage mode="signin" />
-                  </>
+                  <PublicOnlyRoute>
+                    <>
+                      <WelcomePage />
+                      <AuthPage mode="signin" />
+                    </>
+                  </PublicOnlyRoute>
                 }
               />
 
@@ -107,8 +178,21 @@ function App() {
               />
 
               <Route
+                path="/app"
+                element={
+                  <ProtectedRoute>
+                    <CollaboratorDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/profile"
-                element={<Navigate to="/collaborator-preview" replace />}
+                element={
+                  <ProtectedRoute>
+                    <Navigate to="/app" replace />
+                  </ProtectedRoute>
+                }
               />
 
               <Route path="*" element={<Navigate to="/" replace />} />

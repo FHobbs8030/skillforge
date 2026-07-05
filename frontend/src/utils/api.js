@@ -80,6 +80,20 @@ export function signInUser({ email, password }) {
   });
 }
 
+export function getCurrentUser(token) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/auth/me", {
+    method: "GET",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
 export function getGitHubUser(username) {
   const normalizedUsername = username.trim();
 

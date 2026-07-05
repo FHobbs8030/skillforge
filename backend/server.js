@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const User = require("./models/User");
+const requireAuth = require("./middleware/auth");
 
 require("dotenv").config();
 
@@ -194,9 +195,7 @@ app.post("/auth/signin", async (req, res) => {
       : "";
 
   const password =
-    typeof req.body.password === "string"
-      ? req.body.password
-      : "";
+    typeof req.body.password === "string" ? req.body.password : "";
 
   const validationErrors = {};
 
@@ -228,10 +227,7 @@ app.post("/auth/signin", async (req, res) => {
       });
     }
 
-    const passwordMatches = await bcrypt.compare(
-      password,
-      user.passwordHash,
-    );
+    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordMatches) {
       return res.status(401).json({
@@ -257,6 +253,16 @@ app.post("/auth/signin", async (req, res) => {
       error: "Unable to sign in. Please try again.",
     });
   }
+});
+
+/* =========================
+   CURRENT USER
+========================= */
+
+app.get("/auth/me", requireAuth, (req, res) => {
+  return res.status(200).json({
+    user: req.user,
+  });
 });
 
 /* =========================
