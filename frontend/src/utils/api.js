@@ -94,6 +94,25 @@ export function getCurrentUser(token) {
   });
 }
 
+export function updateProfile({ token, fullName, email }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/auth/me", {
+    method: "PATCH",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+
+    body: JSON.stringify({
+      fullName,
+      email,
+    }),
+  });
+}
+
 export function getGitHubUser(username) {
   const normalizedUsername = username.trim();
 

@@ -1,11 +1,9 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { getCurrentUser } from "../utils/api";
+import {
+  getCurrentUser,
+  updateProfile as updateProfileRequest,
+} from "../utils/api";
 import AuthContext from "./AuthContext";
 
 const AUTH_TOKEN_KEY = "skillforgeAuthToken";
@@ -19,6 +17,18 @@ function clearStorage(storage) {
 function clearAllAuthStorage() {
   clearStorage(window.localStorage);
   clearStorage(window.sessionStorage);
+}
+
+function updateStoredUser(token, user) {
+  const storageOptions = [window.localStorage, window.sessionStorage];
+
+  for (const storage of storageOptions) {
+    if (storage.getItem(AUTH_TOKEN_KEY) === token) {
+      storage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+
+      return;
+    }
+  }
 }
 
 function readStoredSession() {
@@ -63,32 +73,62 @@ function AuthProvider({ children }) {
   const [authSession, setAuthSession] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-  const signIn = useCallback(
-    ({ token, user, rememberMe = false }) => {
-      const selectedStorage = rememberMe
-        ? window.localStorage
-        : window.sessionStorage;
+  const signIn = useCallback(({ token, user, rememberMe = false }) => {
+    const selectedStorage = rememberMe
+      ? window.localStorage
+      : window.sessionStorage;
 
-      clearAllAuthStorage();
+    clearAllAuthStorage();
 
-      selectedStorage.setItem(AUTH_TOKEN_KEY, token);
-      selectedStorage.setItem(
-        AUTH_USER_KEY,
-        JSON.stringify(user),
-      );
+    selectedStorage.setItem(AUTH_TOKEN_KEY, token);
+    selectedStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
 
-      setAuthSession({
-        token,
-        user,
-      });
-    },
-    [],
-  );
+    setAuthSession({
+      token,
+      user,
+    });
+  }, []);
 
   const signOut = useCallback(() => {
     clearAllAuthStorage();
     setAuthSession(null);
   }, []);
+
+  const updateCurrentUser = useCallback(
+    async ({ fullName, email }) => {
+      const token = authSession?.token;
+
+      if (!token) {
+        throw new Error("You must be signed in to update your profile.");
+      }
+
+      const response = await updateProfileRequest({
+        token,
+        fullName,
+        email,
+      });
+
+      if (!response?.user) {
+        throw new Error("The server returned an incomplete profile response.");
+      }
+
+      updateStoredUser(token, response.user);
+
+      setAuthSession((currentSession) => {
+        if (!currentSession || currentSession.token !== token) {
+          return currentSession;
+        }
+
+        return {
+          ...currentSession,
+          user: response.user,
+        };
+      });
+
+      return response;
+    },
+    [authSession?.token],
+  );
 
   useEffect(() => {
     let isActive = true;
@@ -105,14 +145,10 @@ function AuthProvider({ children }) {
       }
 
       try {
-        const response = await getCurrentUser(
-          storedSession.token,
-        );
+        const response = await getCurrentUser(storedSession.token);
 
         if (!response?.user) {
-          throw new Error(
-            "The server returned an incomplete user response.",
-          );
+          throw new Error("The server returned an incomplete user response.");
         }
 
         if (!isActive) {
@@ -149,20 +185,17 @@ function AuthProvider({ children }) {
     () => ({
       token: authSession?.token || null,
       currentUser: authSession?.user || null,
-      isAuthenticated: Boolean(
-        authSession?.token && authSession?.user,
-      ),
+      isAuthenticated: Boolean(authSession?.token && authSession?.user),
       isAuthLoading,
       signIn,
       signOut,
+      updateCurrentUser,
     }),
-    [authSession, isAuthLoading, signIn, signOut],
+    [authSession, isAuthLoading, signIn, signOut, updateCurrentUser],
   );
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }
 
