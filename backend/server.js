@@ -265,6 +265,132 @@ app.get("/auth/me", requireAuth, (req, res) => {
   });
 });
 
+app.patch("/auth/me", requireAuth, async (req, res) => {
+  const hasFullName = Object.prototype.hasOwnProperty.call(
+    req.body ?? {},
+    "fullName",
+  );
+
+  const hasEmail = Object.prototype.hasOwnProperty.call(
+    req.body ?? {},
+    "email",
+  );
+
+  if (!hasFullName && !hasEmail) {
+    return res.status(400).json({
+      error: "Provide a full name or email address to update.",
+    });
+  }
+
+  const validationErrors = {};
+
+  let fullName;
+
+  if (hasFullName) {
+    if (typeof req.body.fullName !== "string") {
+      validationErrors.fullName = "Full name must be text.";
+    } else {
+      fullName = req.body.fullName.trim();
+
+      if (fullName.length < 2) {
+        validationErrors.fullName =
+          "Full name must contain at least 2 characters.";
+      } else if (fullName.length > 80) {
+        validationErrors.fullName = "Full name cannot exceed 80 characters.";
+      }
+    }
+  }
+
+  let email;
+
+  if (hasEmail) {
+    if (typeof req.body.email !== "string") {
+      validationErrors.email = "Email address must be text.";
+    } else {
+      email = req.body.email.trim().toLowerCase();
+
+      if (!email) {
+        validationErrors.email = "Email address is required.";
+      } else if (!EMAIL_PATTERN.test(email)) {
+        validationErrors.email = "Enter a valid email address.";
+      } else if (email.length > 254) {
+        validationErrors.email = "Email address is too long.";
+      }
+    }
+  }
+
+  if (Object.keys(validationErrors).length > 0) {
+    return res.status(400).json({
+      error: "Validation failed.",
+      fields: validationErrors,
+    });
+  }
+
+  try {
+    if (hasEmail && email !== req.user.email) {
+      const existingUser = await User.findOne({
+        email,
+        _id: {
+          $ne: req.user._id,
+        },
+      }).lean();
+
+      if (existingUser) {
+        return res.status(409).json({
+          error: "An account with this email address already exists.",
+          fields: {
+            email: "An account with this email address already exists.",
+          },
+        });
+      }
+    }
+
+    if (hasFullName) {
+      req.user.fullName = fullName;
+    }
+
+    if (hasEmail) {
+      req.user.email = email;
+    }
+
+    await req.user.save();
+
+    return res.status(200).json({
+      message: "Profile updated successfully.",
+      user: req.user,
+    });
+  } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(409).json({
+        error: "An account with this email address already exists.",
+        fields: {
+          email: "An account with this email address already exists.",
+        },
+      });
+    }
+
+    if (error instanceof mongoose.Error.ValidationError) {
+      const fields = Object.fromEntries(
+        Object.entries(error.errors).map(([fieldName, fieldError]) => [
+          fieldName,
+          fieldError.message,
+        ]),
+      );
+
+      return res.status(400).json({
+        error: "Validation failed.",
+        fields,
+      });
+    }
+
+    console.error("Profile update route error:", error);
+
+    return res.status(500).json({
+      error: "Unable to update the profile. Please try again.",
+    });
+  }
+});
+
 /* =========================
    GITHUB INTEGRATION
 ========================= */

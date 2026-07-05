@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import useAuth from "../../contexts/useAuth";
 
 import "./ProfilePage.css";
@@ -64,8 +66,113 @@ function formatAccountDate(dateValue) {
   }).format(accountDate);
 }
 
+function validateProfileForm({ fullName, email }) {
+  const errors = {};
+
+  const normalizedFullName = fullName.trim();
+  const normalizedEmail = email.trim();
+
+  if (!normalizedFullName) {
+    errors.fullName = "Enter your full name.";
+  } else if (normalizedFullName.length < 2) {
+    errors.fullName = "Full name must contain at least 2 characters.";
+  } else if (normalizedFullName.length > 120) {
+    errors.fullName = "Full name cannot exceed 120 characters.";
+  }
+
+  if (!normalizedEmail) {
+    errors.email = "Enter your email address.";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    errors.email = "Enter a valid email address.";
+  } else if (normalizedEmail.length > 254) {
+    errors.email = "Email address cannot exceed 254 characters.";
+  }
+
+  return errors;
+}
+
+function getProfileUpdateError(error) {
+  const payload = error?.response?.data || error?.data || error;
+
+  const message =
+    payload?.message ||
+    payload?.error ||
+    error?.message ||
+    "SkillForge could not update your profile. Please try again.";
+
+  const backendErrors = payload?.fieldErrors || payload?.errors;
+
+  const fieldErrors = {};
+
+  if (Array.isArray(backendErrors)) {
+    backendErrors.forEach((item) => {
+      const field = item?.field || item?.path || item?.param;
+      const fieldMessage = item?.message || item?.msg;
+
+      if (
+        (field === "fullName" || field === "email") &&
+        typeof fieldMessage === "string"
+      ) {
+        fieldErrors[field] = fieldMessage;
+      }
+    });
+  } else if (backendErrors && typeof backendErrors === "object") {
+    ["fullName", "email"].forEach((field) => {
+      const fieldError = backendErrors[field];
+
+      if (typeof fieldError === "string") {
+        fieldErrors[field] = fieldError;
+      } else if (typeof fieldError?.message === "string") {
+        fieldErrors[field] = fieldError.message;
+      }
+    });
+  }
+
+  if (
+    !fieldErrors.email &&
+    /email|already exists|already in use/i.test(message)
+  ) {
+    fieldErrors.email = message;
+  }
+
+  if (
+    !fieldErrors.fullName &&
+    /full[\s-]?name|name must|name is required/i.test(message)
+  ) {
+    fieldErrors.fullName = message;
+  }
+
+  return {
+    fieldErrors,
+    formError: Object.keys(fieldErrors).length === 0 ? message : "",
+  };
+}
+
 function ProfilePage() {
-  const { currentUser } = useAuth();
+  const { currentUser, updateCurrentUser } = useAuth();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [formValues, setFormValues] = useState({
+    fullName: currentUser?.fullName || "",
+    email: currentUser?.email || "",
+  });
+
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [formError, setFormError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    if (isEditing) {
+      return;
+    }
+
+    setFormValues({
+      fullName: currentUser?.fullName || "",
+      email: currentUser?.email || "",
+    });
+  }, [currentUser, isEditing]);
 
   const displayName = getDisplayName(currentUser);
   const initials = getInitials(displayName);
@@ -73,6 +180,93 @@ function ProfilePage() {
   const membershipKey = currentUser?.membership?.toLowerCase() || "free";
 
   const membership = membershipDetails[membershipKey] || membershipDetails.free;
+
+  const handleEditProfile = () => {
+    setFormValues({
+      fullName: currentUser?.fullName || "",
+      email: currentUser?.email || "",
+    });
+
+    setFieldErrors({});
+    setFormError("");
+    setSuccessMessage("");
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setFormValues({
+      fullName: currentUser?.fullName || "",
+      email: currentUser?.email || "",
+    });
+
+    setFieldErrors({});
+    setFormError("");
+    setIsEditing(false);
+  };
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormValues((currentValues) => ({
+      ...currentValues,
+      [name]: value,
+    }));
+
+    setFieldErrors((currentErrors) => {
+      if (!currentErrors[name]) {
+        return currentErrors;
+      }
+
+      const nextErrors = { ...currentErrors };
+
+      delete nextErrors[name];
+
+      return nextErrors;
+    });
+
+    if (formError) {
+      setFormError("");
+    }
+
+    if (successMessage) {
+      setSuccessMessage("");
+    }
+  };
+
+  const handleProfileSubmit = async (event) => {
+    event.preventDefault();
+
+    const validationErrors = validateProfileForm(formValues);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      setFormError("");
+      setSuccessMessage("");
+      return;
+    }
+
+    setIsSaving(true);
+    setFieldErrors({});
+    setFormError("");
+    setSuccessMessage("");
+
+    try {
+      await updateCurrentUser({
+        fullName: formValues.fullName.trim(),
+        email: formValues.email.trim(),
+      });
+
+      setSuccessMessage("Your SkillForge profile was updated successfully.");
+      setIsEditing(false);
+    } catch (error) {
+      const profileError = getProfileUpdateError(error);
+
+      setFieldErrors(profileError.fieldErrors);
+      setFormError(profileError.formError);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <section className="profile-page" aria-labelledby="profile-page-title">
@@ -85,8 +279,8 @@ function ProfilePage() {
           </h1>
 
           <p className="profile-page__subtitle">
-            Review the identity, membership, and security information connected
-            to your SkillForge account.
+            Review and manage the identity, membership, and security information
+            connected to your SkillForge account.
           </p>
         </div>
 
@@ -255,25 +449,145 @@ function ProfilePage() {
       </div>
 
       <section
-        className="profile-page__panel profile-page__actions"
+        className={`profile-page__panel profile-page__actions${
+          isEditing ? " profile-page__actions--editing" : ""
+        }`}
         aria-labelledby="profile-actions-title"
       >
-        <div>
-          <p className="profile-page__panel-eyebrow">Profile Management</p>
+        <div className="profile-page__actions-header">
+          <div className="profile-page__actions-copy">
+            <p className="profile-page__panel-eyebrow">Profile Management</p>
 
-          <h2 id="profile-actions-title">Account controls</h2>
+            <h2 id="profile-actions-title">Account controls</h2>
 
-          <p>
-            Profile editing, password changes, and account preferences will be
-            connected after the profile API is introduced.
-          </p>
+            <p>
+              Update the full name and email address associated with your
+              authenticated SkillForge account.
+            </p>
+          </div>
+
+          <div className="profile-page__planned-actions">
+            {!isEditing && (
+              <button
+                className="profile-page__edit-button"
+                type="button"
+                onClick={handleEditProfile}
+              >
+                Edit Profile
+              </button>
+            )}
+
+            <span>Change Password</span>
+            <span>Account Preferences</span>
+          </div>
         </div>
 
-        <div className="profile-page__planned-actions">
-          <span>Edit Profile</span>
-          <span>Change Password</span>
-          <span>Account Preferences</span>
-        </div>
+        {successMessage && (
+          <div
+            className="profile-page__message profile-page__message--success"
+            role="status"
+            aria-live="polite"
+          >
+            {successMessage}
+          </div>
+        )}
+
+        {isEditing && (
+          <form
+            className="profile-page__edit-form"
+            onSubmit={handleProfileSubmit}
+            noValidate
+          >
+            <div className="profile-page__form-grid">
+              <div className="profile-page__field">
+                <label htmlFor="profile-full-name">Full Name</label>
+
+                <input
+                  id="profile-full-name"
+                  name="fullName"
+                  type="text"
+                  value={formValues.fullName}
+                  onChange={handleInputChange}
+                  autoComplete="name"
+                  maxLength={120}
+                  disabled={isSaving}
+                  aria-invalid={Boolean(fieldErrors.fullName)}
+                  aria-describedby={
+                    fieldErrors.fullName ? "profile-full-name-error" : undefined
+                  }
+                  autoFocus
+                />
+
+                {fieldErrors.fullName && (
+                  <p
+                    className="profile-page__field-error"
+                    id="profile-full-name-error"
+                    role="alert"
+                  >
+                    {fieldErrors.fullName}
+                  </p>
+                )}
+              </div>
+
+              <div className="profile-page__field">
+                <label htmlFor="profile-email">Email Address</label>
+
+                <input
+                  id="profile-email"
+                  name="email"
+                  type="email"
+                  value={formValues.email}
+                  onChange={handleInputChange}
+                  autoComplete="email"
+                  maxLength={254}
+                  disabled={isSaving}
+                  aria-invalid={Boolean(fieldErrors.email)}
+                  aria-describedby={
+                    fieldErrors.email ? "profile-email-error" : undefined
+                  }
+                />
+
+                {fieldErrors.email && (
+                  <p
+                    className="profile-page__field-error"
+                    id="profile-email-error"
+                    role="alert"
+                  >
+                    {fieldErrors.email}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {formError && (
+              <div
+                className="profile-page__message profile-page__message--error"
+                role="alert"
+              >
+                {formError}
+              </div>
+            )}
+
+            <div className="profile-page__form-actions">
+              <button
+                className="profile-page__save-button"
+                type="submit"
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving Changes..." : "Save Changes"}
+              </button>
+
+              <button
+                className="profile-page__cancel-button"
+                type="button"
+                onClick={handleCancelEdit}
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
       </section>
     </section>
   );
