@@ -6,7 +6,12 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const User = require("./models/User");
+const Project = require("./models/Project");
+const ProjectMembership = require("./models/ProjectMembership");
+const ActivityEvent = require("./models/ActivityEvent");
+
 const requireAuth = require("./middleware/auth");
+const projectRoutes = require("./routes/projects");
 
 require("dotenv").config();
 
@@ -54,6 +59,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/projects", projectRoutes);
 
 app.get("/", (req, res) => {
   res.send("SkillForge API is running");
@@ -462,10 +468,15 @@ async function startServer() {
     await mongoose.connect(process.env.MONGO_URI);
 
     /*
-     * Ensure MongoDB has created the unique email index before
-     * accepting signup requests.
+     * Ensure MongoDB has created the required model indexes before
+     * accepting requests.
      */
-    await User.init();
+    await Promise.all([
+      User.init(),
+      Project.init(),
+      ProjectMembership.init(),
+      ActivityEvent.init(),
+    ]);
 
     console.log("MongoDB connected");
 
