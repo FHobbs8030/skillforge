@@ -124,3 +124,17 @@ export function getGitHubUser(username) {
     method: "GET",
   });
 }
+
+export function getProjects(token) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/projects", {
+    method: "GET",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

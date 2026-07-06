@@ -367,6 +367,14 @@ function Header({
                     Dashboard
                   </NavLink>
 
+                  <NavLink
+                    to="/projects"
+                    end
+                    className={getPrimaryNavClassName}
+                  >
+                    Projects
+                  </NavLink>
+
                   <NavLink to="/profile" end className={getPrimaryNavClassName}>
                     Profile
                   </NavLink>
@@ -448,6 +456,10 @@ function Header({
               >
                 <NavLink to="/app" end className={getPrimaryNavClassName}>
                   Dashboard
+                </NavLink>
+
+                <NavLink to="/projects" end className={getPrimaryNavClassName}>
+                  Projects
                 </NavLink>
 
                 <NavLink to="/profile" end className={getPrimaryNavClassName}>
