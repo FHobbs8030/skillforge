@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import useAuth from "../../contexts/useAuth";
-import { getProjects } from "../../utils/api";
+import { getProjectActivity, getProjects } from "../../utils/api";
 
 import "./ProjectHistory.css";
 
@@ -17,6 +17,26 @@ function normalizeProjects(response) {
 
   if (Array.isArray(response?.data?.projects)) {
     return response.data.projects;
+  }
+
+  if (Array.isArray(response?.data)) {
+    return response.data;
+  }
+
+  return [];
+}
+
+function normalizeActivityEvents(response) {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (Array.isArray(response?.activityEvents)) {
+    return response.activityEvents;
+  }
+
+  if (Array.isArray(response?.data?.activityEvents)) {
+    return response.data.activityEvents;
   }
 
   if (Array.isArray(response?.data)) {
@@ -74,6 +94,26 @@ function formatDate(value) {
   }).format(date);
 }
 
+function formatDateTime(value) {
+  if (!value) {
+    return "Time pending";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Time pending";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
 function formatProjectMeta(project) {
   const createdAt = formatDate(project?.createdAt);
   const updatedAt = formatDate(project?.updatedAt);
@@ -89,10 +129,43 @@ function formatProjectMeta(project) {
   return `Created ${createdAt}`;
 }
 
+function formatEventType(eventType) {
+  if (!eventType) {
+    return "Activity event";
+  }
+
+  return eventType
+    .split("_")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function formatCountLabel(
+  count,
+  singularLabel,
+  pluralLabel = `${singularLabel}s`,
+) {
+  return `${count} ${count === 1 ? singularLabel : pluralLabel}`;
+}
+
+function getEventSummary(event) {
+  if (event?.eventType === "project_created") {
+    return "Project workspace was created and connected to your account.";
+  }
+
+  return "Project activity was recorded by SkillForge.";
+}
+
 function ProjectHistory() {
   const { token } = useAuth();
 
   const [projects, setProjects] = useState([]);
+  const [activityByProjectId, setActivityByProjectId] = useState({});
+  const [activityLoadingByProjectId, setActivityLoadingByProjectId] = useState(
+    {},
+  );
+  const [activityErrorByProjectId, setActivityErrorByProjectId] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -102,6 +175,9 @@ function ProjectHistory() {
     async function loadProjects() {
       setIsLoading(true);
       setErrorMessage("");
+      setActivityByProjectId({});
+      setActivityLoadingByProjectId({});
+      setActivityErrorByProjectId({});
 
       try {
         const response = await getProjects(token);
@@ -131,6 +207,64 @@ function ProjectHistory() {
     };
   }, [token]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadProjectActivity() {
+      const projectIds = projects.map(getProjectId).filter(Boolean);
+
+      if (!token || projectIds.length === 0) {
+        return;
+      }
+
+      setActivityLoadingByProjectId(
+        Object.fromEntries(projectIds.map((projectId) => [projectId, true])),
+      );
+      setActivityErrorByProjectId({});
+
+      const activityResults = await Promise.allSettled(
+        projectIds.map(async (projectId) => {
+          const response = await getProjectActivity({ token, projectId });
+
+          return [projectId, normalizeActivityEvents(response)];
+        }),
+      );
+
+      if (!isActive) {
+        return;
+      }
+
+      const nextActivityByProjectId = {};
+      const nextActivityErrorByProjectId = {};
+
+      activityResults.forEach((result, index) => {
+        const projectId = projectIds[index];
+
+        if (result.status === "fulfilled") {
+          const [resolvedProjectId, activityEvents] = result.value;
+
+          nextActivityByProjectId[resolvedProjectId] = activityEvents;
+        } else {
+          nextActivityErrorByProjectId[projectId] =
+            result.reason?.message ||
+            "Activity history could not be loaded for this project.";
+        }
+      });
+
+      setActivityByProjectId(nextActivityByProjectId);
+      setActivityErrorByProjectId(nextActivityErrorByProjectId);
+      setActivityLoadingByProjectId(
+        Object.fromEntries(projectIds.map((projectId) => [projectId, false])),
+      );
+    }
+
+    loadProjectActivity();
+
+    return () => {
+      isActive = false;
+    };
+  }, [projects, token]);
+
   const projectStats = useMemo(() => {
     const totalProjects = projects.length;
 
@@ -149,6 +283,13 @@ function ProjectHistory() {
     };
   }, [projects]);
 
+  const activityEventCount = useMemo(() => {
+    return Object.values(activityByProjectId).reduce(
+      (total, activityEvents) => total + activityEvents.length,
+      0,
+    );
+  }, [activityByProjectId]);
+
   const hasProjects = projects.length > 0;
 
   return (
@@ -166,8 +307,8 @@ function ProjectHistory() {
 
           <p className="project-history__subtitle">
             Review the protected project records connected to your authenticated
-            SkillForge account. This view is powered by the backend project
-            history foundation.
+            SkillForge account. This view now includes backend activity events
+            for each project timeline.
           </p>
         </div>
 
@@ -201,12 +342,12 @@ function ProjectHistory() {
         </article>
 
         <article className="project-history__metric project-history__metric--purple">
-          <span className="project-history__metric-label">Owned</span>
+          <span className="project-history__metric-label">Activity</span>
           <strong className="project-history__metric-value">
-            {projectStats.ownedProjects}
+            {activityEventCount}
           </strong>
           <span className="project-history__metric-detail">
-            Membership role
+            Timeline events
           </span>
         </article>
       </div>
@@ -226,7 +367,7 @@ function ProjectHistory() {
 
           {!isLoading && hasProjects && (
             <span className="project-history__count-badge">
-              {projects.length} loaded
+              {formatCountLabel(projects.length, "project")} loaded
             </span>
           )}
         </div>
@@ -264,6 +405,11 @@ function ProjectHistory() {
           <div className="project-history__list">
             {projects.map((project) => {
               const projectId = getProjectId(project);
+              const activityEvents = activityByProjectId[projectId] || [];
+              const isActivityLoading = Boolean(
+                activityLoadingByProjectId[projectId],
+              );
+              const activityError = activityErrorByProjectId[projectId];
 
               return (
                 <article
@@ -307,6 +453,88 @@ function ProjectHistory() {
                       </div>
                     )}
                   </dl>
+
+                  <section
+                    className="project-history__activity"
+                    aria-label={`${getProjectName(project)} activity history`}
+                  >
+                    <div className="project-history__activity-heading">
+                      <div>
+                        <p className="project-history__activity-label">
+                          Activity History
+                        </p>
+
+                        <h4>Project timeline</h4>
+                      </div>
+
+                      <span className="project-history__activity-count">
+                        {formatCountLabel(activityEvents.length, "event")}
+                      </span>
+                    </div>
+
+                    {isActivityLoading && (
+                      <div className="project-history__activity-state">
+                        Loading activity events...
+                      </div>
+                    )}
+
+                    {!isActivityLoading && activityError && (
+                      <div className="project-history__activity-state project-history__activity-state--error">
+                        {activityError}
+                      </div>
+                    )}
+
+                    {!isActivityLoading &&
+                      !activityError &&
+                      activityEvents.length === 0 && (
+                        <div className="project-history__activity-state">
+                          No activity events recorded yet.
+                        </div>
+                      )}
+
+                    {!isActivityLoading &&
+                      !activityError &&
+                      activityEvents.length > 0 && (
+                        <ol className="project-history__activity-list">
+                          {activityEvents.map((event) => (
+                            <li
+                              className="project-history__activity-item"
+                              key={
+                                event._id ||
+                                `${event.eventType}-${event.occurredAt}`
+                              }
+                            >
+                              <span
+                                className="project-history__activity-marker"
+                                aria-hidden="true"
+                              />
+
+                              <div className="project-history__activity-content">
+                                <div className="project-history__activity-title-row">
+                                  <strong>
+                                    {formatEventType(event.eventType)}
+                                  </strong>
+
+                                  <time dateTime={event.occurredAt}>
+                                    {formatDateTime(event.occurredAt)}
+                                  </time>
+                                </div>
+
+                                <p>{getEventSummary(event)}</p>
+
+                                <div className="project-history__activity-details">
+                                  <span>{event.source || "skillforge"}</span>
+
+                                  {event.entityType && (
+                                    <span>{event.entityType}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                  </section>
                 </article>
               );
             })}

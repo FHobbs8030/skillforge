@@ -138,3 +138,21 @@ export function getProjects(token) {
     },
   });
 }
+
+export function getProjectActivity({ token, projectId }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!projectId) {
+    return Promise.reject(new Error("Project ID is required."));
+  }
+
+  return apiRequest(`/projects/${encodeURIComponent(projectId)}/activity`, {
+    method: "GET",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

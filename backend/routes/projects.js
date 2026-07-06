@@ -163,6 +163,49 @@ router.get("/", requireAuth, async (req, res) => {
   }
 });
 
+router.get("/:projectId/activity", requireAuth, async (req, res) => {
+  const { projectId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    return res.status(400).json({
+      error: "Invalid project ID.",
+    });
+  }
+
+  try {
+    const membership = await ProjectMembership.findOne({
+      projectId,
+      userId: req.user._id,
+      status: "active",
+    }).lean();
+
+    if (!membership) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    const activityEvents = await ActivityEvent.find({
+      projectId,
+    })
+      .sort({
+        occurredAt: -1,
+      })
+      .limit(50)
+      .lean();
+
+    return res.status(200).json({
+      activityEvents,
+    });
+  } catch (error) {
+    console.error("Project activity route error:", error);
+
+    return res.status(500).json({
+      error: "Unable to load project activity. Please try again.",
+    });
+  }
+});
+
 router.post("/", requireAuth, async (req, res) => {
   const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
 
