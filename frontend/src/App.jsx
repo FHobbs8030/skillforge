@@ -1,10 +1,12 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useLayoutEffect } from "react";
+
 import WelcomePage from "./pages/WelcomePage/WelcomePage";
 import DemoMission from "./pages/DemoMission/DemoMission";
 import HostDashboard from "./pages/HostDashboard/HostDashboard";
 import CollaboratorDashboard from "./pages/CollaboratorDashboard/CollaboratorDashboard";
 import AppDashboard from "./pages/AppDashboard/AppDashboard";
+import ProjectHistory from "./pages/ProjectHistory/ProjectHistory";
 import ProfilePage from "./pages/ProfilePage/ProfilePage";
 import AuthPage from "./pages/AuthPage/AuthPage";
 
@@ -92,6 +94,7 @@ function App() {
   const isHostPreview = location.pathname === "/host-preview";
   const isCollaboratorPreview = location.pathname === "/collaborator-preview";
   const isAppDashboard = location.pathname === "/app";
+  const isProjectHistory = location.pathname === "/projects";
   const isProfilePage = location.pathname === "/profile";
 
   const appLayoutClassName = [
@@ -102,6 +105,7 @@ function App() {
     isHostPreview && "app-layout--host-preview",
     isCollaboratorPreview && "app-layout--collaborator-preview",
     isAppDashboard && "app-layout--app-dashboard",
+    isProjectHistory && "app-layout--project-history",
     isProfilePage && "app-layout--profile",
   ]
     .filter(Boolean)
@@ -115,6 +119,7 @@ function App() {
     isHostPreview && "main-content--host-preview",
     isCollaboratorPreview && "main-content--collaborator-preview",
     isAppDashboard && "main-content--app-dashboard",
+    isProjectHistory && "main-content--project-history",
     isProfilePage && "main-content--profile",
   ]
     .filter(Boolean)
@@ -128,6 +133,7 @@ function App() {
     isHostPreview && "main-inner--host-preview",
     isCollaboratorPreview && "main-inner--collaborator-preview",
     isAppDashboard && "main-inner--app-dashboard",
+    isProjectHistory && "main-inner--project-history",
     isProfilePage && "main-inner--profile",
   ]
     .filter(Boolean)
@@ -206,6 +212,15 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AppDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/projects"
+                element={
+                  <ProtectedRoute>
+                    <ProjectHistory />
                   </ProtectedRoute>
                 }
               />
