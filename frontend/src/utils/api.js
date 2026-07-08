@@ -31,7 +31,9 @@ async function checkResponse(response) {
 
   if (!response.ok) {
     const requestError = new Error(
-      responseData?.error || `Request failed with status ${response.status}.`,
+      responseData?.error ||
+        responseData?.message ||
+        `Request failed with status ${response.status}.`,
     );
 
     requestError.status = response.status;
@@ -131,6 +133,24 @@ export function getProjects(token) {
   }
 
   return apiRequest("/projects", {
+    method: "GET",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function getProjectById({ token, projectId }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!projectId) {
+    return Promise.reject(new Error("Project ID is required."));
+  }
+
+  return apiRequest(`/projects/${encodeURIComponent(projectId)}`, {
     method: "GET",
 
     headers: {

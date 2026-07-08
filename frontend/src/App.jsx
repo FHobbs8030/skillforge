@@ -7,6 +7,7 @@ import HostDashboard from "./pages/HostDashboard/HostDashboard";
 import CollaboratorDashboard from "./pages/CollaboratorDashboard/CollaboratorDashboard";
 import AppDashboard from "./pages/AppDashboard/AppDashboard";
 import ProjectHistory from "./pages/ProjectHistory/ProjectHistory";
+import ProjectDetail from "./pages/ProjectDetail/ProjectDetail";
 import ProfilePage from "./pages/ProfilePage/ProfilePage";
 import AuthPage from "./pages/AuthPage/AuthPage";
 
@@ -95,6 +96,7 @@ function App() {
   const isCollaboratorPreview = location.pathname === "/collaborator-preview";
   const isAppDashboard = location.pathname === "/app";
   const isProjectHistory = location.pathname === "/projects";
+  const isProjectDetail = location.pathname.startsWith("/projects/");
   const isProfilePage = location.pathname === "/profile";
 
   const appLayoutClassName = [
@@ -106,6 +108,7 @@ function App() {
     isCollaboratorPreview && "app-layout--collaborator-preview",
     isAppDashboard && "app-layout--app-dashboard",
     isProjectHistory && "app-layout--project-history",
+    isProjectDetail && "app-layout--project-detail",
     isProfilePage && "app-layout--profile",
   ]
     .filter(Boolean)
@@ -120,6 +123,7 @@ function App() {
     isCollaboratorPreview && "main-content--collaborator-preview",
     isAppDashboard && "main-content--app-dashboard",
     isProjectHistory && "main-content--project-history",
+    isProjectDetail && "main-content--project-detail",
     isProfilePage && "main-content--profile",
   ]
     .filter(Boolean)
@@ -134,6 +138,7 @@ function App() {
     isCollaboratorPreview && "main-inner--collaborator-preview",
     isAppDashboard && "main-inner--app-dashboard",
     isProjectHistory && "main-inner--project-history",
+    isProjectDetail && "main-inner--project-detail",
     isProfilePage && "main-inner--profile",
   ]
     .filter(Boolean)
@@ -221,6 +226,15 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ProjectHistory />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/projects/:projectId"
+                element={
+                  <ProtectedRoute>
+                    <ProjectDetail />
                   </ProtectedRoute>
                 }
               />
