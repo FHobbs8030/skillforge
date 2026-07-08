@@ -8,6 +8,7 @@ import {
   getProjectActivity,
   getProjectById,
   getProjectMembers,
+  inviteProjectMember,
 } from "../../utils/api";
 
 import useAuth from "../../contexts/useAuth";
@@ -21,10 +22,16 @@ function ProjectDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [repositoryUrlInput, setRepositoryUrlInput] = useState("");
+   const [repositoryUrlInput, setRepositoryUrlInput] = useState("");
   const [repositoryError, setRepositoryError] = useState("");
   const [repositoryMessage, setRepositoryMessage] = useState("");
   const [isConnectingRepository, setIsConnectingRepository] = useState(false);
+
+  const [inviteEmailInput, setInviteEmailInput] = useState("");
+  const [inviteRoleInput, setInviteRoleInput] = useState("collaborator");
+  const [inviteError, setInviteError] = useState("");
+  const [inviteMessage, setInviteMessage] = useState("");
+  const [isInvitingMember, setIsInvitingMember] = useState(false);
 
   const { token, authToken, jwt } = useAuth();
 
@@ -162,27 +169,82 @@ function ProjectDetail() {
     }
   };
 
+  const handleInviteSubmit = async (event) => {
+    event.preventDefault();
+
+    setInviteError("");
+    setInviteMessage("");
+
+    try {
+      setIsInvitingMember(true);
+
+      const inviteResponse = await inviteProjectMember({
+        token: accessToken,
+        projectId,
+        email: inviteEmailInput,
+        role: inviteRoleInput,
+      });
+
+      setMembers((currentMembers) => {
+        const filteredMembers = currentMembers.filter((member) => {
+          return member.userId !== inviteResponse.member.userId;
+        });
+
+        return [...filteredMembers, inviteResponse.member];
+      });
+
+      if (inviteResponse.activityEvent) {
+        setActivityEvents((currentEvents) => [
+          inviteResponse.activityEvent,
+          ...currentEvents,
+        ]);
+      }
+
+      setInviteEmailInput("");
+      setInviteRoleInput("collaborator");
+      setInviteMessage("Member invited successfully.");
+    } catch (requestError) {
+      console.error("Project member invite error:", requestError);
+
+      const fieldError =
+        requestError.fields?.email || requestError.fields?.role;
+
+      setInviteError(
+        fieldError ||
+          requestError.message ||
+          "Unable to invite this member right now.",
+      );
+    } finally {
+      setIsInvitingMember(false);
+    }
+  };
+
   const projectRole = project?.role || project?.membership?.role || "Member";
   const repository = project?.repository || {};
   const repositoryUrl =
     project?.repositoryUrl || project?.repository?.url || "";
-  const canConnectRepository = ["owner", "host"].includes(
-    projectRole.toLowerCase(),
-  );
 
-  if (isLoading) {
-    return (
-      <section className="project-detail">
-        <div className="project-detail__state-card">
-          <p className="project-detail__eyebrow">Project Detail</p>
-          <h1 className="project-detail__title">Loading project...</h1>
-          <p className="project-detail__text">
-            Fetching project overview and activity history.
-          </p>
-        </div>
-      </section>
-    );
-  }
+      const canConnectRepository = ["owner", "host"].includes(
+        projectRole.toLowerCase(),
+      );
+
+      const canInviteMembers = ["owner", "host"].includes(
+        projectRole.toLowerCase(),
+      );
+
+      if (isLoading) {
+        return (
+          <section className="project-detail">
+            <div className="project-detail__state-card">
+              <p className="project-detail__eyebrow">Project Detail</p>
+              <h1 className="project-detail__title">Loading project...</h1>
+              <p className="project-detail__text">
+                Fetching project overview and activity history.
+              </p>
+            </div>
+          </section>
+        );
+      }
 
   if (error) {
     return (
@@ -395,6 +457,67 @@ function ProjectDetail() {
             </span>
           </div>
 
+          {canInviteMembers ? (
+            <form
+              className="project-detail__invite-form"
+              onSubmit={handleInviteSubmit}
+            >
+              <div className="project-detail__invite-fields">
+                <label htmlFor="inviteEmail">
+                  Member email
+                  <input
+                    id="inviteEmail"
+                    name="inviteEmail"
+                    type="email"
+                    placeholder="member@example.com"
+                    value={inviteEmailInput}
+                    onChange={(event) =>
+                      setInviteEmailInput(event.target.value)
+                    }
+                    disabled={isInvitingMember}
+                  />
+                </label>
+
+                <label htmlFor="inviteRole">
+                  Role
+                  <select
+                    id="inviteRole"
+                    name="inviteRole"
+                    value={inviteRoleInput}
+                    onChange={(event) => setInviteRoleInput(event.target.value)}
+                    disabled={isInvitingMember}
+                  >
+                    <option value="collaborator">Collaborator</option>
+                    <option value="host">Host</option>
+                    <option value="viewer">Viewer</option>
+                  </select>
+                </label>
+              </div>
+
+              {inviteError && (
+                <p className="project-detail__invite-error">{inviteError}</p>
+              )}
+
+              {inviteMessage && (
+                <p className="project-detail__invite-success">
+                  {inviteMessage}
+                </p>
+              )}
+
+              <button
+                className="project-detail__invite-button"
+                type="submit"
+                disabled={isInvitingMember}
+              >
+                {isInvitingMember ? "Inviting..." : "Invite Member"}
+              </button>
+            </form>
+          ) : (
+            <p className="project-detail__invite-note">
+              Only project owners and hosts can invite members.
+            </p>
+          )}
+
           {members.length > 0 ? (
             <div className="project-detail__members-list">
               {members.map((member) => (
@@ -474,13 +597,14 @@ function ProjectDetail() {
                     <h3>{formatActivityType(event.eventType)}</h3>
 
                     <p>
-                      {event.metadata?.projectName
-                        ? `${event.metadata.projectName} workspace activity was recorded.`
-                        : event.metadata?.name && event.metadata?.owner
-                          ? `${event.metadata.owner}/${event.metadata.name} repository activity was recorded.`
-                          : "A project activity event was recorded."}
+                      {event.eventType === "member_invited"
+                        ? `${event.metadata?.invitedFullName || event.metadata?.invitedEmail || "A member"} was invited as ${formatMemberLabel(event.metadata?.role)}.`
+                        : event.metadata?.projectName
+                          ? `${event.metadata.projectName} workspace activity was recorded.`
+                          : event.metadata?.name && event.metadata?.owner
+                            ? `${event.metadata.owner}/${event.metadata.name} repository activity was recorded.`
+                            : "A project activity event was recorded."}
                     </p>
-
                     <time>{formatDateTime(event.occurredAt)}</time>
                   </div>
                 </li>
