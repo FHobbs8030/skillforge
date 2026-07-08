@@ -412,9 +412,10 @@ function ProjectHistory() {
               const activityError = activityErrorByProjectId[projectId];
 
               return (
-                <article
+                <Link
                   className="project-history__project-card"
                   key={projectId || getProjectName(project)}
+                  to={`/projects/${projectId}`}
                 >
                   <div className="project-history__project-main">
                     <div>
@@ -425,7 +426,13 @@ function ProjectHistory() {
                       <p>{getProjectDescription(project)}</p>
                     </div>
 
-                    <span className="project-history__status-badge">
+                    <span
+                      className={`project-history__status-badge ${
+                        getProjectStatus(project).toLowerCase() === "active"
+                          ? "status-light status-light--pill"
+                          : ""
+                      }`}
+                    >
                       {getProjectStatus(project)}
                     </span>
                   </div>
@@ -535,7 +542,7 @@ function ProjectHistory() {
                         </ol>
                       )}
                   </section>
-                </article>
+                </Link>
               );
             })}
           </div>
