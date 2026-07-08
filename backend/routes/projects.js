@@ -5,6 +5,7 @@ const fetch = require("node-fetch");
 const ActivityEvent = require("../models/ActivityEvent");
 const Project = require("../models/Project");
 const ProjectMembership = require("../models/ProjectMembership");
+const User = require("../models/User");
 
 const requireAuth = require("../middleware/auth");
 
@@ -20,6 +21,9 @@ const PROJECT_STATUSES = new Set([
 
 const PROJECT_VISIBILITIES = new Set(["private", "team", "public"]);
 const PROJECT_REPOSITORY_WRITE_ROLES = new Set(["owner", "host"]);
+const PROJECT_MEMBER_WRITE_ROLES = new Set(["owner", "host"]);
+const PROJECT_INVITE_ROLES = new Set(["host", "collaborator", "viewer"]);
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function getMongooseValidationFields(error) {
   return Object.fromEntries(
@@ -467,6 +471,181 @@ router.get("/:projectId/members", requireAuth, async (req, res) => {
 
     return res.status(500).json({
       error: "Unable to load project members. Please try again.",
+    });
+  }
+});
+
+router.post("/:projectId/members/invite", requireAuth, async (req, res) => {
+  const { projectId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    return res.status(400).json({
+      error: "Invalid project ID.",
+    });
+  }
+
+  const email =
+    typeof req.body?.email === "string"
+      ? req.body.email.trim().toLowerCase()
+      : "";
+
+  const role =
+    typeof req.body?.role === "string"
+      ? req.body.role.trim().toLowerCase()
+      : "collaborator";
+
+  const validationErrors = {};
+
+  if (!email) {
+    validationErrors.email = "Member email is required.";
+  } else if (email.length > 254 || !EMAIL_PATTERN.test(email)) {
+    validationErrors.email = "Enter a valid member email address.";
+  }
+
+  if (!PROJECT_INVITE_ROLES.has(role)) {
+    validationErrors.role =
+      "Invite role must be host, collaborator, or viewer.";
+  }
+
+  if (Object.keys(validationErrors).length > 0) {
+    return res.status(400).json({
+      error: "Validation failed.",
+      fields: validationErrors,
+    });
+  }
+
+  try {
+    const membership = await ProjectMembership.findOne({
+      projectId,
+      userId: req.user._id,
+      status: "active",
+    }).lean();
+
+    if (!membership) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    if (!PROJECT_MEMBER_WRITE_ROLES.has(membership.role)) {
+      return res.status(403).json({
+        error: "Only project owners and hosts can invite members.",
+      });
+    }
+
+    const invitedUser = await User.findOne({
+      email,
+    }).lean();
+
+    if (!invitedUser) {
+      return res.status(404).json({
+        error: "SkillForge user not found.",
+        fields: {
+          email: "No SkillForge account was found for this email address.",
+        },
+      });
+    }
+
+    const existingMembership = await ProjectMembership.findOne({
+      projectId,
+      userId: invitedUser._id,
+    }).lean();
+
+    if (existingMembership && existingMembership.status !== "removed") {
+      return res.status(409).json({
+        error: "This user is already attached to the project.",
+        fields: {
+          email: "This user already has a project membership.",
+        },
+      });
+    }
+
+    const invitedMembership = existingMembership
+      ? await ProjectMembership.findByIdAndUpdate(
+          existingMembership._id,
+          {
+            role,
+            status: "invited",
+            invitedBy: req.user._id,
+            joinedAt: new Date(),
+            leftAt: null,
+          },
+          {
+            new: true,
+            runValidators: true,
+          },
+        )
+      : await ProjectMembership.create({
+          projectId,
+          userId: invitedUser._id,
+          role,
+          status: "invited",
+          invitedBy: req.user._id,
+        });
+
+    const populatedMembership = await ProjectMembership.findById(
+      invitedMembership._id,
+    )
+      .populate({
+        path: "userId",
+        select: "fullName email membership createdAt",
+      })
+      .lean();
+
+    const user = populatedMembership.userId;
+
+    const member = {
+      id: populatedMembership._id,
+      projectId: populatedMembership.projectId,
+      userId: user?._id || populatedMembership.userId,
+      fullName: user?.fullName || "Unknown member",
+      email: user?.email || "",
+      accountMembership: user?.membership || "free",
+      role: populatedMembership.role,
+      status: populatedMembership.status,
+      invitedBy: populatedMembership.invitedBy,
+      joinedAt: populatedMembership.joinedAt,
+      leftAt: populatedMembership.leftAt,
+      createdAt: populatedMembership.createdAt,
+      updatedAt: populatedMembership.updatedAt,
+    };
+
+    const activityEvent = await ActivityEvent.create({
+      projectId,
+      actorId: req.user._id,
+      eventType: "member_invited",
+      source: "skillforge",
+      entityType: "project_membership",
+      entityId: invitedMembership._id.toString(),
+      metadata: {
+        invitedUserId: invitedUser._id,
+        invitedEmail: invitedUser.email,
+        invitedFullName: invitedUser.fullName,
+        role,
+        status: "invited",
+      },
+      occurredAt: new Date(),
+    });
+
+    return res.status(201).json({
+      message: "Member invited successfully.",
+      member,
+      activityEvent,
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        error: "This user is already attached to the project.",
+        fields: {
+          email: "This user already has a project membership.",
+        },
+      });
+    }
+
+    console.error("Project member invite route error:", error);
+
+    return res.status(500).json({
+      error: "Unable to invite project member. Please try again.",
     });
   }
 });

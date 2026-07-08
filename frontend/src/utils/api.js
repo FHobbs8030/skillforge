@@ -195,6 +195,40 @@ export function getProjectMembers({ token, projectId }) {
   });
 }
 
+export function inviteProjectMember({ token, projectId, email, role }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!projectId) {
+    return Promise.reject(new Error("Project ID is required."));
+  }
+
+  const normalizedEmail = typeof email === "string" ? email.trim() : "";
+  const normalizedRole =
+    typeof role === "string" ? role.trim().toLowerCase() : "collaborator";
+
+  if (!normalizedEmail) {
+    return Promise.reject(new Error("Member email is required."));
+  }
+
+  return apiRequest(
+    `/projects/${encodeURIComponent(projectId)}/members/invite`,
+    {
+      method: "POST",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify({
+        email: normalizedEmail,
+        role: normalizedRole,
+      }),
+    },
+  );
+}
+
 export function connectProjectRepository({ token, projectId, repositoryUrl }) {
   if (!token) {
     return Promise.reject(new Error("Authentication token is required."));
