@@ -1,8 +1,8 @@
 .project-detail {
   width: 100%;
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 28px 20px 56px;
+  max-width: none;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
   color: #f8fafc;
 }
@@ -585,7 +585,7 @@
 
 @media (max-width: 560px) {
   .project-detail {
-    padding: 18px 14px 40px;
+    padding: 0;
   }
 
   .project-detail__hero,
