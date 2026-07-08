@@ -27,6 +27,28 @@ const repositorySchema = new mongoose.Schema(
       trim: true,
       maxLength: [500, "Repository URL cannot exceed 500 characters."],
     },
+
+    defaultBranch: {
+      type: String,
+      trim: true,
+      maxLength: [100, "Default branch cannot exceed 100 characters."],
+      default: "",
+    },
+
+    repositoryUpdatedAt: {
+      type: Date,
+      default: null,
+    },
+
+    connectedAt: {
+      type: Date,
+      default: null,
+    },
+
+    syncedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     _id: false,

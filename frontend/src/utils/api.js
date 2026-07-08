@@ -176,3 +176,32 @@ export function getProjectActivity({ token, projectId }) {
     },
   });
 }
+
+export function connectProjectRepository({ token, projectId, repositoryUrl }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!projectId) {
+    return Promise.reject(new Error("Project ID is required."));
+  }
+
+  const normalizedRepositoryUrl =
+    typeof repositoryUrl === "string" ? repositoryUrl.trim() : "";
+
+  if (!normalizedRepositoryUrl) {
+    return Promise.reject(new Error("Repository URL is required."));
+  }
+
+  return apiRequest(`/projects/${encodeURIComponent(projectId)}/repository`, {
+    method: "PATCH",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+
+    body: JSON.stringify({
+      repositoryUrl: normalizedRepositoryUrl,
+    }),
+  });
+}
