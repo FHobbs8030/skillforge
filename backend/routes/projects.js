@@ -383,6 +383,94 @@ router.get("/:projectId/activity", requireAuth, async (req, res) => {
   }
 });
 
+router.get("/:projectId/members", requireAuth, async (req, res) => {
+  const { projectId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    return res.status(400).json({
+      error: "Invalid project ID.",
+    });
+  }
+
+  try {
+    const membership = await ProjectMembership.findOne({
+      projectId,
+      userId: req.user._id,
+      status: "active",
+    }).lean();
+
+    if (!membership) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    const projectMembers = await ProjectMembership.find({
+      projectId,
+      status: {
+        $ne: "removed",
+      },
+    })
+      .populate({
+        path: "userId",
+        select: "fullName email membership createdAt",
+      })
+      .sort({
+        joinedAt: 1,
+      })
+      .lean();
+
+    const roleOrder = {
+      owner: 1,
+      host: 2,
+      collaborator: 3,
+      viewer: 4,
+    };
+
+    const members = projectMembers
+      .sort((firstMember, secondMember) => {
+        return (
+          (roleOrder[firstMember.role] || 99) -
+          (roleOrder[secondMember.role] || 99)
+        );
+      })
+      .map((projectMember) => {
+        const user = projectMember.userId;
+
+        return {
+          id: projectMember._id,
+          projectId: projectMember.projectId,
+          userId: user?._id || projectMember.userId,
+          fullName: user?.fullName || "Unknown member",
+          email: user?.email || "",
+          accountMembership: user?.membership || "free",
+          role: projectMember.role,
+          status: projectMember.status,
+          invitedBy: projectMember.invitedBy,
+          joinedAt: projectMember.joinedAt,
+          leftAt: projectMember.leftAt,
+          createdAt: projectMember.createdAt,
+          updatedAt: projectMember.updatedAt,
+        };
+      });
+
+    return res.status(200).json({
+      members,
+      currentUserMembership: {
+        role: membership.role,
+        status: membership.status,
+        joinedAt: membership.joinedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Project members route error:", error);
+
+    return res.status(500).json({
+      error: "Unable to load project members. Please try again.",
+    });
+  }
+});
+
 router.patch("/:projectId/repository", requireAuth, async (req, res) => {
   const { projectId } = req.params;
 
