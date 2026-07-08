@@ -7,7 +7,9 @@ import {
   connectProjectRepository,
   getProjectActivity,
   getProjectById,
+  getProjectMembers,
 } from "../../utils/api";
+
 import useAuth from "../../contexts/useAuth";
 
 function ProjectDetail() {
@@ -15,6 +17,7 @@ function ProjectDetail() {
 
   const [project, setProject] = useState(null);
   const [activityEvents, setActivityEvents] = useState([]);
+  const [members, setMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -41,10 +44,12 @@ function ProjectDetail() {
         setIsLoading(true);
         setError("");
 
-        const [projectResponse, activityResponse] = await Promise.all([
-          getProjectById({ token: accessToken, projectId }),
-          getProjectActivity({ token: accessToken, projectId }),
-        ]);
+        const [projectResponse, activityResponse, membersResponse] =
+          await Promise.all([
+            getProjectById({ token: accessToken, projectId }),
+            getProjectActivity({ token: accessToken, projectId }),
+            getProjectMembers({ token: accessToken, projectId }),
+          ]);
 
         if (!isMounted) {
           return;
@@ -52,6 +57,7 @@ function ProjectDetail() {
 
         setProject(projectResponse.project);
         setActivityEvents(activityResponse.activityEvents || []);
+        setMembers(membersResponse.members || []);
       } catch (requestError) {
         console.error("Project detail load error:", requestError);
 
@@ -92,6 +98,17 @@ function ProjectDetail() {
 
   const formatActivityType = (eventType = "") => {
     return eventType
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  const formatMemberLabel = (value = "") => {
+    if (!value) {
+      return "Not available";
+    }
+
+    return value
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
@@ -362,6 +379,78 @@ function ProjectDetail() {
           ) : (
             <div className="project-detail__repository-note">
               Only project owners and hosts can connect repositories.
+            </div>
+          )}
+        </article>
+
+        <article className="project-detail__panel project-detail__panel_type_members">
+          <div className="project-detail__panel-header project-detail__panel-header_type_split">
+            <div>
+              <p className="project-detail__eyebrow">Collaborators</p>
+              <h2 className="project-detail__panel-title">Project Members</h2>
+            </div>
+
+            <span className="project-detail__member-count">
+              {members.length} {members.length === 1 ? "member" : "members"}
+            </span>
+          </div>
+
+          {members.length > 0 ? (
+            <div className="project-detail__members-list">
+              {members.map((member) => (
+                <article
+                  className="project-detail__member-card"
+                  key={member.id || member.userId}
+                >
+                  <div
+                    className="project-detail__member-avatar"
+                    aria-hidden="true"
+                  >
+                    {(member.fullName || member.email || "?")
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+
+                  <div className="project-detail__member-main">
+                    <div className="project-detail__member-heading">
+                      <div>
+                        <h3>{member.fullName || "Unknown member"}</h3>
+                        <p>{member.email || "Email not available"}</p>
+                      </div>
+
+                      <div className="project-detail__member-badges">
+                        <span className="project-detail__member-badge project-detail__member-badge_type_role">
+                          {formatMemberLabel(member.role)}
+                        </span>
+
+                        <span className="project-detail__member-badge project-detail__member-badge_type_status">
+                          {formatMemberLabel(member.status)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <dl className="project-detail__member-meta">
+                      <div>
+                        <dt>Joined</dt>
+                        <dd>{formatDateTime(member.joinedAt)}</dd>
+                      </div>
+
+                      <div>
+                        <dt>Account</dt>
+                        <dd>{formatMemberLabel(member.accountMembership)}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="project-detail__empty-state">
+              <h3>No members found</h3>
+              <p>
+                Project collaborators will appear here once members are attached
+                to this workspace.
+              </p>
             </div>
           )}
         </article>
