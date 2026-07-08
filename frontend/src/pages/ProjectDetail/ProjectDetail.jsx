@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 
 import "./ProjectDetail.css";
 
-import { getProjectActivity, getProjectById } from "../../utils/api";
+import {
+  connectProjectRepository,
+  getProjectActivity,
+  getProjectById,
+} from "../../utils/api";
 import useAuth from "../../contexts/useAuth";
 
 function ProjectDetail() {
@@ -13,6 +17,11 @@ function ProjectDetail() {
   const [activityEvents, setActivityEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [repositoryUrlInput, setRepositoryUrlInput] = useState("");
+  const [repositoryError, setRepositoryError] = useState("");
+  const [repositoryMessage, setRepositoryMessage] = useState("");
+  const [isConnectingRepository, setIsConnectingRepository] = useState(false);
 
   const { token, authToken, jwt } = useAuth();
 
@@ -88,9 +97,61 @@ function ProjectDetail() {
       .join(" ");
   };
 
+  const formatRepositoryName = (repository) => {
+    if (!repository?.owner || !repository?.name) {
+      return "No repository connected";
+    }
+
+    return `${repository.owner}/${repository.name}`;
+  };
+
+  const handleRepositorySubmit = async (event) => {
+    event.preventDefault();
+
+    setRepositoryError("");
+    setRepositoryMessage("");
+
+    try {
+      setIsConnectingRepository(true);
+
+      const repositoryResponse = await connectProjectRepository({
+        token: accessToken,
+        projectId,
+        repositoryUrl: repositoryUrlInput,
+      });
+
+      setProject(repositoryResponse.project);
+      setRepositoryUrlInput("");
+      setRepositoryMessage("Repository connected successfully.");
+
+      if (repositoryResponse.activityEvent) {
+        setActivityEvents((currentEvents) => [
+          repositoryResponse.activityEvent,
+          ...currentEvents,
+        ]);
+      }
+    } catch (requestError) {
+      console.error("Repository connection error:", requestError);
+
+      const fieldError = requestError.fields?.repositoryUrl;
+
+      setRepositoryError(
+        fieldError ||
+          requestError.message ||
+          "Unable to connect this repository right now.",
+      );
+    } finally {
+      setIsConnectingRepository(false);
+    }
+  };
+
   const projectRole = project?.role || project?.membership?.role || "Member";
+  const repository = project?.repository || {};
   const repositoryUrl =
     project?.repositoryUrl || project?.repository?.url || "";
+  const canConnectRepository = ["owner", "host"].includes(
+    projectRole.toLowerCase(),
+  );
 
   if (isLoading) {
     return (
@@ -179,23 +240,133 @@ function ProjectDetail() {
               <dt>Updated</dt>
               <dd>{formatDateTime(project.updatedAt)}</dd>
             </div>
-
-            <div>
-              <dt>Repository</dt>
-              <dd>
-                {repositoryUrl ? (
-                  <a href={repositoryUrl} target="_blank" rel="noreferrer">
-                    Open repository
-                  </a>
-                ) : (
-                  "No repository connected yet"
-                )}
-              </dd>
-            </div>
           </dl>
         </article>
 
         <article className="project-detail__panel">
+          <div className="project-detail__panel-header">
+            <p className="project-detail__eyebrow">Repository</p>
+            <h2 className="project-detail__panel-title">
+              Repository Connection
+            </h2>
+          </div>
+
+          <div className="project-detail__repository-card">
+            <div className="project-detail__repository-header">
+              <div>
+                <p className="project-detail__repository-label">
+                  Connected Repository
+                </p>
+
+                <h3 className="project-detail__repository-name">
+                  {formatRepositoryName(repository)}
+                </h3>
+              </div>
+
+              <span
+                className={`project-detail__repository-badge ${
+                  repositoryUrl
+                    ? "project-detail__repository-badge_type_connected"
+                    : ""
+                }`}
+              >
+                {repositoryUrl ? "Connected" : "Not connected"}
+              </span>
+            </div>
+
+            {repositoryUrl ? (
+              <dl className="project-detail__repository-meta">
+                <div>
+                  <dt>Provider</dt>
+                  <dd>{repository.provider || "github"}</dd>
+                </div>
+
+                <div>
+                  <dt>Default Branch</dt>
+                  <dd>{repository.defaultBranch || "Not available"}</dd>
+                </div>
+
+                <div>
+                  <dt>GitHub Updated</dt>
+                  <dd>{formatDateTime(repository.repositoryUpdatedAt)}</dd>
+                </div>
+
+                <div>
+                  <dt>Last Synced</dt>
+                  <dd>{formatDateTime(repository.syncedAt)}</dd>
+                </div>
+              </dl>
+            ) : (
+              <p className="project-detail__repository-empty">
+                Connect a GitHub repository to display source control metadata
+                for this project.
+              </p>
+            )}
+
+            {repositoryUrl && (
+              <a
+                className="project-detail__repository-link"
+                href={repositoryUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open repository
+              </a>
+            )}
+          </div>
+
+          {canConnectRepository ? (
+            <form
+              className="project-detail__repository-form"
+              onSubmit={handleRepositorySubmit}
+            >
+              <label htmlFor="repositoryUrl">
+                GitHub repository URL
+                <input
+                  id="repositoryUrl"
+                  name="repositoryUrl"
+                  type="url"
+                  placeholder="https://github.com/FHobbs8030/skillforge"
+                  value={repositoryUrlInput}
+                  onChange={(event) =>
+                    setRepositoryUrlInput(event.target.value)
+                  }
+                  disabled={isConnectingRepository}
+                />
+              </label>
+
+              {repositoryError && (
+                <p className="project-detail__repository-error">
+                  {repositoryError}
+                </p>
+              )}
+
+              {repositoryMessage && (
+                <p className="project-detail__repository-success">
+                  {repositoryMessage}
+                </p>
+              )}
+
+              <button
+                className="project-detail__repository-button"
+                type="submit"
+                disabled={isConnectingRepository}
+              >
+                {isConnectingRepository
+                  ? "Connecting..."
+                  : repositoryUrl
+                    ? "Update Repository"
+                    : "Connect Repository"}
+              </button>
+            </form>
+          ) : (
+            <div className="project-detail__repository-note">
+              Only project owners and hosts can connect repositories.
+            </div>
+          )}
+        </article>
+
+        <article className="project-detail__panel project-detail__panel_type_timeline">
           <div className="project-detail__panel-header">
             <p className="project-detail__eyebrow">Activity</p>
             <h2 className="project-detail__panel-title">Project Timeline</h2>
@@ -216,7 +387,9 @@ function ProjectDetail() {
                     <p>
                       {event.metadata?.projectName
                         ? `${event.metadata.projectName} workspace activity was recorded.`
-                        : "A project activity event was recorded."}
+                        : event.metadata?.name && event.metadata?.owner
+                          ? `${event.metadata.owner}/${event.metadata.name} repository activity was recorded.`
+                          : "A project activity event was recorded."}
                     </p>
 
                     <time>{formatDateTime(event.occurredAt)}</time>

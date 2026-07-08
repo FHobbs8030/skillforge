@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const fetch = require("node-fetch");
 
 const ActivityEvent = require("../models/ActivityEvent");
 const Project = require("../models/Project");
@@ -18,6 +19,7 @@ const PROJECT_STATUSES = new Set([
 ]);
 
 const PROJECT_VISIBILITIES = new Set(["private", "team", "public"]);
+const PROJECT_REPOSITORY_WRITE_ROLES = new Set(["owner", "host"]);
 
 function getMongooseValidationFields(error) {
   return Object.fromEntries(
@@ -26,6 +28,20 @@ function getMongooseValidationFields(error) {
       fieldError.message,
     ]),
   );
+}
+
+function normalizeDateValue(dateValue) {
+  if (!dateValue) {
+    return null;
+  }
+
+  const parsedDate = new Date(dateValue);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  return parsedDate;
 }
 
 function normalizeRepository(repository) {
@@ -46,7 +62,12 @@ function normalizeRepository(repository) {
 
   const url = typeof repository.url === "string" ? repository.url.trim() : "";
 
-  if (!provider && !owner && !name && !url) {
+  const defaultBranch =
+    typeof repository.defaultBranch === "string"
+      ? repository.defaultBranch.trim()
+      : "";
+
+  if (!provider && !owner && !name && !url && !defaultBranch) {
     return undefined;
   }
 
@@ -55,6 +76,10 @@ function normalizeRepository(repository) {
     owner,
     name,
     url,
+    defaultBranch,
+    repositoryUpdatedAt: normalizeDateValue(repository.repositoryUpdatedAt),
+    connectedAt: normalizeDateValue(repository.connectedAt),
+    syncedAt: normalizeDateValue(repository.syncedAt),
   };
 }
 
@@ -101,7 +126,107 @@ function validateRepository(repository) {
     }
   }
 
+  if (repository.defaultBranch && repository.defaultBranch.length > 100) {
+    errors["repository.defaultBranch"] =
+      "Default branch cannot exceed 100 characters.";
+  }
+
   return errors;
+}
+
+function parseGitHubRepositoryUrl(repositoryUrl) {
+  const normalizedUrl =
+    typeof repositoryUrl === "string" ? repositoryUrl.trim() : "";
+
+  if (!normalizedUrl) {
+    return {
+      error: "Repository URL is required.",
+    };
+  }
+
+  let parsedUrl;
+
+  try {
+    parsedUrl = new URL(normalizedUrl);
+  } catch {
+    return {
+      error: "Repository URL must be a valid GitHub HTTPS URL.",
+    };
+  }
+
+  if (parsedUrl.protocol !== "https:" || parsedUrl.hostname !== "github.com") {
+    return {
+      error: "Repository URL must be a valid GitHub HTTPS URL.",
+    };
+  }
+
+  const [owner, rawRepositoryName] = parsedUrl.pathname
+    .split("/")
+    .filter(Boolean);
+
+  const repositoryName = rawRepositoryName?.replace(/\.git$/i, "");
+
+  if (!owner || !repositoryName) {
+    return {
+      error: "Repository URL must include an owner and repository name.",
+    };
+  }
+
+  return {
+    repository: {
+      provider: "github",
+      owner,
+      name: repositoryName,
+      url: `https://github.com/${owner}/${repositoryName}`,
+    },
+  };
+}
+
+function getGitHubRequestHeaders() {
+  const headers = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "SkillForge",
+  };
+
+  if (process.env.GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  }
+
+  return headers;
+}
+
+async function fetchGitHubRepositoryMetadata({ owner, name }) {
+  const repositoryResponse = await fetch(
+    `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`,
+    {
+      headers: getGitHubRequestHeaders(),
+    },
+  );
+
+  const repositoryData = await repositoryResponse.json();
+
+  if (!repositoryResponse.ok) {
+    const status = repositoryResponse.status === 404 ? 404 : 502;
+
+    const error = new Error(
+      repositoryData.message || "Unable to fetch GitHub repository metadata.",
+    );
+
+    error.status = status;
+
+    throw error;
+  }
+
+  return {
+    provider: "github",
+    owner: repositoryData.owner?.login || owner,
+    name: repositoryData.name || name,
+    url: repositoryData.html_url,
+    defaultBranch: repositoryData.default_branch || "",
+    repositoryUpdatedAt: normalizeDateValue(repositoryData.updated_at),
+    connectedAt: new Date(),
+    syncedAt: new Date(),
+  };
 }
 
 router.get("/", requireAuth, async (req, res) => {
@@ -254,6 +379,114 @@ router.get("/:projectId/activity", requireAuth, async (req, res) => {
 
     return res.status(500).json({
       error: "Unable to load project activity. Please try again.",
+    });
+  }
+});
+
+router.patch("/:projectId/repository", requireAuth, async (req, res) => {
+  const { projectId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    return res.status(400).json({
+      error: "Invalid project ID.",
+    });
+  }
+
+  const parsedRepository = parseGitHubRepositoryUrl(
+    req.body?.repositoryUrl || req.body?.url,
+  );
+
+  if (parsedRepository.error) {
+    return res.status(400).json({
+      error: "Validation failed.",
+      fields: {
+        repositoryUrl: parsedRepository.error,
+      },
+    });
+  }
+
+  try {
+    const membership = await ProjectMembership.findOne({
+      projectId,
+      userId: req.user._id,
+      status: "active",
+    }).lean();
+
+    if (!membership) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    if (!PROJECT_REPOSITORY_WRITE_ROLES.has(membership.role)) {
+      return res.status(403).json({
+        error: "Only project owners and hosts can connect repositories.",
+      });
+    }
+
+    const repositoryMetadata = await fetchGitHubRepositoryMetadata({
+      owner: parsedRepository.repository.owner,
+      name: parsedRepository.repository.name,
+    });
+
+    const project = await Project.findByIdAndUpdate(
+      projectId,
+      {
+        repository: repositoryMetadata,
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).lean();
+
+    if (!project) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    const activityEvent = await ActivityEvent.create({
+      projectId,
+      actorId: req.user._id,
+      eventType: "repository_connected",
+      source: "github",
+      entityType: "repository",
+      entityId: `${repositoryMetadata.owner}/${repositoryMetadata.name}`,
+      metadata: {
+        provider: repositoryMetadata.provider,
+        owner: repositoryMetadata.owner,
+        name: repositoryMetadata.name,
+        url: repositoryMetadata.url,
+        defaultBranch: repositoryMetadata.defaultBranch,
+      },
+      occurredAt: new Date(),
+    });
+
+    return res.status(200).json({
+      message: "Repository connected successfully.",
+      project: {
+        ...project,
+        id: project._id,
+        role: membership.role,
+        repositoryUrl: project.repository?.url || "",
+        membership: {
+          role: membership.role,
+          status: membership.status,
+          joinedAt: membership.joinedAt,
+        },
+      },
+      repository: project.repository,
+      activityEvent,
+    });
+  } catch (error) {
+    console.error("Project repository connection route error:", error);
+
+    return res.status(error.status || 500).json({
+      error:
+        error.status === 404
+          ? "GitHub repository not found."
+          : "Unable to connect repository. Please try again.",
     });
   }
 });
