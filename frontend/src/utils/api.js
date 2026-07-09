@@ -302,6 +302,24 @@ export function updateProject({
   });
 }
 
+export function archiveProject({ token, projectId }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!projectId) {
+    return Promise.reject(new Error("Project ID is required."));
+  }
+
+  return apiRequest(`/projects/${encodeURIComponent(projectId)}/archive`, {
+    method: "PATCH",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
 export function getProjectActivity({ token, projectId }) {
   if (!token) {
     return Promise.reject(new Error("Authentication token is required."));
