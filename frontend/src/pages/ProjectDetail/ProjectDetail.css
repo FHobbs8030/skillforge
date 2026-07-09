@@ -86,6 +86,90 @@
   text-transform: capitalize;
 }
 
+.project-detail__hero-aside {
+  display: grid;
+  align-content: start;
+
+  gap: 14px;
+
+  min-width: 180px;
+}
+
+.project-detail__access-card {
+  padding: 18px;
+
+  border: 1px solid rgba(103, 232, 249, 0.28);
+  border-radius: 18px;
+
+  background:
+    radial-gradient(
+      circle at 85% 20%,
+      rgba(103, 232, 249, 0.18),
+      transparent 42%
+    ),
+    rgba(2, 6, 23, 0.3);
+}
+
+.project-detail__access-label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #94a3b8;
+
+  font-size: 12px;
+  font-weight: 900;
+
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.project-detail__access-value {
+  display: block;
+
+  color: #f8fafc;
+
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.project-detail__access-detail {
+  display: block;
+
+  margin-top: 8px;
+
+  color: #cbd5e1;
+
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.project-detail__role-summary {
+  margin-top: 18px;
+  padding: 16px;
+
+  border: 1px solid rgba(103, 232, 249, 0.22);
+  border-radius: 16px;
+
+  background: rgba(8, 47, 73, 0.28);
+}
+
+.project-detail__role-summary strong {
+  color: #cffafe;
+
+  font-size: 15px;
+}
+
+.project-detail__role-summary p {
+  margin: 8px 0 0;
+
+  color: #cbd5e1;
+
+  font-size: 14px;
+  line-height: 1.55;
+}
+
 .project-detail__grid {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -314,6 +398,20 @@
   line-height: 1.5;
 }
 
+.project-detail__repository-note {
+  display: grid;
+
+  gap: 6px;
+}
+
+.project-detail__repository-note strong {
+  color: #f8fafc;
+}
+
+.project-detail__repository-note span {
+  color: #cbd5e1;
+}
+
 .project-detail__repository-error {
   border: 1px solid rgba(248, 113, 113, 0.34);
   color: #fecaca;
@@ -459,6 +557,28 @@
   border: 1px dashed rgba(148, 163, 184, 0.3);
   color: #cbd5e1;
   background: rgba(2, 6, 23, 0.22);
+}
+
+.project-detail__invite-note {
+  display: grid;
+
+  gap: 6px;
+}
+
+.project-detail__invite-note strong {
+  color: #f8fafc;
+}
+
+.project-detail__invite-note span {
+  color: #cbd5e1;
+}
+
+.project-detail__repository-note_type_enabled,
+.project-detail__invite-note_type_enabled {
+  border-style: solid;
+  border-color: rgba(34, 197, 94, 0.34);
+
+  background: rgba(20, 83, 45, 0.22);
 }
 
 .project-detail__members-list {
@@ -667,6 +787,10 @@
     flex-direction: column;
   }
 
+  .project-detail__hero-aside {
+    width: 100%;
+  }
+
   .project-detail__status-card {
     width: 100%;
     box-sizing: border-box;
@@ -685,6 +809,10 @@
 @media (max-width: 560px) {
   .project-detail {
     padding: 0;
+  }
+
+  .project-detail__hero-aside {
+    min-width: 0;
   }
 
   .project-detail__hero,
@@ -723,7 +851,7 @@
     padding: 16px;
   }
 
-    .project-detail__panel-header_type_split,
+  .project-detail__panel-header_type_split,
   .project-detail__member-heading {
     flex-direction: column;
   }
