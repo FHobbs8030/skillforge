@@ -141,6 +141,47 @@ export function getProjects(token) {
   });
 }
 
+export function createProject({
+  token,
+  name,
+  description = "",
+  status = "active",
+  visibility = "private",
+}) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  const normalizedName = typeof name === "string" ? name.trim() : "";
+  const normalizedDescription =
+    typeof description === "string" ? description.trim() : "";
+  const normalizedStatus =
+    typeof status === "string" ? status.trim().toLowerCase() : "active";
+  const normalizedVisibility =
+    typeof visibility === "string"
+      ? visibility.trim().toLowerCase()
+      : "private";
+
+  if (!normalizedName) {
+    return Promise.reject(new Error("Project name is required."));
+  }
+
+  return apiRequest("/projects", {
+    method: "POST",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+
+    body: JSON.stringify({
+      name: normalizedName,
+      description: normalizedDescription,
+      status: normalizedStatus,
+      visibility: normalizedVisibility,
+    }),
+  });
+}
+
 export function getPendingProjectInvitations(token) {
   if (!token) {
     return Promise.reject(new Error("Authentication token is required."));
