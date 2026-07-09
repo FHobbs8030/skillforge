@@ -13,6 +13,140 @@ import {
 
 import useAuth from "../../contexts/useAuth";
 
+const projectRoleDetails = {
+  owner: {
+    label: "Owner",
+    accessLabel: "Full management access",
+    tone: "owner",
+    heroEyebrow: "Owner Workspace",
+    heroSubtitle:
+      "You can manage project setup, repository connection, member invitations, project membership, and activity review.",
+    overviewTitle: "Owner project controls",
+    overviewSummary:
+      "Owner access includes full project management permissions for this SkillForge workspace.",
+    repositoryTitle: "Repository Management",
+    repositoryEmpty:
+      "Connect a GitHub repository to display source control metadata for this project.",
+    repositoryNoteTitle: "Repository management enabled",
+    repositoryNote:
+      "Owners can connect or update the GitHub repository attached to this project.",
+    membersEyebrow: "Team Management",
+    membersTitle: "Project Members",
+    inviteNoteTitle: "Member invitations enabled",
+    inviteNote:
+      "Owners can invite hosts, collaborators, and viewers into this project workspace.",
+    activityTitle: "Project Timeline",
+    activityEmpty:
+      "Project timeline events will appear here as collaboration activity is recorded.",
+  },
+  host: {
+    label: "Host",
+    accessLabel: "Host management access",
+    tone: "host",
+    heroEyebrow: "Host Workspace",
+    heroSubtitle:
+      "You can coordinate the project workspace, manage repository setup, invite members, and review project activity.",
+    overviewTitle: "Host project controls",
+    overviewSummary:
+      "Host access supports day-to-day project coordination and workspace management.",
+    repositoryTitle: "Repository Management",
+    repositoryEmpty:
+      "Connect a GitHub repository to display source control metadata for this project.",
+    repositoryNoteTitle: "Repository management enabled",
+    repositoryNote:
+      "Hosts can connect or update the GitHub repository attached to this project.",
+    membersEyebrow: "Team Management",
+    membersTitle: "Project Members",
+    inviteNoteTitle: "Member invitations enabled",
+    inviteNote:
+      "Hosts can invite collaborators and viewers into this project workspace.",
+    activityTitle: "Project Timeline",
+    activityEmpty:
+      "Project timeline events will appear here as collaboration activity is recorded.",
+  },
+  collaborator: {
+    label: "Collaborator",
+    accessLabel: "Contributor access",
+    tone: "collaborator",
+    heroEyebrow: "Collaborator Workspace",
+    heroSubtitle:
+      "You can review project details, repository context, members, and activity without management controls.",
+    overviewTitle: "Collaborator project view",
+    overviewSummary:
+      "Collaborator access focuses on project context, contribution visibility, and activity review.",
+    repositoryTitle: "Repository Reference",
+    repositoryEmpty:
+      "No repository is connected yet. Once an owner or host connects one, repository details will appear here.",
+    repositoryNoteTitle: "Repository is read-only",
+    repositoryNote:
+      "Collaborators can view repository details, but only owners and hosts can connect or update repositories.",
+    membersEyebrow: "Project Team",
+    membersTitle: "Project Members",
+    inviteNoteTitle: "Invitations unavailable",
+    inviteNote:
+      "Collaborators can view the project team, but only owners and hosts can invite members.",
+    activityTitle: "Project Activity",
+    activityEmpty:
+      "Project activity will appear here once workspace events are recorded.",
+  },
+  viewer: {
+    label: "Viewer",
+    accessLabel: "Read-only access",
+    tone: "viewer",
+    heroEyebrow: "Read-only Workspace",
+    heroSubtitle:
+      "You can view project details, repository context, members, and activity without editing project data.",
+    overviewTitle: "Read-only project overview",
+    overviewSummary:
+      "Viewer access is designed for observing project status and activity without workspace management actions.",
+    repositoryTitle: "Repository Reference",
+    repositoryEmpty:
+      "No repository is connected yet. Repository details will appear here after an owner or host connects one.",
+    repositoryNoteTitle: "Read-only repository access",
+    repositoryNote:
+      "Viewers can review repository details, but cannot connect or update repositories.",
+    membersEyebrow: "Project Team",
+    membersTitle: "Project Members",
+    inviteNoteTitle: "Read-only member access",
+    inviteNote:
+      "Viewers can review project members, but cannot invite or manage members.",
+    activityTitle: "Project Activity",
+    activityEmpty:
+      "Project activity will appear here once workspace events are recorded.",
+  },
+  member: {
+    label: "Member",
+    accessLabel: "Project access",
+    tone: "member",
+    heroEyebrow: "Project Workspace",
+    heroSubtitle:
+      "You can review the project workspace available to your SkillForge account.",
+    overviewTitle: "Project Details",
+    overviewSummary:
+      "Your project access is connected to this authenticated SkillForge account.",
+    repositoryTitle: "Repository Reference",
+    repositoryEmpty:
+      "No repository is connected yet. Repository details will appear here when available.",
+    repositoryNoteTitle: "Repository management unavailable",
+    repositoryNote:
+      "Repository management is limited to project owners and hosts.",
+    membersEyebrow: "Project Team",
+    membersTitle: "Project Members",
+    inviteNoteTitle: "Invitations unavailable",
+    inviteNote:
+      "Member invitation controls are limited to project owners and hosts.",
+    activityTitle: "Project Activity",
+    activityEmpty:
+      "Project activity will appear here once workspace events are recorded.",
+  },
+};
+
+function getProjectRoleDetails(role = "") {
+  const normalizedRole = role.toLowerCase();
+
+  return projectRoleDetails[normalizedRole] || projectRoleDetails.member;
+}
+
 function ProjectDetail() {
   const { projectId } = useParams();
 
@@ -22,7 +156,7 @@ function ProjectDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-   const [repositoryUrlInput, setRepositoryUrlInput] = useState("");
+  const [repositoryUrlInput, setRepositoryUrlInput] = useState("");
   const [repositoryError, setRepositoryError] = useState("");
   const [repositoryMessage, setRepositoryMessage] = useState("");
   const [isConnectingRepository, setIsConnectingRepository] = useState(false);
@@ -129,6 +263,34 @@ function ProjectDetail() {
     return `${repository.owner}/${repository.name}`;
   };
 
+  const getActivitySummary = (event) => {
+    if (event.eventType === "member_invited") {
+      return `${event.metadata?.invitedFullName || event.metadata?.invitedEmail || "A member"} was invited as ${formatMemberLabel(event.metadata?.role)}.`;
+    }
+
+    if (event.eventType === "member_invitation_accepted") {
+      return `A project invitation was accepted for the ${formatMemberLabel(event.metadata?.role)} role.`;
+    }
+
+    if (event.eventType === "member_invitation_declined") {
+      return `A project invitation was declined for the ${formatMemberLabel(event.metadata?.role)} role.`;
+    }
+
+    if (event.eventType === "repository_connected") {
+      return event.metadata?.name && event.metadata?.owner
+        ? `${event.metadata.owner}/${event.metadata.name} repository activity was recorded.`
+        : "Repository activity was recorded.";
+    }
+
+    if (event.eventType === "project_created") {
+      return event.metadata?.projectName
+        ? `${event.metadata.projectName} workspace activity was recorded.`
+        : "Project workspace activity was recorded.";
+    }
+
+    return "A project activity event was recorded.";
+  };
+
   const handleRepositorySubmit = async (event) => {
     event.preventDefault();
 
@@ -219,32 +381,30 @@ function ProjectDetail() {
     }
   };
 
-  const projectRole = project?.role || project?.membership?.role || "Member";
+  const projectRole = project?.role || project?.membership?.role || "member";
+  const normalizedProjectRole = projectRole.toLowerCase();
+  const roleDetails = getProjectRoleDetails(normalizedProjectRole);
   const repository = project?.repository || {};
   const repositoryUrl =
     project?.repositoryUrl || project?.repository?.url || "";
 
-      const canConnectRepository = ["owner", "host"].includes(
-        projectRole.toLowerCase(),
-      );
+  const canManageProject = ["owner", "host"].includes(normalizedProjectRole);
+  const canConnectRepository = canManageProject;
+  const canInviteMembers = canManageProject;
 
-      const canInviteMembers = ["owner", "host"].includes(
-        projectRole.toLowerCase(),
-      );
-
-      if (isLoading) {
-        return (
-          <section className="project-detail">
-            <div className="project-detail__state-card">
-              <p className="project-detail__eyebrow">Project Detail</p>
-              <h1 className="project-detail__title">Loading project...</h1>
-              <p className="project-detail__text">
-                Fetching project overview and activity history.
-              </p>
-            </div>
-          </section>
-        );
-      }
+  if (isLoading) {
+    return (
+      <section className="project-detail">
+        <div className="project-detail__state-card">
+          <p className="project-detail__eyebrow">Project Detail</p>
+          <h1 className="project-detail__title">Loading project...</h1>
+          <p className="project-detail__text">
+            Fetching project overview, access level, and activity history.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   if (error) {
     return (
@@ -263,31 +423,40 @@ function ProjectDetail() {
   }
 
   return (
-    <section className="project-detail">
+    <section className={`project-detail project-detail--${roleDetails.tone}`}>
       <div className="project-detail__hero">
         <div>
           <Link className="project-detail__back-link" to="/projects">
             Back to Projects
           </Link>
 
-          <p className="project-detail__eyebrow">Project Workspace</p>
+          <p className="project-detail__eyebrow">{roleDetails.heroEyebrow}</p>
 
           <h1 className="project-detail__title">{project.name}</h1>
 
-          <p className="project-detail__subtitle">
-            Dedicated project overview, membership role, repository reference,
-            and activity timeline.
-          </p>
+          <p className="project-detail__subtitle">{roleDetails.heroSubtitle}</p>
         </div>
 
-        <div className="project-detail__status-card status-light status-light--hero">
-          <div className="status-light__content">
-            <span className="project-detail__status-label status-light__label">
-              Status
-            </span>
-            <strong className="project-detail__status-value status-light__value">
-              {project.status || "Active"}
+        <div className="project-detail__hero-aside">
+          <div className="project-detail__status-card status-light status-light--hero">
+            <div className="status-light__content">
+              <span className="project-detail__status-label status-light__label">
+                Status
+              </span>
+              <strong className="project-detail__status-value status-light__value">
+                {project.status || "Active"}
+              </strong>
+            </div>
+          </div>
+
+          <div className="project-detail__access-card">
+            <span className="project-detail__access-label">Access</span>
+            <strong className="project-detail__access-value">
+              {roleDetails.label}
             </strong>
+            <span className="project-detail__access-detail">
+              {roleDetails.accessLabel}
+            </span>
           </div>
         </div>
       </div>
@@ -296,7 +465,9 @@ function ProjectDetail() {
         <article className="project-detail__panel">
           <div className="project-detail__panel-header">
             <p className="project-detail__eyebrow">Overview</p>
-            <h2 className="project-detail__panel-title">Project Details</h2>
+            <h2 className="project-detail__panel-title">
+              {roleDetails.overviewTitle}
+            </h2>
           </div>
 
           <dl className="project-detail__details-list">
@@ -307,7 +478,12 @@ function ProjectDetail() {
 
             <div>
               <dt>Role</dt>
-              <dd>{projectRole}</dd>
+              <dd>{roleDetails.label}</dd>
+            </div>
+
+            <div>
+              <dt>Access</dt>
+              <dd>{roleDetails.accessLabel}</dd>
             </div>
 
             <div>
@@ -320,13 +496,18 @@ function ProjectDetail() {
               <dd>{formatDateTime(project.updatedAt)}</dd>
             </div>
           </dl>
+
+          <div className="project-detail__role-summary">
+            <strong>{roleDetails.accessLabel}</strong>
+            <p>{roleDetails.overviewSummary}</p>
+          </div>
         </article>
 
         <article className="project-detail__panel">
           <div className="project-detail__panel-header">
             <p className="project-detail__eyebrow">Repository</p>
             <h2 className="project-detail__panel-title">
-              Repository Connection
+              {roleDetails.repositoryTitle}
             </h2>
           </div>
 
@@ -377,8 +558,7 @@ function ProjectDetail() {
               </dl>
             ) : (
               <p className="project-detail__repository-empty">
-                Connect a GitHub repository to display source control metadata
-                for this project.
+                {roleDetails.repositoryEmpty}
               </p>
             )}
 
@@ -395,52 +575,60 @@ function ProjectDetail() {
           </div>
 
           {canConnectRepository ? (
-            <form
-              className="project-detail__repository-form"
-              onSubmit={handleRepositorySubmit}
-            >
-              <label htmlFor="repositoryUrl">
-                GitHub repository URL
-                <input
-                  id="repositoryUrl"
-                  name="repositoryUrl"
-                  type="url"
-                  placeholder="https://github.com/FHobbs8030/skillforge"
-                  value={repositoryUrlInput}
-                  onChange={(event) =>
-                    setRepositoryUrlInput(event.target.value)
-                  }
-                  disabled={isConnectingRepository}
-                />
-              </label>
+            <>
+              <div className="project-detail__repository-note project-detail__repository-note_type_enabled">
+                <strong>{roleDetails.repositoryNoteTitle}</strong>
+                <span>{roleDetails.repositoryNote}</span>
+              </div>
 
-              {repositoryError && (
-                <p className="project-detail__repository-error">
-                  {repositoryError}
-                </p>
-              )}
-
-              {repositoryMessage && (
-                <p className="project-detail__repository-success">
-                  {repositoryMessage}
-                </p>
-              )}
-
-              <button
-                className="project-detail__repository-button"
-                type="submit"
-                disabled={isConnectingRepository}
+              <form
+                className="project-detail__repository-form"
+                onSubmit={handleRepositorySubmit}
               >
-                {isConnectingRepository
-                  ? "Connecting..."
-                  : repositoryUrl
-                    ? "Update Repository"
-                    : "Connect Repository"}
-              </button>
-            </form>
+                <label htmlFor="repositoryUrl">
+                  GitHub repository URL
+                  <input
+                    id="repositoryUrl"
+                    name="repositoryUrl"
+                    type="url"
+                    placeholder="https://github.com/FHobbs8030/skillforge"
+                    value={repositoryUrlInput}
+                    onChange={(event) =>
+                      setRepositoryUrlInput(event.target.value)
+                    }
+                    disabled={isConnectingRepository}
+                  />
+                </label>
+
+                {repositoryError && (
+                  <p className="project-detail__repository-error">
+                    {repositoryError}
+                  </p>
+                )}
+
+                {repositoryMessage && (
+                  <p className="project-detail__repository-success">
+                    {repositoryMessage}
+                  </p>
+                )}
+
+                <button
+                  className="project-detail__repository-button"
+                  type="submit"
+                  disabled={isConnectingRepository}
+                >
+                  {isConnectingRepository
+                    ? "Connecting..."
+                    : repositoryUrl
+                      ? "Update Repository"
+                      : "Connect Repository"}
+                </button>
+              </form>
+            </>
           ) : (
             <div className="project-detail__repository-note">
-              Only project owners and hosts can connect repositories.
+              <strong>{roleDetails.repositoryNoteTitle}</strong>
+              <span>{roleDetails.repositoryNote}</span>
             </div>
           )}
         </article>
@@ -448,8 +636,12 @@ function ProjectDetail() {
         <article className="project-detail__panel project-detail__panel_type_members">
           <div className="project-detail__panel-header project-detail__panel-header_type_split">
             <div>
-              <p className="project-detail__eyebrow">Collaborators</p>
-              <h2 className="project-detail__panel-title">Project Members</h2>
+              <p className="project-detail__eyebrow">
+                {roleDetails.membersEyebrow}
+              </p>
+              <h2 className="project-detail__panel-title">
+                {roleDetails.membersTitle}
+              </h2>
             </div>
 
             <span className="project-detail__member-count">
@@ -458,64 +650,74 @@ function ProjectDetail() {
           </div>
 
           {canInviteMembers ? (
-            <form
-              className="project-detail__invite-form"
-              onSubmit={handleInviteSubmit}
-            >
-              <div className="project-detail__invite-fields">
-                <label htmlFor="inviteEmail">
-                  Member email
-                  <input
-                    id="inviteEmail"
-                    name="inviteEmail"
-                    type="email"
-                    placeholder="member@example.com"
-                    value={inviteEmailInput}
-                    onChange={(event) =>
-                      setInviteEmailInput(event.target.value)
-                    }
-                    disabled={isInvitingMember}
-                  />
-                </label>
-
-                <label htmlFor="inviteRole">
-                  Role
-                  <select
-                    id="inviteRole"
-                    name="inviteRole"
-                    value={inviteRoleInput}
-                    onChange={(event) => setInviteRoleInput(event.target.value)}
-                    disabled={isInvitingMember}
-                  >
-                    <option value="collaborator">Collaborator</option>
-                    <option value="host">Host</option>
-                    <option value="viewer">Viewer</option>
-                  </select>
-                </label>
+            <>
+              <div className="project-detail__invite-note project-detail__invite-note_type_enabled">
+                <strong>{roleDetails.inviteNoteTitle}</strong>
+                <span>{roleDetails.inviteNote}</span>
               </div>
 
-              {inviteError && (
-                <p className="project-detail__invite-error">{inviteError}</p>
-              )}
-
-              {inviteMessage && (
-                <p className="project-detail__invite-success">
-                  {inviteMessage}
-                </p>
-              )}
-
-              <button
-                className="project-detail__invite-button"
-                type="submit"
-                disabled={isInvitingMember}
+              <form
+                className="project-detail__invite-form"
+                onSubmit={handleInviteSubmit}
               >
-                {isInvitingMember ? "Inviting..." : "Invite Member"}
-              </button>
-            </form>
+                <div className="project-detail__invite-fields">
+                  <label htmlFor="inviteEmail">
+                    Member email
+                    <input
+                      id="inviteEmail"
+                      name="inviteEmail"
+                      type="email"
+                      placeholder="member@example.com"
+                      value={inviteEmailInput}
+                      onChange={(event) =>
+                        setInviteEmailInput(event.target.value)
+                      }
+                      disabled={isInvitingMember}
+                    />
+                  </label>
+
+                  <label htmlFor="inviteRole">
+                    Role
+                    <select
+                      id="inviteRole"
+                      name="inviteRole"
+                      value={inviteRoleInput}
+                      onChange={(event) =>
+                        setInviteRoleInput(event.target.value)
+                      }
+                      disabled={isInvitingMember}
+                    >
+                      <option value="collaborator">Collaborator</option>
+                      <option value="host">Host</option>
+                      <option value="viewer">Viewer</option>
+                    </select>
+                  </label>
+                </div>
+
+                {inviteError && (
+                  <p className="project-detail__invite-error">{inviteError}</p>
+                )}
+
+                {inviteMessage && (
+                  <p className="project-detail__invite-success">
+                    {inviteMessage}
+                  </p>
+                )}
+
+                <button
+                  className="project-detail__invite-button"
+                  type="submit"
+                  disabled={isInvitingMember}
+                >
+                  {isInvitingMember ? "Inviting..." : "Invite Member"}
+                </button>
+              </form>
+            </>
           ) : (
-            <p className="project-detail__invite-note">
-              Only project owners and hosts can invite members.
-            </p>
+            <div className="project-detail__invite-note">
+              <strong>{roleDetails.inviteNoteTitle}</strong>
+              <span>{roleDetails.inviteNote}</span>
+            </div>
           )}
 
           {members.length > 0 ? (
@@ -581,7 +783,9 @@ function ProjectDetail() {
         <article className="project-detail__panel project-detail__panel_type_timeline">
           <div className="project-detail__panel-header">
             <p className="project-detail__eyebrow">Activity</p>
-            <h2 className="project-detail__panel-title">Project Timeline</h2>
+            <h2 className="project-detail__panel-title">
+              {roleDetails.activityTitle}
+            </h2>
           </div>
 
           {activityEvents.length > 0 ? (
@@ -596,15 +800,7 @@ function ProjectDetail() {
                   <div>
                     <h3>{formatActivityType(event.eventType)}</h3>
 
-                    <p>
-                      {event.eventType === "member_invited"
-                        ? `${event.metadata?.invitedFullName || event.metadata?.invitedEmail || "A member"} was invited as ${formatMemberLabel(event.metadata?.role)}.`
-                        : event.metadata?.projectName
-                          ? `${event.metadata.projectName} workspace activity was recorded.`
-                          : event.metadata?.name && event.metadata?.owner
-                            ? `${event.metadata.owner}/${event.metadata.name} repository activity was recorded.`
-                            : "A project activity event was recorded."}
-                    </p>
+                    <p>{getActivitySummary(event)}</p>
                     <time>{formatDateTime(event.occurredAt)}</time>
                   </div>
                 </li>
@@ -613,10 +809,7 @@ function ProjectDetail() {
           ) : (
             <div className="project-detail__empty-state">
               <h3>No activity yet</h3>
-              <p>
-                Project timeline events will appear here as collaboration
-                activity is recorded.
-              </p>
+              <p>{roleDetails.activityEmpty}</p>
             </div>
           )}
         </article>
