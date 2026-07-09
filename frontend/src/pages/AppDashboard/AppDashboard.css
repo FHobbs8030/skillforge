@@ -573,6 +573,164 @@
   text-transform: uppercase;
 }
 
+.app-dashboard__role-state {
+  color: var(--color-text-secondary);
+
+  font-size: var(--font-size-sm);
+}
+
+.app-dashboard__role-state--error {
+  color: #fca5a5;
+
+  background: rgba(127, 29, 29, 0.12);
+
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+.app-dashboard__role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: var(--space-3);
+}
+
+.app-dashboard__role-card {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--space-4);
+
+  overflow: hidden;
+}
+
+.app-dashboard__role-card::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+
+  width: 3px;
+}
+
+.app-dashboard__role-card--host::before {
+  background: var(--brand-blue);
+}
+
+.app-dashboard__role-card--collaborator::before {
+  background: var(--brand-teal);
+}
+
+.app-dashboard__role-card--viewer::before {
+  background: var(--brand-purple);
+}
+
+.app-dashboard__role-card--member::before {
+  background: var(--brand-orange);
+}
+
+.app-dashboard__role-card-main {
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--space-2);
+}
+
+.app-dashboard__role-badge {
+  align-self: flex-start;
+
+  padding: 3px var(--space-2);
+
+  color: var(--color-brand-cyan-light);
+
+  background: rgba(56, 189, 248, 0.1);
+
+  border: 1px solid rgba(56, 189, 248, 0.24);
+  border-radius: var(--radius-pill);
+
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-bold);
+
+  text-transform: uppercase;
+}
+
+.app-dashboard__role-card h3 {
+  margin: 0;
+
+  color: var(--color-text-primary);
+
+  font-size: var(--font-size-base);
+}
+
+.app-dashboard__role-card-main p,
+.app-dashboard__role-description {
+  margin: 0;
+
+  color: var(--color-text-secondary);
+
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+}
+
+.app-dashboard__role-meta {
+  display: grid;
+
+  gap: var(--space-2);
+
+  margin: 0;
+}
+
+.app-dashboard__role-meta > div {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.35fr) minmax(0, 1fr);
+
+  gap: var(--space-2);
+
+  padding-top: var(--space-2);
+
+  border-top: 1px solid var(--border-subtle);
+}
+
+.app-dashboard__role-meta dt {
+  color: var(--color-text-muted);
+
+  font-size: var(--font-size-xs);
+}
+
+.app-dashboard__role-meta dd {
+  margin: 0;
+
+  color: var(--color-text-primary);
+
+  font-size: var(--font-size-sm);
+}
+
+.app-dashboard__role-card-link {
+  align-self: flex-start;
+
+  margin-top: auto;
+  padding: var(--space-2) var(--space-3);
+
+  color: var(--color-text-inverse);
+  background: var(--button-gradient);
+
+  border-radius: var(--radius-pill);
+
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+
+  text-decoration: none;
+
+  box-shadow: var(--shadow-button);
+}
+
+.app-dashboard__role-card-link:hover {
+  transform: translateY(-1px);
+}
+
 /* =========================
    SECURITY
 ========================= */
@@ -614,79 +772,7 @@
   font-weight: var(--font-weight-bold);
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
-
-@media (max-width: 960px) {
-  .app-dashboard__metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .app-dashboard__workspace-grid,
-  .app-dashboard__activity-grid,
-  .app-dashboard__account-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 700px) {
-  .app-dashboard__invitation-item {
-    grid-template-columns: 1fr;
-  }
-
-  .app-dashboard__invitation-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .app-dashboard__invitation-button {
-    width: 100%;
-  }
-}
-
-@media (max-width: 640px) {
-  .app-dashboard {
-    gap: var(--space-4);
-  }
-
-  .app-dashboard__header {
-    flex-direction: column;
-  }
-
-  .app-dashboard__membership {
-    align-self: stretch;
-    justify-content: center;
-  }
-
-  .app-dashboard__metrics {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .app-dashboard__panel {
-    padding: var(--space-3);
-  }
-
-  .app-dashboard__readiness-item {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .app-dashboard__readiness-status {
-    grid-column: 2;
-  }
-
-  .app-dashboard__capability-list li {
-    flex-direction: column;
-  }
-
-  .app-dashboard__detail-list > div,
-  .app-dashboard__account-details > div {
-    grid-template-columns: minmax(0, 1fr);
-
-    gap: var(--space-1);
-  }
-
-  .app-dashboard__invitations-panel {
+.app-dashboard__invitations-panel {
   display: flex;
   flex-direction: column;
 
@@ -812,4 +898,90 @@
 
   border-color: rgba(248, 113, 113, 0.28);
 }
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 960px) {
+  .app-dashboard__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-dashboard__workspace-grid,
+  .app-dashboard__activity-grid,
+  .app-dashboard__account-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+     .app-dashboard__role-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .app-dashboard__invitation-item {
+    grid-template-columns: 1fr;
+  }
+
+  .app-dashboard__invitation-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-dashboard__invitation-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-dashboard {
+    gap: var(--space-4);
+  }
+
+  .app-dashboard__header {
+    flex-direction: column;
+  }
+
+  .app-dashboard__membership {
+    align-self: stretch;
+    justify-content: center;
+  }
+
+  .app-dashboard__metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-dashboard__panel {
+    padding: var(--space-3);
+  }
+
+  .app-dashboard__readiness-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .app-dashboard__readiness-status {
+    grid-column: 2;
+  }
+
+  .app-dashboard__capability-list li {
+    flex-direction: column;
+  }
+
+  .app-dashboard__detail-list > div,
+  .app-dashboard__account-details > div {
+    grid-template-columns: minmax(0, 1fr);
+
+    gap: var(--space-1);
+  }
+
+  .app-dashboard__role-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-dashboard__role-meta > div {
+    grid-template-columns: minmax(0, 1fr);
+
+    gap: var(--space-1);
+  }
 }
