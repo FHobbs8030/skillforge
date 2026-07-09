@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 
 import useAuth from "../../contexts/useAuth";
 import {
   acceptProjectInvitation,
   declineProjectInvitation,
   getPendingProjectInvitations,
+  getProjects,
 } from "../../utils/api";
 
 import "./AppDashboard.css";
@@ -27,6 +29,74 @@ const membershipDetails = {
   },
 };
 
+const roleWorkspaceDetails = {
+  owner: {
+    label: "Owner",
+    accessLabel: "Host Workspace",
+    badgeLabel: "Host tools",
+    actionLabel: "Open Host Workspace",
+    description:
+      "Manage project setup, repository connections, members, invitations, and activity.",
+    tone: "host",
+  },
+  host: {
+    label: "Host",
+    accessLabel: "Host Workspace",
+    badgeLabel: "Host tools",
+    actionLabel: "Open Host Workspace",
+    description:
+      "Manage project coordination, repository setup, collaborators, and workspace activity.",
+    tone: "host",
+  },
+  collaborator: {
+    label: "Collaborator",
+    accessLabel: "Collaborator Workspace",
+    badgeLabel: "Collaborator tools",
+    actionLabel: "Open Collaborator Workspace",
+    description:
+      "Review assigned project work, activity history, repository details, and collaboration updates.",
+    tone: "collaborator",
+  },
+  viewer: {
+    label: "Viewer",
+    accessLabel: "Read-only Overview",
+    badgeLabel: "Read-only",
+    actionLabel: "Open Project Overview",
+    description:
+      "View project details, member context, repository information, and activity history without edit access.",
+    tone: "viewer",
+  },
+  member: {
+    label: "Member",
+    accessLabel: "Project Overview",
+    badgeLabel: "Project access",
+    actionLabel: "Open Project",
+    description:
+      "Review the project workspace available to your SkillForge account.",
+    tone: "member",
+  },
+};
+
+function normalizeProjects(response) {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (Array.isArray(response?.projects)) {
+    return response.projects;
+  }
+
+  if (Array.isArray(response?.data?.projects)) {
+    return response.data.projects;
+  }
+
+  if (Array.isArray(response?.data)) {
+    return response.data;
+  }
+
+  return [];
+}
+
 function getDisplayName(user) {
   return (
     user?.fullName ||
@@ -43,6 +113,42 @@ function getFirstName(displayName) {
   }
 
   return displayName.trim().split(/\s+/)[0] || "Member";
+}
+
+function getProjectId(project) {
+  return project?._id || project?.id || project?.projectId || "";
+}
+
+function getProjectName(project) {
+  return project?.name || project?.title || "Untitled project";
+}
+
+function getProjectDescription(project) {
+  return (
+    project?.description ||
+    "This SkillForge project is connected to your authenticated account."
+  );
+}
+
+function getProjectRole(project) {
+  return (
+    project?.role ||
+    project?.memberRole ||
+    project?.membershipRole ||
+    project?.membership?.role ||
+    project?.projectMembership?.role ||
+    "member"
+  );
+}
+
+function getProjectStatus(project) {
+  return project?.status || "active";
+}
+
+function getRoleWorkspaceDetails(role) {
+  const normalizedRole = typeof role === "string" ? role.toLowerCase() : "";
+
+  return roleWorkspaceDetails[normalizedRole] || roleWorkspaceDetails.member;
 }
 
 function formatMemberSince(createdAt) {
@@ -62,6 +168,14 @@ function formatMemberSince(createdAt) {
   }).format(createdDate);
 }
 
+function formatCountLabel(
+  count,
+  singularLabel,
+  pluralLabel = `${singularLabel}s`,
+) {
+  return `${count} ${count === 1 ? singularLabel : pluralLabel}`;
+}
+
 function AppDashboard() {
   const { currentUser, token } = useAuth();
 
@@ -69,6 +183,10 @@ function AppDashboard() {
   const [isInvitationLoading, setIsInvitationLoading] = useState(true);
   const [invitationErrorMessage, setInvitationErrorMessage] = useState("");
   const [respondingInvitationId, setRespondingInvitationId] = useState("");
+
+  const [projects, setProjects] = useState([]);
+  const [isProjectLoading, setIsProjectLoading] = useState(true);
+  const [projectErrorMessage, setProjectErrorMessage] = useState("");
 
   useEffect(() => {
     let isActive = true;
@@ -113,6 +231,60 @@ function AppDashboard() {
     };
   }, [token]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadProjects() {
+      if (!token) {
+        setProjects([]);
+        setIsProjectLoading(false);
+        return;
+      }
+
+      setIsProjectLoading(true);
+      setProjectErrorMessage("");
+
+      try {
+        const response = await getProjects(token);
+        const projectList = normalizeProjects(response);
+
+        if (isActive) {
+          setProjects(projectList);
+        }
+      } catch (error) {
+        if (isActive) {
+          setProjectErrorMessage(
+            error?.message ||
+              "Project workspaces could not be loaded. Please try again.",
+          );
+        }
+      } finally {
+        if (isActive) {
+          setIsProjectLoading(false);
+        }
+      }
+    }
+
+    loadProjects();
+
+    return () => {
+      isActive = false;
+    };
+  }, [token]);
+
+  async function refreshProjectsAfterInvitationResponse() {
+    try {
+      const response = await getProjects(token);
+      setProjects(normalizeProjects(response));
+      setProjectErrorMessage("");
+    } catch (error) {
+      setProjectErrorMessage(
+        error?.message ||
+          "Invitation updated, but project workspaces could not be refreshed.",
+      );
+    }
+  }
+
   async function handleAcceptInvitation(invitation) {
     const projectId = invitation?.projectId;
 
@@ -131,6 +303,8 @@ function AppDashboard() {
           (currentInvitation) => currentInvitation.id !== invitation.id,
         ),
       );
+
+      await refreshProjectsAfterInvitationResponse();
     } catch (error) {
       setInvitationErrorMessage(
         error?.message ||
@@ -173,8 +347,47 @@ function AppDashboard() {
   const firstName = getFirstName(displayName);
 
   const membershipKey = currentUser?.membership?.toLowerCase() || "free";
-
   const membership = membershipDetails[membershipKey] || membershipDetails.free;
+
+  const projectStats = useMemo(() => {
+    const totalProjects = projects.length;
+
+    const roleCounts = projects.reduce(
+      (counts, project) => {
+        const role = getProjectRole(project).toLowerCase();
+
+        return {
+          ...counts,
+          [role]: (counts[role] || 0) + 1,
+        };
+      },
+      {
+        owner: 0,
+        host: 0,
+        collaborator: 0,
+        viewer: 0,
+      },
+    );
+
+    const hostWorkspaceCount = roleCounts.owner + roleCounts.host;
+    const collaboratorWorkspaceCount = roleCounts.collaborator;
+    const viewerWorkspaceCount = roleCounts.viewer;
+
+    const primaryRoleLabel =
+      totalProjects === 0
+        ? "Not assigned"
+        : totalProjects === 1
+          ? getRoleWorkspaceDetails(getProjectRole(projects[0])).label
+          : `${totalProjects} project roles`;
+
+    return {
+      totalProjects,
+      hostWorkspaceCount,
+      collaboratorWorkspaceCount,
+      viewerWorkspaceCount,
+      primaryRoleLabel,
+    };
+  }, [projects]);
 
   const readinessItems = [
     {
@@ -200,14 +413,20 @@ function AppDashboard() {
     {
       id: "project-workspace",
       label: "Project workspace",
-      detail: "No project workspace has been connected yet.",
-      complete: false,
+      detail:
+        projectStats.totalProjects > 0
+          ? `${formatCountLabel(projectStats.totalProjects, "project workspace")} connected.`
+          : "No project workspace has been connected yet.",
+      complete: projectStats.totalProjects > 0,
     },
     {
-      id: "github-profile",
-      label: "GitHub connection",
-      detail: "GitHub account connection will be added in a later phase.",
-      complete: false,
+      id: "role-based-access",
+      label: "Role-based access",
+      detail:
+        projectStats.totalProjects > 0
+          ? "Your dashboard can open the correct workspace experience by role."
+          : "Accept or create a project role to unlock workspace access.",
+      complete: projectStats.totalProjects > 0,
     },
   ];
 
@@ -237,15 +456,29 @@ function AppDashboard() {
     {
       id: "projects",
       label: "Project Workspace",
-      value: "Not Connected",
-      detail: "Project workflow is next",
+      value: isProjectLoading
+        ? "Loading"
+        : projectStats.totalProjects > 0
+          ? `${projectStats.totalProjects} Active`
+          : "Not Connected",
+      detail:
+        projectStats.totalProjects > 0
+          ? "Role-based access ready"
+          : "Project workflow is next",
       tone: "purple",
     },
     {
-      id: "github",
-      label: "GitHub Profile",
-      value: "Not Connected",
-      detail: "Integration is planned",
+      id: "roles",
+      label: "Project Role",
+      value: projectStats.primaryRoleLabel,
+      detail:
+        projectStats.hostWorkspaceCount > 0
+          ? "Host tools available"
+          : projectStats.collaboratorWorkspaceCount > 0
+            ? "Collaborator tools available"
+            : projectStats.viewerWorkspaceCount > 0
+              ? "Read-only access available"
+              : "Awaiting assignment",
       tone: "orange",
     },
   ];
@@ -266,9 +499,9 @@ function AppDashboard() {
           </h1>
 
           <p className="app-dashboard__subtitle">
-            This is your private SkillForge workspace. As project, profile, and
-            GitHub capabilities are connected, this dashboard will become the
-            central view of your development activity.
+            This is your private SkillForge workspace. Project invitations,
+            role-based access, and project activity are now connected to your
+            authenticated account.
           </p>
         </div>
 
@@ -432,8 +665,9 @@ function AppDashboard() {
             </h2>
 
             <p>
-              Your authenticated account is established. The remaining workspace
-              capabilities will be connected incrementally.
+              Your authenticated account is established. SkillForge now checks
+              active project roles and opens the correct workspace path for each
+              project.
             </p>
           </div>
         </div>
@@ -534,89 +768,164 @@ function AppDashboard() {
       <section
         className="app-dashboard__section app-dashboard__section-anchor"
         id="app-activity"
-        aria-labelledby="project-activity-title"
+        aria-labelledby="project-access-title"
       >
         <div className="app-dashboard__section-heading">
           <div>
-            <p className="app-dashboard__panel-eyebrow">Project Activity</p>
+            <p className="app-dashboard__panel-eyebrow">Project Access</p>
 
-            <h2 id="project-activity-title">Your SkillForge activity</h2>
+            <h2 id="project-access-title">Role-based dashboard access</h2>
 
             <p>
-              Project assignments, work-section progress, messages, and GitHub
-              updates will appear here after those systems are connected.
+              Open the correct SkillForge workspace experience based on your
+              active project role.
             </p>
           </div>
         </div>
 
-        <div className="app-dashboard__activity-grid">
-          <article className="app-dashboard__panel app-dashboard__empty-state">
-            <span className="app-dashboard__status-badge">
-              No active project
-            </span>
-
-            <div
-              className="app-dashboard__empty-state-symbol"
-              aria-hidden="true"
-            >
-              SF
-            </div>
-
-            <h3>Your project workspace is ready to be connected</h3>
-
-            <p>
-              You are signed in successfully, but this account has not yet been
-              assigned a Host or Collaborator project role.
-            </p>
+        {isProjectLoading && (
+          <article className="app-dashboard__panel app-dashboard__role-state">
+            Loading active project roles...
           </article>
+        )}
 
-          <article className="app-dashboard__panel">
-            <div className="app-dashboard__panel-heading">
-              <div>
-                <p className="app-dashboard__panel-eyebrow">
-                  Planned Capabilities
+        {!isProjectLoading && projectErrorMessage && (
+          <article className="app-dashboard__panel app-dashboard__role-state app-dashboard__role-state--error">
+            {projectErrorMessage}
+          </article>
+        )}
+
+        {!isProjectLoading &&
+          !projectErrorMessage &&
+          projectStats.totalProjects === 0 && (
+            <div className="app-dashboard__activity-grid">
+              <article className="app-dashboard__panel app-dashboard__empty-state">
+                <span className="app-dashboard__status-badge">
+                  No active project
+                </span>
+
+                <div
+                  className="app-dashboard__empty-state-symbol"
+                  aria-hidden="true"
+                >
+                  SF
+                </div>
+
+                <h3>Your project workspace is ready to be connected</h3>
+
+                <p>
+                  You are signed in successfully, but this account has not yet
+                  been assigned a Host, Collaborator, or Viewer project role.
                 </p>
+              </article>
 
-                <h3>Coming to this workspace</h3>
-              </div>
+              <article className="app-dashboard__panel">
+                <div className="app-dashboard__panel-heading">
+                  <div>
+                    <p className="app-dashboard__panel-eyebrow">
+                      Planned Capabilities
+                    </p>
+
+                    <h3>Coming to this workspace</h3>
+                  </div>
+                </div>
+
+                <ul className="app-dashboard__capability-list">
+                  <li>
+                    <div>
+                      <strong>Create or join projects</strong>
+                      <p>Connect members to real SkillForge workspaces.</p>
+                    </div>
+
+                    <span>Planned</span>
+                  </li>
+
+                  <li>
+                    <div>
+                      <strong>Role-based dashboard access</strong>
+                      <p>
+                        Open the correct Host, Collaborator, or Viewer tools for
+                        each project.
+                      </p>
+                    </div>
+
+                    <span>Ready</span>
+                  </li>
+
+                  <li>
+                    <div>
+                      <strong>GitHub development activity</strong>
+                      <p>
+                        Connect repositories, commits, pull requests, and
+                        project progress.
+                      </p>
+                    </div>
+
+                    <span>Planned</span>
+                  </li>
+                </ul>
+              </article>
             </div>
+          )}
 
-            <ul className="app-dashboard__capability-list">
-              <li>
-                <div>
-                  <strong>Create or join projects</strong>
-                  <p>Connect members to real SkillForge workspaces.</p>
-                </div>
+        {!isProjectLoading &&
+          !projectErrorMessage &&
+          projectStats.totalProjects > 0 && (
+            <div className="app-dashboard__role-grid">
+              {projects.map((project) => {
+                const projectId = getProjectId(project);
+                const projectRole = getProjectRole(project);
+                const workspaceDetails = getRoleWorkspaceDetails(projectRole);
 
-                <span>Planned</span>
-              </li>
+                return (
+                  <article
+                    className={`app-dashboard__panel app-dashboard__role-card app-dashboard__role-card--${workspaceDetails.tone}`}
+                    key={projectId || getProjectName(project)}
+                  >
+                    <div className="app-dashboard__role-card-main">
+                      <span className="app-dashboard__role-badge">
+                        {workspaceDetails.badgeLabel}
+                      </span>
 
-              <li>
-                <div>
-                  <strong>Role-based dashboard access</strong>
-                  <p>
-                    Open the correct Host or Collaborator tools for each
-                    project.
-                  </p>
-                </div>
+                      <h3>{getProjectName(project)}</h3>
 
-                <span>Planned</span>
-              </li>
+                      <p>{getProjectDescription(project)}</p>
+                    </div>
 
-              <li>
-                <div>
-                  <strong>GitHub development activity</strong>
-                  <p>
-                    Connect repositories, commits, pull requests, and project
-                    progress.
-                  </p>
-                </div>
+                    <dl className="app-dashboard__role-meta">
+                      <div>
+                        <dt>Role</dt>
+                        <dd>{workspaceDetails.label}</dd>
+                      </div>
 
-                <span>Planned</span>
-              </li>
-            </ul>
-          </article>
-        </div>
+                      <div>
+                        <dt>Workspace</dt>
+                        <dd>{workspaceDetails.accessLabel}</dd>
+                      </div>
+
+                      <div>
+                        <dt>Status</dt>
+                        <dd>{getProjectStatus(project)}</dd>
+                      </div>
+                    </dl>
+
+                    <p className="app-dashboard__role-description">
+                      {workspaceDetails.description}
+                    </p>
+
+                    {projectId && (
+                      <Link
+                        className="app-dashboard__role-card-link"
+                        to={`/projects/${projectId}`}
+                      >
+                        {workspaceDetails.actionLabel}
+                      </Link>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
       </section>
 
       <section
@@ -631,7 +940,8 @@ function AppDashboard() {
             <h2 id="account-summary-title">Account summary</h2>
 
             <p>
-              These details come from your authenticated SkillForge account.
+              These details come from your authenticated SkillForge account and
+              active project memberships.
             </p>
           </div>
         </div>
@@ -656,7 +966,7 @@ function AppDashboard() {
 
               <div>
                 <dt>Project Role</dt>
-                <dd>Not assigned</dd>
+                <dd>{projectStats.primaryRoleLabel}</dd>
               </div>
             </dl>
           </article>
