@@ -292,6 +292,203 @@ router.get("/", requireAuth, async (req, res) => {
   }
 });
 
+function formatInvitationMembership(projectMembership) {
+  const project = projectMembership.projectId;
+  const invitedBy = projectMembership.invitedBy;
+
+  return {
+    id: projectMembership._id,
+    projectId: project?._id || projectMembership.projectId,
+    projectName: project?.name || "Untitled project",
+    projectDescription: project?.description || "",
+    projectStatus: project?.status || "active",
+    projectVisibility: project?.visibility || "private",
+    role: projectMembership.role,
+    status: projectMembership.status,
+    invitedBy: invitedBy
+      ? {
+          id: invitedBy._id,
+          fullName: invitedBy.fullName,
+          email: invitedBy.email,
+        }
+      : null,
+    invitedAt: projectMembership.createdAt,
+    updatedAt: projectMembership.updatedAt,
+  };
+}
+
+router.get("/invitations/pending", requireAuth, async (req, res) => {
+  try {
+    const invitations = await ProjectMembership.find({
+      userId: req.user._id,
+      status: "invited",
+    })
+      .populate({
+        path: "projectId",
+        select: "name description status visibility createdAt updatedAt",
+      })
+      .populate({
+        path: "invitedBy",
+        select: "fullName email",
+      })
+      .sort({
+        updatedAt: -1,
+      })
+      .lean();
+
+    return res.status(200).json({
+      invitations: invitations.map(formatInvitationMembership),
+    });
+  } catch (error) {
+    console.error("Pending project invitations route error:", error);
+
+    return res.status(500).json({
+      error: "Unable to load project invitations. Please try again.",
+    });
+  }
+});
+
+router.patch(
+  "/:projectId/invitations/accept",
+  requireAuth,
+  async (req, res) => {
+    const { projectId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+      return res.status(400).json({
+        error: "Invalid project ID.",
+      });
+    }
+
+    try {
+      const invitedMembership = await ProjectMembership.findOne({
+        projectId,
+        userId: req.user._id,
+        status: "invited",
+      });
+
+      if (!invitedMembership) {
+        return res.status(404).json({
+          error: "Project invitation not found.",
+        });
+      }
+
+      invitedMembership.status = "active";
+      invitedMembership.joinedAt = new Date();
+      invitedMembership.leftAt = null;
+
+      await invitedMembership.save();
+
+      const project = await Project.findById(projectId).lean();
+
+      const activityEvent = await ActivityEvent.create({
+        projectId,
+        actorId: req.user._id,
+        eventType: "member_invitation_accepted",
+        source: "skillforge",
+        entityType: "project_membership",
+        entityId: invitedMembership._id.toString(),
+        metadata: {
+          userId: req.user._id,
+          role: invitedMembership.role,
+          status: "active",
+        },
+        occurredAt: new Date(),
+      });
+
+      return res.status(200).json({
+        message: "Project invitation accepted.",
+        invitation: {
+          id: invitedMembership._id,
+          projectId: invitedMembership.projectId,
+          projectName: project?.name || "Untitled project",
+          role: invitedMembership.role,
+          status: invitedMembership.status,
+          joinedAt: invitedMembership.joinedAt,
+          updatedAt: invitedMembership.updatedAt,
+        },
+        activityEvent,
+      });
+    } catch (error) {
+      console.error("Accept project invitation route error:", error);
+
+      return res.status(500).json({
+        error: "Unable to accept project invitation. Please try again.",
+      });
+    }
+  },
+);
+
+router.patch(
+  "/:projectId/invitations/decline",
+  requireAuth,
+  async (req, res) => {
+    const { projectId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+      return res.status(400).json({
+        error: "Invalid project ID.",
+      });
+    }
+
+    try {
+      const invitedMembership = await ProjectMembership.findOne({
+        projectId,
+        userId: req.user._id,
+        status: "invited",
+      });
+
+      if (!invitedMembership) {
+        return res.status(404).json({
+          error: "Project invitation not found.",
+        });
+      }
+
+      invitedMembership.status = "removed";
+      invitedMembership.leftAt = new Date();
+
+      await invitedMembership.save();
+
+      const project = await Project.findById(projectId).lean();
+
+      const activityEvent = await ActivityEvent.create({
+        projectId,
+        actorId: req.user._id,
+        eventType: "member_invitation_declined",
+        source: "skillforge",
+        entityType: "project_membership",
+        entityId: invitedMembership._id.toString(),
+        metadata: {
+          userId: req.user._id,
+          role: invitedMembership.role,
+          status: "removed",
+        },
+        occurredAt: new Date(),
+      });
+
+      return res.status(200).json({
+        message: "Project invitation declined.",
+        invitation: {
+          id: invitedMembership._id,
+          projectId: invitedMembership.projectId,
+          projectName: project?.name || "Untitled project",
+          role: invitedMembership.role,
+          status: invitedMembership.status,
+          leftAt: invitedMembership.leftAt,
+          updatedAt: invitedMembership.updatedAt,
+        },
+        activityEvent,
+      });
+    } catch (error) {
+      console.error("Decline project invitation route error:", error);
+
+      return res.status(500).json({
+        error: "Unable to decline project invitation. Please try again.",
+      });
+    }
+  },
+);
+
 router.get("/:projectId", requireAuth, async (req, res) => {
   const { projectId } = req.params;
 

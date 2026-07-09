@@ -1,4 +1,11 @@
+import { useEffect, useState } from "react";
+
 import useAuth from "../../contexts/useAuth";
+import {
+  acceptProjectInvitation,
+  declineProjectInvitation,
+  getPendingProjectInvitations,
+} from "../../utils/api";
 
 import "./AppDashboard.css";
 
@@ -56,7 +63,111 @@ function formatMemberSince(createdAt) {
 }
 
 function AppDashboard() {
-  const { currentUser } = useAuth();
+  const { currentUser, token } = useAuth();
+
+  const [projectInvitations, setProjectInvitations] = useState([]);
+  const [isInvitationLoading, setIsInvitationLoading] = useState(true);
+  const [invitationErrorMessage, setInvitationErrorMessage] = useState("");
+  const [respondingInvitationId, setRespondingInvitationId] = useState("");
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadPendingInvitations() {
+      if (!token) {
+        setProjectInvitations([]);
+        setIsInvitationLoading(false);
+        return;
+      }
+
+      setIsInvitationLoading(true);
+      setInvitationErrorMessage("");
+
+      try {
+        const response = await getPendingProjectInvitations(token);
+        const invitations = Array.isArray(response?.invitations)
+          ? response.invitations
+          : [];
+
+        if (isActive) {
+          setProjectInvitations(invitations);
+        }
+      } catch (error) {
+        if (isActive) {
+          setInvitationErrorMessage(
+            error?.message ||
+              "Project invitations could not be loaded. Please try again.",
+          );
+        }
+      } finally {
+        if (isActive) {
+          setIsInvitationLoading(false);
+        }
+      }
+    }
+
+    loadPendingInvitations();
+
+    return () => {
+      isActive = false;
+    };
+  }, [token]);
+
+  async function handleAcceptInvitation(invitation) {
+    const projectId = invitation?.projectId;
+
+    if (!projectId) {
+      return;
+    }
+
+    setRespondingInvitationId(invitation.id);
+    setInvitationErrorMessage("");
+
+    try {
+      await acceptProjectInvitation({ token, projectId });
+
+      setProjectInvitations((currentInvitations) =>
+        currentInvitations.filter(
+          (currentInvitation) => currentInvitation.id !== invitation.id,
+        ),
+      );
+    } catch (error) {
+      setInvitationErrorMessage(
+        error?.message ||
+          "Project invitation could not be accepted. Please try again.",
+      );
+    } finally {
+      setRespondingInvitationId("");
+    }
+  }
+
+  async function handleDeclineInvitation(invitation) {
+    const projectId = invitation?.projectId;
+
+    if (!projectId) {
+      return;
+    }
+
+    setRespondingInvitationId(invitation.id);
+    setInvitationErrorMessage("");
+
+    try {
+      await declineProjectInvitation({ token, projectId });
+
+      setProjectInvitations((currentInvitations) =>
+        currentInvitations.filter(
+          (currentInvitation) => currentInvitation.id !== invitation.id,
+        ),
+      );
+    } catch (error) {
+      setInvitationErrorMessage(
+        error?.message ||
+          "Project invitation could not be declined. Please try again.",
+      );
+    } finally {
+      setRespondingInvitationId("");
+    }
+  }
 
   const displayName = getDisplayName(currentUser);
   const firstName = getFirstName(displayName);
@@ -191,6 +302,121 @@ function AppDashboard() {
           </article>
         ))}
       </div>
+
+      <section
+        className="app-dashboard__section app-dashboard__section-anchor"
+        id="app-invitations"
+        aria-labelledby="project-invitations-title"
+      >
+        <div className="app-dashboard__section-heading">
+          <div>
+            <p className="app-dashboard__panel-eyebrow">Project Invitations</p>
+
+            <h2 id="project-invitations-title">Pending invitations</h2>
+
+            <p>
+              Review project invitations sent to your SkillForge account. You
+              can accept a project role or decline the invitation.
+            </p>
+          </div>
+        </div>
+
+        <article className="app-dashboard__panel app-dashboard__invitations-panel">
+          <div className="app-dashboard__panel-heading">
+            <div>
+              <p className="app-dashboard__panel-eyebrow">
+                Invitation Response
+              </p>
+
+              <h3>
+                {projectInvitations.length > 0
+                  ? `${projectInvitations.length} pending`
+                  : "No pending invitations"}
+              </h3>
+            </div>
+
+            <span className="app-dashboard__count-badge">
+              {projectInvitations.length}
+            </span>
+          </div>
+
+          {isInvitationLoading && (
+            <div className="app-dashboard__invitation-state">
+              Loading project invitations...
+            </div>
+          )}
+
+          {!isInvitationLoading && invitationErrorMessage && (
+            <div className="app-dashboard__invitation-state app-dashboard__invitation-state--error">
+              {invitationErrorMessage}
+            </div>
+          )}
+
+          {!isInvitationLoading &&
+            !invitationErrorMessage &&
+            projectInvitations.length === 0 && (
+              <div className="app-dashboard__invitation-state">
+                You do not have any pending project invitations right now.
+              </div>
+            )}
+
+          {!isInvitationLoading &&
+            !invitationErrorMessage &&
+            projectInvitations.length > 0 && (
+              <ul className="app-dashboard__invitation-list">
+                {projectInvitations.map((invitation) => {
+                  const isResponding = respondingInvitationId === invitation.id;
+
+                  return (
+                    <li
+                      className="app-dashboard__invitation-item"
+                      key={invitation.id}
+                    >
+                      <div>
+                        <span className="app-dashboard__status-badge">
+                          {invitation.role}
+                        </span>
+
+                        <h4>{invitation.projectName}</h4>
+
+                        <p>
+                          {invitation.projectDescription ||
+                            "You have been invited to join this SkillForge project."}
+                        </p>
+
+                        {invitation.invitedBy && (
+                          <p className="app-dashboard__invitation-meta">
+                            Invited by {invitation.invitedBy.fullName}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="app-dashboard__invitation-actions">
+                        <button
+                          className="app-dashboard__invitation-button app-dashboard__invitation-button--accept"
+                          type="button"
+                          disabled={isResponding}
+                          onClick={() => handleAcceptInvitation(invitation)}
+                        >
+                          {isResponding ? "Working..." : "Accept"}
+                        </button>
+
+                        <button
+                          className="app-dashboard__invitation-button app-dashboard__invitation-button--decline"
+                          type="button"
+                          disabled={isResponding}
+                          onClick={() => handleDeclineInvitation(invitation)}
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+        </article>
+      </section>
 
       <section
         className="app-dashboard__section app-dashboard__section-anchor"
