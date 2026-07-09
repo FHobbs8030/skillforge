@@ -9,6 +9,7 @@ import {
   getProjectById,
   getProjectMembers,
   inviteProjectMember,
+  updateProject,
 } from "../../utils/api";
 
 import useAuth from "../../contexts/useAuth";
@@ -156,6 +157,19 @@ function ProjectDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [projectSettingsForm, setProjectSettingsForm] = useState({
+    name: "",
+    description: "",
+    status: "active",
+    visibility: "private",
+  });
+  const [projectSettingsError, setProjectSettingsError] = useState("");
+  const [projectSettingsMessage, setProjectSettingsMessage] = useState("");
+  const [projectSettingsFieldErrors, setProjectSettingsFieldErrors] = useState(
+    {},
+  );
+  const [isUpdatingProject, setIsUpdatingProject] = useState(false);
+
   const [repositoryUrlInput, setRepositoryUrlInput] = useState("");
   const [repositoryError, setRepositoryError] = useState("");
   const [repositoryMessage, setRepositoryMessage] = useState("");
@@ -226,6 +240,19 @@ function ProjectDetail() {
     };
   }, [projectId, accessToken]);
 
+  useEffect(() => {
+    if (!project) {
+      return;
+    }
+
+    setProjectSettingsForm({
+      name: project.name || "",
+      description: project.description || "",
+      status: project.status || "active",
+      visibility: project.visibility || "private",
+    });
+  }, [project]);
+
   const formatDateTime = (dateValue) => {
     if (!dateValue) {
       return "Not available";
@@ -282,6 +309,14 @@ function ProjectDetail() {
         : "Repository activity was recorded.";
     }
 
+    if (event.eventType === "project_updated") {
+      const currentName = event.metadata?.current?.name;
+
+      return currentName
+        ? `${currentName} project settings were updated.`
+        : "Project settings were updated.";
+    }
+
     if (event.eventType === "project_created") {
       return event.metadata?.projectName
         ? `${event.metadata.projectName} workspace activity was recorded.`
@@ -289,6 +324,83 @@ function ProjectDetail() {
     }
 
     return "A project activity event was recorded.";
+  };
+
+  const handleProjectSettingsChange = (event) => {
+    const { name, value } = event.target;
+
+    setProjectSettingsForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+  };
+
+  const handleProjectSettingsSubmit = async (event) => {
+    event.preventDefault();
+
+    const normalizedName = projectSettingsForm.name.trim();
+
+    if (!normalizedName) {
+      setProjectSettingsError("Project name is required.");
+      setProjectSettingsFieldErrors({
+        name: "Project name is required.",
+      });
+
+      return;
+    }
+
+    setProjectSettingsError("");
+    setProjectSettingsMessage("");
+    setProjectSettingsFieldErrors({});
+
+    try {
+      setIsUpdatingProject(true);
+
+      const projectResponse = await updateProject({
+        token: accessToken,
+        projectId,
+        name: normalizedName,
+        description: projectSettingsForm.description,
+        status: projectSettingsForm.status,
+        visibility: projectSettingsForm.visibility,
+      });
+
+      setProject(projectResponse.project);
+
+      setProjectSettingsForm({
+        name: projectResponse.project.name || "",
+        description: projectResponse.project.description || "",
+        status: projectResponse.project.status || "active",
+        visibility: projectResponse.project.visibility || "private",
+      });
+
+      if (projectResponse.activityEvent) {
+        setActivityEvents((currentEvents) => [
+          projectResponse.activityEvent,
+          ...currentEvents,
+        ]);
+      }
+
+      setProjectSettingsMessage("Project settings updated successfully.");
+    } catch (requestError) {
+      console.error("Project settings update error:", requestError);
+
+      const fieldErrors = requestError.fields || {};
+      const fieldError =
+        fieldErrors.name ||
+        fieldErrors.description ||
+        fieldErrors.status ||
+        fieldErrors.visibility;
+
+      setProjectSettingsFieldErrors(fieldErrors);
+      setProjectSettingsError(
+        fieldError ||
+          requestError.message ||
+          "Unable to update project settings right now.",
+      );
+    } finally {
+      setIsUpdatingProject(false);
+    }
   };
 
   const handleRepositorySubmit = async (event) => {
@@ -629,6 +741,133 @@ function ProjectDetail() {
             <div className="project-detail__repository-note">
               <strong>{roleDetails.repositoryNoteTitle}</strong>
               <span>{roleDetails.repositoryNote}</span>
+            </div>
+          )}
+        </article>
+
+        <article className="project-detail__panel project-detail__panel_type_settings">
+          <div className="project-detail__panel-header">
+            <p className="project-detail__eyebrow">Project Settings</p>
+            <h2 className="project-detail__panel-title">
+              Workspace configuration
+            </h2>
+          </div>
+
+          {canManageProject ? (
+            <>
+              <div className="project-detail__settings-note project-detail__settings-note_type_enabled">
+                <strong>Project settings enabled</strong>
+                <span>
+                  Owners and hosts can edit the project name, description,
+                  status, and visibility.
+                </span>
+              </div>
+
+              <form
+                className="project-detail__settings-form"
+                onSubmit={handleProjectSettingsSubmit}
+              >
+                <div className="project-detail__settings-fields">
+                  <label htmlFor="projectSettingsName">
+                    Project name
+                    <input
+                      id="projectSettingsName"
+                      name="name"
+                      type="text"
+                      value={projectSettingsForm.name}
+                      onChange={handleProjectSettingsChange}
+                      disabled={isUpdatingProject}
+                      aria-invalid={Boolean(projectSettingsFieldErrors.name)}
+                    />
+                  </label>
+
+                  <label htmlFor="projectSettingsStatus">
+                    Status
+                    <select
+                      id="projectSettingsStatus"
+                      name="status"
+                      value={projectSettingsForm.status}
+                      onChange={handleProjectSettingsChange}
+                      disabled={isUpdatingProject}
+                      aria-invalid={Boolean(projectSettingsFieldErrors.status)}
+                    >
+                      <option value="planned">Planned</option>
+                      <option value="active">Active</option>
+                      <option value="paused">Paused</option>
+                      <option value="completed">Completed</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </label>
+
+                  <label htmlFor="projectSettingsVisibility">
+                    Visibility
+                    <select
+                      id="projectSettingsVisibility"
+                      name="visibility"
+                      value={projectSettingsForm.visibility}
+                      onChange={handleProjectSettingsChange}
+                      disabled={isUpdatingProject}
+                      aria-invalid={Boolean(
+                        projectSettingsFieldErrors.visibility,
+                      )}
+                    >
+                      <option value="private">Private</option>
+                      <option value="team">Team</option>
+                      <option value="public">Public</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label
+                  className="project-detail__settings-description"
+                  htmlFor="projectSettingsDescription"
+                >
+                  Description
+                  <textarea
+                    id="projectSettingsDescription"
+                    name="description"
+                    value={projectSettingsForm.description}
+                    onChange={handleProjectSettingsChange}
+                    disabled={isUpdatingProject}
+                    placeholder="Describe the project workspace, goal, or collaboration context."
+                    aria-invalid={Boolean(
+                      projectSettingsFieldErrors.description,
+                    )}
+                  />
+                </label>
+
+                {projectSettingsError && (
+                  <p className="project-detail__settings-error">
+                    {projectSettingsError}
+                  </p>
+                )}
+
+                {projectSettingsMessage && (
+                  <p className="project-detail__settings-success">
+                    {projectSettingsMessage}
+                  </p>
+                )}
+
+                <div className="project-detail__settings-actions">
+                  <button
+                    className="project-detail__settings-button"
+                    type="submit"
+                    disabled={isUpdatingProject}
+                  >
+                    {isUpdatingProject
+                      ? "Saving settings..."
+                      : "Save Project Settings"}
+                  </button>
+                </div>
+              </form>
+            </>
+          ) : (
+            <div className="project-detail__settings-note">
+              <strong>Project settings are read-only</strong>
+              <span>
+                Your role can review project settings, but only owners and hosts
+                can edit this workspace.
+              </span>
             </div>
           )}
         </article>
