@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import useAuth from "../../contexts/useAuth";
-import { getProjectActivity, getProjects } from "../../utils/api";
+import {
+  createProject,
+  getProjectActivity,
+  getProjects,
+} from "../../utils/api";
 
 import "./ProjectHistory.css";
 
@@ -44,6 +48,32 @@ function normalizeActivityEvents(response) {
   }
 
   return [];
+}
+
+function normalizeCreatedProject(response) {
+  const project = response?.project || response?.data?.project;
+
+  if (!project || typeof project !== "object") {
+    return null;
+  }
+
+  const membership = response?.membership ||
+    response?.data?.membership || {
+      role: "owner",
+      status: "active",
+      joinedAt: project.createdAt,
+    };
+
+  return {
+    ...project,
+    id: project.id || project._id,
+    role: membership.role || "owner",
+    membership: {
+      role: membership.role || "owner",
+      status: membership.status || "active",
+      joinedAt: membership.joinedAt || project.createdAt,
+    },
+  };
 }
 
 function getProjectId(project) {
@@ -159,8 +189,17 @@ function getEventSummary(event) {
 
 function ProjectHistory() {
   const { token } = useAuth();
+  const navigate = useNavigate();
 
   const [projects, setProjects] = useState([]);
+  const [projectForm, setProjectForm] = useState({
+    name: "",
+    description: "",
+    visibility: "private",
+  });
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [createProjectError, setCreateProjectError] = useState("");
+  const [createProjectFieldErrors, setCreateProjectFieldErrors] = useState({});
   const [activityByProjectId, setActivityByProjectId] = useState({});
   const [activityLoadingByProjectId, setActivityLoadingByProjectId] = useState(
     {},
@@ -290,266 +329,482 @@ function ProjectHistory() {
     );
   }, [activityByProjectId]);
 
-  const hasProjects = projects.length > 0;
+    const hasProjects = projects.length > 0;
 
-  return (
-    <section
-      className="project-history"
-      aria-labelledby="project-history-title"
-    >
-      <header className="project-history__header">
-        <div>
-          <p className="project-history__eyebrow">Project History</p>
+    function handleProjectFormChange(event) {
+      const { name, value } = event.target;
 
-          <h1 className="project-history__title" id="project-history-title">
-            Your SkillForge projects
-          </h1>
+      setProjectForm((currentForm) => ({
+        ...currentForm,
+        [name]: value,
+      }));
+    }
 
-          <p className="project-history__subtitle">
-            Review the protected project records connected to your authenticated
-            SkillForge account. This view now includes backend activity events
-            for each project timeline.
-          </p>
-        </div>
+    async function handleCreateProject(event) {
+      event.preventDefault();
 
-        <Link className="project-history__dashboard-link" to="/app">
-          Back to dashboard
-        </Link>
-      </header>
+      const normalizedName = projectForm.name.trim();
 
-      <div
-        className="project-history__metrics"
-        aria-label="Project history overview"
-      >
-        <article className="project-history__metric project-history__metric--blue">
-          <span className="project-history__metric-label">Projects</span>
-          <strong className="project-history__metric-value">
-            {projectStats.totalProjects}
-          </strong>
-          <span className="project-history__metric-detail">
-            Available from backend
-          </span>
-        </article>
+      if (!normalizedName) {
+        setCreateProjectError(
+          "Add a project name before creating the project.",
+        );
+        setCreateProjectFieldErrors({
+          name: "Project name is required.",
+        });
 
-        <article className="project-history__metric project-history__metric--teal">
-          <span className="project-history__metric-label">Active</span>
-          <strong className="project-history__metric-value">
-            {projectStats.activeProjects}
-          </strong>
-          <span className="project-history__metric-detail">
-            Ready for tracking
-          </span>
-        </article>
+        return;
+      }
 
-        <article className="project-history__metric project-history__metric--purple">
-          <span className="project-history__metric-label">Activity</span>
-          <strong className="project-history__metric-value">
-            {activityEventCount}
-          </strong>
-          <span className="project-history__metric-detail">
-            Timeline events
-          </span>
-        </article>
-      </div>
+      setIsCreatingProject(true);
+      setCreateProjectError("");
+      setCreateProjectFieldErrors({});
 
+      try {
+        const response = await createProject({
+          token,
+          name: normalizedName,
+          description: projectForm.description,
+          visibility: projectForm.visibility,
+        });
+
+        const createdProject = normalizeCreatedProject(response);
+        const createdProjectId = getProjectId(createdProject);
+        const createdActivityEvent =
+          response?.activityEvent || response?.data?.activityEvent;
+
+        if (createdProject) {
+          setProjects((currentProjects) => [
+            createdProject,
+            ...currentProjects.filter(
+              (project) => getProjectId(project) !== createdProjectId,
+            ),
+          ]);
+        }
+
+        if (createdProjectId && createdActivityEvent) {
+          setActivityByProjectId((currentActivity) => ({
+            ...currentActivity,
+            [createdProjectId]: [
+              createdActivityEvent,
+              ...(currentActivity[createdProjectId] || []),
+            ],
+          }));
+
+          setActivityLoadingByProjectId((currentLoadingState) => ({
+            ...currentLoadingState,
+            [createdProjectId]: false,
+          }));
+
+          setActivityErrorByProjectId((currentErrors) => {
+            const nextErrors = {
+              ...currentErrors,
+            };
+
+            delete nextErrors[createdProjectId];
+
+            return nextErrors;
+          });
+        }
+
+        setProjectForm({
+          name: "",
+          description: "",
+          visibility: "private",
+        });
+
+        if (createdProjectId) {
+          navigate(`/projects/${createdProjectId}`);
+        }
+      } catch (error) {
+        setCreateProjectError(
+          error?.message || "Project could not be created. Please try again.",
+        );
+        setCreateProjectFieldErrors(error?.fields || {});
+      } finally {
+        setIsCreatingProject(false);
+      }
+    }
+
+    return (
       <section
-        className="project-history__panel"
-        aria-labelledby="project-list-title"
+        className="project-history"
+        aria-labelledby="project-history-title"
       >
-        <div className="project-history__panel-heading">
+        <header className="project-history__header">
           <div>
-            <p className="project-history__panel-eyebrow">
-              Connected Workspace
-            </p>
+            <p className="project-history__eyebrow">Project History</p>
 
-            <h2 id="project-list-title">Project list</h2>
+            <h1 className="project-history__title" id="project-history-title">
+              Your SkillForge projects
+            </h1>
+
+            <p className="project-history__subtitle">
+              Review the protected project records connected to your
+              authenticated SkillForge account. This view now includes backend
+              activity events for each project timeline.
+            </p>
           </div>
 
-          {!isLoading && hasProjects && (
-            <span className="project-history__count-badge">
-              {formatCountLabel(projects.length, "project")} loaded
+          <Link className="project-history__dashboard-link" to="/app">
+            Back to dashboard
+          </Link>
+        </header>
+
+        <div
+          className="project-history__metrics"
+          aria-label="Project history overview"
+        >
+          <article className="project-history__metric project-history__metric--blue">
+            <span className="project-history__metric-label">Projects</span>
+            <strong className="project-history__metric-value">
+              {projectStats.totalProjects}
+            </strong>
+            <span className="project-history__metric-detail">
+              Available from backend
             </span>
-          )}
+          </article>
+
+          <article className="project-history__metric project-history__metric--teal">
+            <span className="project-history__metric-label">Active</span>
+            <strong className="project-history__metric-value">
+              {projectStats.activeProjects}
+            </strong>
+            <span className="project-history__metric-detail">
+              Ready for tracking
+            </span>
+          </article>
+
+          <article className="project-history__metric project-history__metric--purple">
+            <span className="project-history__metric-label">Activity</span>
+            <strong className="project-history__metric-value">
+              {activityEventCount}
+            </strong>
+            <span className="project-history__metric-detail">
+              Timeline events
+            </span>
+          </article>
         </div>
 
-        {isLoading && (
-          <div
-            className="project-history__state"
-            role="status"
-            aria-live="polite"
+        <section
+          className="project-history__create-panel"
+          aria-labelledby="create-project-title"
+        >
+          <div className="project-history__create-heading">
+            <div>
+              <p className="project-history__create-eyebrow">Create Project</p>
+
+              <h2 id="create-project-title">
+                Start a new SkillForge workspace
+              </h2>
+
+              <p>
+                Create a protected project record, become the project owner, and
+                open the new project detail workspace immediately.
+              </p>
+            </div>
+          </div>
+
+          <form
+            className="project-history__create-form"
+            onSubmit={handleCreateProject}
           >
-            Loading project history...
-          </div>
-        )}
+            <div className="project-history__create-grid">
+              <label className="project-history__field" htmlFor="project-name">
+                <span>Project name</span>
 
-        {!isLoading && errorMessage && (
-          <div className="project-history__state project-history__state--error">
-            <h3>Project history unavailable</h3>
+                <input
+                  id="project-name"
+                  name="name"
+                  type="text"
+                  value={projectForm.name}
+                  onChange={handleProjectFormChange}
+                  placeholder="Example: Client Portal Build"
+                  disabled={isCreatingProject}
+                  aria-invalid={Boolean(createProjectFieldErrors.name)}
+                />
 
-            <p>{errorMessage}</p>
-          </div>
-        )}
+                {createProjectFieldErrors.name && (
+                  <small className="project-history__field-error">
+                    {createProjectFieldErrors.name}
+                  </small>
+                )}
+              </label>
 
-        {!isLoading && !errorMessage && !hasProjects && (
-          <div className="project-history__state project-history__state--empty">
-            <h3>No projects found</h3>
+              <label
+                className="project-history__field"
+                htmlFor="project-visibility"
+              >
+                <span>Visibility</span>
 
-            <p>
-              Your account is authenticated, but no project records were
-              returned by the backend yet.
-            </p>
-          </div>
-        )}
-
-        {!isLoading && !errorMessage && hasProjects && (
-          <div className="project-history__list">
-            {projects.map((project) => {
-              const projectId = getProjectId(project);
-              const activityEvents = activityByProjectId[projectId] || [];
-              const isActivityLoading = Boolean(
-                activityLoadingByProjectId[projectId],
-              );
-              const activityError = activityErrorByProjectId[projectId];
-
-              return (
-                <Link
-                  className="project-history__project-card"
-                  key={projectId || getProjectName(project)}
-                  to={`/projects/${projectId}`}
+                <select
+                  id="project-visibility"
+                  name="visibility"
+                  value={projectForm.visibility}
+                  onChange={handleProjectFormChange}
+                  disabled={isCreatingProject}
+                  aria-invalid={Boolean(createProjectFieldErrors.visibility)}
                 >
-                  <div className="project-history__project-main">
-                    <div>
-                      <p className="project-history__project-label">Project</p>
+                  <option value="private">Private</option>
+                  <option value="team">Team</option>
+                  <option value="public">Public</option>
+                </select>
 
-                      <h3>{getProjectName(project)}</h3>
+                {createProjectFieldErrors.visibility && (
+                  <small className="project-history__field-error">
+                    {createProjectFieldErrors.visibility}
+                  </small>
+                )}
+              </label>
+            </div>
 
-                      <p>{getProjectDescription(project)}</p>
-                    </div>
+            <label
+              className="project-history__field"
+              htmlFor="project-description"
+            >
+              <span>Description</span>
 
-                    <span
-                      className={`project-history__status-badge ${
-                        getProjectStatus(project).toLowerCase() === "active"
-                          ? "status-light status-light--pill"
-                          : ""
-                      }`}
-                    >
-                      {getProjectStatus(project)}
-                    </span>
-                  </div>
+              <textarea
+                id="project-description"
+                name="description"
+                className="project-history__textarea"
+                value={projectForm.description}
+                onChange={handleProjectFormChange}
+                placeholder="Describe the project goal, team mission, or workspace purpose."
+                disabled={isCreatingProject}
+                aria-invalid={Boolean(createProjectFieldErrors.description)}
+              />
 
-                  <dl className="project-history__project-meta">
-                    <div>
-                      <dt>Role</dt>
-                      <dd>{getProjectRole(project)}</dd>
-                    </div>
+              {createProjectFieldErrors.description && (
+                <small className="project-history__field-error">
+                  {createProjectFieldErrors.description}
+                </small>
+              )}
+            </label>
 
-                    <div>
-                      <dt>Created</dt>
-                      <dd>{formatDate(project?.createdAt)}</dd>
-                    </div>
+            {createProjectError && (
+              <div className="project-history__create-error" role="alert">
+                {createProjectError}
+              </div>
+            )}
 
-                    <div>
-                      <dt>Timeline</dt>
-                      <dd>{formatProjectMeta(project)}</dd>
-                    </div>
+            <div className="project-history__create-footer">
+              <p className="project-history__create-note">
+                New projects are created as active workspaces with you assigned
+                as owner.
+              </p>
 
-                    {projectId && (
-                      <div>
-                        <dt>Project ID</dt>
-                        <dd>{projectId}</dd>
-                      </div>
-                    )}
-                  </dl>
+              <button
+                className="project-history__create-button"
+                type="submit"
+                disabled={isCreatingProject}
+              >
+                {isCreatingProject ? "Creating project..." : "Create project"}
+              </button>
+            </div>
+          </form>
+        </section>
 
-                  <section
-                    className="project-history__activity"
-                    aria-label={`${getProjectName(project)} activity history`}
+        <section
+          className="project-history__panel"
+          aria-labelledby="project-list-title"
+        >
+          <div className="project-history__panel-heading">
+            <div>
+              <p className="project-history__panel-eyebrow">
+                Connected Workspace
+              </p>
+
+              <h2 id="project-list-title">Project list</h2>
+            </div>
+
+            {!isLoading && hasProjects && (
+              <span className="project-history__count-badge">
+                {formatCountLabel(projects.length, "project")} loaded
+              </span>
+            )}
+          </div>
+
+          {isLoading && (
+            <div
+              className="project-history__state"
+              role="status"
+              aria-live="polite"
+            >
+              Loading project history...
+            </div>
+          )}
+
+          {!isLoading && errorMessage && (
+            <div className="project-history__state project-history__state--error">
+              <h3>Project history unavailable</h3>
+
+              <p>{errorMessage}</p>
+            </div>
+          )}
+
+          {!isLoading && !errorMessage && !hasProjects && (
+            <div className="project-history__state project-history__state--empty">
+              <h3>No projects found</h3>
+
+              <p>
+                Your account is authenticated, but no project records were
+                returned by the backend yet.
+              </p>
+            </div>
+          )}
+
+          {!isLoading && !errorMessage && hasProjects && (
+            <div className="project-history__list">
+              {projects.map((project) => {
+                const projectId = getProjectId(project);
+                const activityEvents = activityByProjectId[projectId] || [];
+                const isActivityLoading = Boolean(
+                  activityLoadingByProjectId[projectId],
+                );
+                const activityError = activityErrorByProjectId[projectId];
+
+                return (
+                  <Link
+                    className="project-history__project-card"
+                    key={projectId || getProjectName(project)}
+                    to={`/projects/${projectId}`}
                   >
-                    <div className="project-history__activity-heading">
+                    <div className="project-history__project-main">
                       <div>
-                        <p className="project-history__activity-label">
-                          Activity History
+                        <p className="project-history__project-label">
+                          Project
                         </p>
 
-                        <h4>Project timeline</h4>
+                        <h3>{getProjectName(project)}</h3>
+
+                        <p>{getProjectDescription(project)}</p>
                       </div>
 
-                      <span className="project-history__activity-count">
-                        {formatCountLabel(activityEvents.length, "event")}
+                      <span
+                        className={`project-history__status-badge ${
+                          getProjectStatus(project).toLowerCase() === "active"
+                            ? "status-light status-light--pill"
+                            : ""
+                        }`}
+                      >
+                        {getProjectStatus(project)}
                       </span>
                     </div>
 
-                    {isActivityLoading && (
-                      <div className="project-history__activity-state">
-                        Loading activity events...
+                    <dl className="project-history__project-meta">
+                      <div>
+                        <dt>Role</dt>
+                        <dd>{getProjectRole(project)}</dd>
                       </div>
-                    )}
 
-                    {!isActivityLoading && activityError && (
-                      <div className="project-history__activity-state project-history__activity-state--error">
-                        {activityError}
+                      <div>
+                        <dt>Created</dt>
+                        <dd>{formatDate(project?.createdAt)}</dd>
                       </div>
-                    )}
 
-                    {!isActivityLoading &&
-                      !activityError &&
-                      activityEvents.length === 0 && (
+                      <div>
+                        <dt>Timeline</dt>
+                        <dd>{formatProjectMeta(project)}</dd>
+                      </div>
+
+                      {projectId && (
+                        <div>
+                          <dt>Project ID</dt>
+                          <dd>{projectId}</dd>
+                        </div>
+                      )}
+                    </dl>
+
+                    <section
+                      className="project-history__activity"
+                      aria-label={`${getProjectName(project)} activity history`}
+                    >
+                      <div className="project-history__activity-heading">
+                        <div>
+                          <p className="project-history__activity-label">
+                            Activity History
+                          </p>
+
+                          <h4>Project timeline</h4>
+                        </div>
+
+                        <span className="project-history__activity-count">
+                          {formatCountLabel(activityEvents.length, "event")}
+                        </span>
+                      </div>
+
+                      {isActivityLoading && (
                         <div className="project-history__activity-state">
-                          No activity events recorded yet.
+                          Loading activity events...
                         </div>
                       )}
 
-                    {!isActivityLoading &&
-                      !activityError &&
-                      activityEvents.length > 0 && (
-                        <ol className="project-history__activity-list">
-                          {activityEvents.map((event) => (
-                            <li
-                              className="project-history__activity-item"
-                              key={
-                                event._id ||
-                                `${event.eventType}-${event.occurredAt}`
-                              }
-                            >
-                              <span
-                                className="project-history__activity-marker"
-                                aria-hidden="true"
-                              />
-
-                              <div className="project-history__activity-content">
-                                <div className="project-history__activity-title-row">
-                                  <strong>
-                                    {formatEventType(event.eventType)}
-                                  </strong>
-
-                                  <time dateTime={event.occurredAt}>
-                                    {formatDateTime(event.occurredAt)}
-                                  </time>
-                                </div>
-
-                                <p>{getEventSummary(event)}</p>
-
-                                <div className="project-history__activity-details">
-                                  <span>{event.source || "skillforge"}</span>
-
-                                  {event.entityType && (
-                                    <span>{event.entityType}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </li>
-                          ))}
-                        </ol>
+                      {!isActivityLoading && activityError && (
+                        <div className="project-history__activity-state project-history__activity-state--error">
+                          {activityError}
+                        </div>
                       )}
-                  </section>
-                </Link>
-              );
-            })}
-          </div>
-        )}
+
+                      {!isActivityLoading &&
+                        !activityError &&
+                        activityEvents.length === 0 && (
+                          <div className="project-history__activity-state">
+                            No activity events recorded yet.
+                          </div>
+                        )}
+
+                      {!isActivityLoading &&
+                        !activityError &&
+                        activityEvents.length > 0 && (
+                          <ol className="project-history__activity-list">
+                            {activityEvents.map((event) => (
+                              <li
+                                className="project-history__activity-item"
+                                key={
+                                  event._id ||
+                                  `${event.eventType}-${event.occurredAt}`
+                                }
+                              >
+                                <span
+                                  className="project-history__activity-marker"
+                                  aria-hidden="true"
+                                />
+
+                                <div className="project-history__activity-content">
+                                  <div className="project-history__activity-title-row">
+                                    <strong>
+                                      {formatEventType(event.eventType)}
+                                    </strong>
+
+                                    <time dateTime={event.occurredAt}>
+                                      {formatDateTime(event.occurredAt)}
+                                    </time>
+                                  </div>
+
+                                  <p>{getEventSummary(event)}</p>
+
+                                  <div className="project-history__activity-details">
+                                    <span>{event.source || "skillforge"}</span>
+
+                                    {event.entityType && (
+                                      <span>{event.entityType}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ol>
+                        )}
+                    </section>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </section>
-    </section>
-  );
+    );
 }
 
 export default ProjectHistory;
