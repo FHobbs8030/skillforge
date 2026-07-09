@@ -489,6 +489,158 @@ router.patch(
   },
 );
 
+router.patch("/:projectId", requireAuth, async (req, res) => {
+  const { projectId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    return res.status(400).json({
+      error: "Invalid project ID.",
+    });
+  }
+
+  const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
+
+  const description =
+    typeof req.body?.description === "string"
+      ? req.body.description.trim()
+      : "";
+
+  const status =
+    typeof req.body?.status === "string"
+      ? req.body.status.trim().toLowerCase()
+      : "";
+
+  const visibility =
+    typeof req.body?.visibility === "string"
+      ? req.body.visibility.trim().toLowerCase()
+      : "";
+
+  const validationErrors = {};
+
+  if (name.length < 2) {
+    validationErrors.name = "Project name must contain at least 2 characters.";
+  } else if (name.length > 120) {
+    validationErrors.name = "Project name cannot exceed 120 characters.";
+  }
+
+  if (description.length > 2000) {
+    validationErrors.description =
+      "Project description cannot exceed 2000 characters.";
+  }
+
+  if (!PROJECT_STATUSES.has(status)) {
+    validationErrors.status =
+      "Project status must be planned, active, paused, completed, or archived.";
+  }
+
+  if (!PROJECT_VISIBILITIES.has(visibility)) {
+    validationErrors.visibility =
+      "Project visibility must be private, team, or public.";
+  }
+
+  if (Object.keys(validationErrors).length > 0) {
+    return res.status(400).json({
+      error: "Validation failed.",
+      fields: validationErrors,
+    });
+  }
+
+  try {
+    const membership = await ProjectMembership.findOne({
+      projectId,
+      userId: req.user._id,
+      status: "active",
+    }).lean();
+
+    if (!membership) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    if (!PROJECT_MEMBER_WRITE_ROLES.has(membership.role)) {
+      return res.status(403).json({
+        error: "Only project owners and hosts can edit project settings.",
+      });
+    }
+
+    const existingProject = await Project.findById(projectId).lean();
+
+    if (!existingProject) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    const updatedProject = await Project.findByIdAndUpdate(
+      projectId,
+      {
+        name,
+        description,
+        status,
+        visibility,
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).lean();
+
+    const activityEvent = await ActivityEvent.create({
+      projectId,
+      actorId: req.user._id,
+      eventType: "project_updated",
+      source: "skillforge",
+      entityType: "project",
+      entityId: projectId,
+      metadata: {
+        previous: {
+          name: existingProject.name,
+          description: existingProject.description,
+          status: existingProject.status,
+          visibility: existingProject.visibility,
+        },
+        current: {
+          name: updatedProject.name,
+          description: updatedProject.description,
+          status: updatedProject.status,
+          visibility: updatedProject.visibility,
+        },
+      },
+      occurredAt: new Date(),
+    });
+
+    return res.status(200).json({
+      message: "Project updated successfully.",
+      project: {
+        ...updatedProject,
+        id: updatedProject._id,
+        role: membership.role,
+        repositoryUrl: updatedProject.repository?.url || "",
+        membership: {
+          role: membership.role,
+          status: membership.status,
+          joinedAt: membership.joinedAt,
+        },
+      },
+      activityEvent,
+    });
+  } catch (error) {
+    if (error instanceof mongoose.Error.ValidationError) {
+      return res.status(400).json({
+        error: "Validation failed.",
+        fields: getMongooseValidationFields(error),
+      });
+    }
+
+    console.error("Project update route error:", error);
+
+    return res.status(500).json({
+      error: "Unable to update the project. Please try again.",
+    });
+  }
+});
+
 router.get("/:projectId", requireAuth, async (req, res) => {
   const { projectId } = req.params;
 
