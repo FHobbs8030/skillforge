@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import "./ProjectDetail.css";
 
 import {
+  archiveProject,
   connectProjectRepository,
   getProjectActivity,
   getProjectById,
@@ -168,7 +169,11 @@ function ProjectDetail() {
   const [projectSettingsFieldErrors, setProjectSettingsFieldErrors] = useState(
     {},
   );
+
   const [isUpdatingProject, setIsUpdatingProject] = useState(false);
+  const [lifecycleError, setLifecycleError] = useState("");
+  const [lifecycleMessage, setLifecycleMessage] = useState("");
+  const [isArchivingProject, setIsArchivingProject] = useState(false);
 
   const [repositoryUrlInput, setRepositoryUrlInput] = useState("");
   const [repositoryError, setRepositoryError] = useState("");
@@ -309,6 +314,10 @@ function ProjectDetail() {
         : "Repository activity was recorded.";
     }
 
+    if (event.eventType === "project_archived") {
+      return "Project was archived by the owner.";
+    }
+
     if (event.eventType === "project_updated") {
       const currentName = event.metadata?.current?.name;
 
@@ -400,6 +409,54 @@ function ProjectDetail() {
       );
     } finally {
       setIsUpdatingProject(false);
+    }
+  };
+
+  const handleArchiveProject = async () => {
+    const confirmedArchive = window.confirm(
+      "Archive this project? Archived projects stay available for review, but active collaboration controls should no longer be used.",
+    );
+
+    if (!confirmedArchive) {
+      return;
+    }
+
+    setLifecycleError("");
+    setLifecycleMessage("");
+
+    try {
+      setIsArchivingProject(true);
+
+      const archiveResponse = await archiveProject({
+        token: accessToken,
+        projectId,
+      });
+
+      setProject(archiveResponse.project);
+
+      setProjectSettingsForm({
+        name: archiveResponse.project.name || "",
+        description: archiveResponse.project.description || "",
+        status: archiveResponse.project.status || "archived",
+        visibility: archiveResponse.project.visibility || "private",
+      });
+
+      if (archiveResponse.activityEvent) {
+        setActivityEvents((currentEvents) => [
+          archiveResponse.activityEvent,
+          ...currentEvents,
+        ]);
+      }
+
+      setLifecycleMessage("Project archived successfully.");
+    } catch (requestError) {
+      console.error("Project archive error:", requestError);
+
+      setLifecycleError(
+        requestError.message || "Unable to archive this project right now.",
+      );
+    } finally {
+      setIsArchivingProject(false);
     }
   };
 
@@ -501,8 +558,10 @@ function ProjectDetail() {
     project?.repositoryUrl || project?.repository?.url || "";
 
   const canManageProject = ["owner", "host"].includes(normalizedProjectRole);
+  const canArchiveProject = normalizedProjectRole === "owner";
   const canConnectRepository = canManageProject;
   const canInviteMembers = canManageProject;
+  const isProjectArchived = project?.status === "archived";
 
   if (isLoading) {
     return (
@@ -795,7 +854,11 @@ function ProjectDetail() {
                       <option value="active">Active</option>
                       <option value="paused">Paused</option>
                       <option value="completed">Completed</option>
-                      <option value="archived">Archived</option>
+                      {projectSettingsForm.status === "archived" && (
+                        <option value="archived" disabled>
+                          Archived
+                        </option>
+                      )}
                     </select>
                   </label>
 
@@ -867,6 +930,59 @@ function ProjectDetail() {
               <span>
                 Your role can review project settings, but only owners and hosts
                 can edit this workspace.
+              </span>
+            </div>
+          )}
+        </article>
+
+        <article className="project-detail__panel project-detail__panel_type_lifecycle">
+          <div className="project-detail__panel-header">
+            <p className="project-detail__eyebrow">Lifecycle Controls</p>
+            <h2 className="project-detail__panel-title">Archive project</h2>
+          </div>
+
+          {canArchiveProject ? (
+            <div className="project-detail__lifecycle-card">
+              <div>
+                <h3>Owner-only archive control</h3>
+                <p>
+                  Archive this project when active collaboration is complete.
+                  The project will remain available for review, timeline
+                  history, and project records.
+                </p>
+              </div>
+
+              {lifecycleError && (
+                <p className="project-detail__lifecycle-error">
+                  {lifecycleError}
+                </p>
+              )}
+
+              {lifecycleMessage && (
+                <p className="project-detail__lifecycle-success">
+                  {lifecycleMessage}
+                </p>
+              )}
+
+              <button
+                className="project-detail__lifecycle-button"
+                type="button"
+                onClick={handleArchiveProject}
+                disabled={isArchivingProject || isProjectArchived}
+              >
+                {isProjectArchived
+                  ? "Project Archived"
+                  : isArchivingProject
+                    ? "Archiving..."
+                    : "Archive Project"}
+              </button>
+            </div>
+          ) : (
+            <div className="project-detail__lifecycle-note">
+              <strong>Lifecycle controls are owner-only</strong>
+              <span>
+                Your role can review project lifecycle status, but only project
+                owners can archive this workspace.
               </span>
             </div>
           )}

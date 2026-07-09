@@ -22,6 +22,7 @@ const PROJECT_STATUSES = new Set([
 const PROJECT_VISIBILITIES = new Set(["private", "team", "public"]);
 const PROJECT_REPOSITORY_WRITE_ROLES = new Set(["owner", "host"]);
 const PROJECT_MEMBER_WRITE_ROLES = new Set(["owner", "host"]);
+const PROJECT_LIFECYCLE_WRITE_ROLES = new Set(["owner"]);
 const PROJECT_INVITE_ROLES = new Set(["host", "collaborator", "viewer"]);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -533,6 +534,11 @@ router.patch("/:projectId", requireAuth, async (req, res) => {
       "Project status must be planned, active, paused, completed, or archived.";
   }
 
+  if (status === "archived") {
+    validationErrors.status =
+      "Use project lifecycle controls to archive this project.";
+  }
+
   if (!PROJECT_VISIBILITIES.has(visibility)) {
     validationErrors.visibility =
       "Project visibility must be private, team, or public.";
@@ -637,6 +643,106 @@ router.patch("/:projectId", requireAuth, async (req, res) => {
 
     return res.status(500).json({
       error: "Unable to update the project. Please try again.",
+    });
+  }
+});
+
+router.patch("/:projectId/archive", requireAuth, async (req, res) => {
+  const { projectId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    return res.status(400).json({
+      error: "Invalid project ID.",
+    });
+  }
+
+  try {
+    const membership = await ProjectMembership.findOne({
+      projectId,
+      userId: req.user._id,
+      status: "active",
+    }).lean();
+
+    if (!membership) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    if (!PROJECT_LIFECYCLE_WRITE_ROLES.has(membership.role)) {
+      return res.status(403).json({
+        error: "Only project owners can archive projects.",
+      });
+    }
+
+    const existingProject = await Project.findById(projectId).lean();
+
+    if (!existingProject) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    if (existingProject.status === "archived") {
+      return res.status(409).json({
+        error: "This project is already archived.",
+      });
+    }
+
+    const archivedAt = new Date();
+
+    const updatedProject = await Project.findByIdAndUpdate(
+      projectId,
+      {
+        status: "archived",
+        archivedAt,
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).lean();
+
+    const activityEvent = await ActivityEvent.create({
+      projectId,
+      actorId: req.user._id,
+      eventType: "project_archived",
+      source: "skillforge",
+      entityType: "project",
+      entityId: projectId,
+      metadata: {
+        previous: {
+          status: existingProject.status,
+          archivedAt: existingProject.archivedAt,
+        },
+        current: {
+          status: updatedProject.status,
+          archivedAt: updatedProject.archivedAt,
+        },
+      },
+      occurredAt: archivedAt,
+    });
+
+    return res.status(200).json({
+      message: "Project archived successfully.",
+      project: {
+        ...updatedProject,
+        id: updatedProject._id,
+        role: membership.role,
+        repositoryUrl: updatedProject.repository?.url || "",
+        membership: {
+          role: membership.role,
+          status: membership.status,
+          joinedAt: membership.joinedAt,
+        },
+      },
+      activityEvent,
+    });
+  } catch (error) {
+    console.error("Project archive route error:", error);
+
+    return res.status(500).json({
+      error: "Unable to archive the project. Please try again.",
     });
   }
 });
