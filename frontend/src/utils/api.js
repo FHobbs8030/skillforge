@@ -141,6 +141,62 @@ export function getProjects(token) {
   });
 }
 
+export function getPendingProjectInvitations(token) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/projects/invitations/pending", {
+    method: "GET",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function acceptProjectInvitation({ token, projectId }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!projectId) {
+    return Promise.reject(new Error("Project ID is required."));
+  }
+
+  return apiRequest(
+    `/projects/${encodeURIComponent(projectId)}/invitations/accept`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function declineProjectInvitation({ token, projectId }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!projectId) {
+    return Promise.reject(new Error("Project ID is required."));
+  }
+
+  return apiRequest(
+    `/projects/${encodeURIComponent(projectId)}/invitations/decline`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
 export function getProjectById({ token, projectId }) {
   if (!token) {
     return Promise.reject(new Error("Authentication token is required."));
