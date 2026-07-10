@@ -124,13 +124,43 @@ function getUserAvatarUrl(user) {
   );
 }
 
-function AuthenticatedAccount({ currentUser, onSignOut }) {
+function ThemeToggle({ themeMode, onToggleTheme }) {
+  const isNightMode = themeMode !== "day";
+  const nextThemeLabel = isNightMode ? "day" : "night";
+
+  return (
+    <button
+      className="header__theme-toggle"
+      type="button"
+      onClick={onToggleTheme}
+      aria-label={`Switch to ${nextThemeLabel} mode`}
+      title={`Switch to ${nextThemeLabel} mode`}
+    >
+      <span className="header__theme-icon" aria-hidden="true">
+        {isNightMode ? "🌙" : "☀️"}
+      </span>
+
+      <span className="header__theme-label">
+        {isNightMode ? "Night" : "Day"}
+      </span>
+    </button>
+  );
+}
+
+function AuthenticatedAccount({
+  currentUser,
+  onSignOut,
+  themeMode,
+  onToggleTheme,
+}) {
   const displayName = getUserDisplayName(currentUser);
   const initials = getUserInitials(currentUser);
   const avatarUrl = getUserAvatarUrl(currentUser);
 
   return (
     <div className="header__account">
+      <ThemeToggle themeMode={themeMode} onToggleTheme={onToggleTheme} />
+
       <div className="header__user" title={currentUser?.email || displayName}>
         {avatarUrl ? (
           <img
@@ -166,6 +196,8 @@ function Header({
   isDemoMission = false,
   isHostPreview = false,
   isCollaboratorPreview = false,
+  themeMode = "night",
+  onToggleTheme,
 }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -379,6 +411,8 @@ function Header({
                 <AuthenticatedAccount
                   currentUser={currentUser}
                   onSignOut={handleSignOut}
+                  themeMode={themeMode}
+                  onToggleTheme={onToggleTheme}
                 />
               </div>
             ) : (
@@ -490,6 +524,8 @@ function Header({
               <AuthenticatedAccount
                 currentUser={currentUser}
                 onSignOut={handleSignOut}
+                themeMode={themeMode}
+                onToggleTheme={onToggleTheme}
               />
             </div>
           ) : (

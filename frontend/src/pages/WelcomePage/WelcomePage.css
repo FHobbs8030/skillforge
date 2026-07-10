@@ -652,6 +652,133 @@
   margin-top: 0;
 }
 
+:root[data-theme="day"] .welcome-hero {
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.58)),
+    linear-gradient(135deg, rgba(8, 145, 178, 0.2), transparent 42%),
+    linear-gradient(315deg, rgba(249, 115, 22, 0.14), transparent 38%),
+    rgba(15, 23, 42, 0.82);
+}
+
+:root[data-theme="day"] .welcome-hero__title {
+  color: #eaf6fb;
+}
+
+:root[data-theme="day"] .welcome-hero__description {
+  color: #c7dce8;
+}
+
+:root[data-theme="day"] .welcome-button--secondary {
+  background: rgba(226, 242, 248, 0.92);
+  color: #10202d;
+
+  border-color: rgba(226, 242, 248, 0.5);
+}
+
+:root[data-theme="day"] .welcome-button--secondary:hover {
+  color: #0369a1;
+
+  border-color: rgba(8, 145, 178, 0.38);
+
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+}
+
+:root[data-theme="day"] .welcome-hero__highlights {
+  background: rgba(15, 23, 42, 0.72);
+
+  border-color: rgba(226, 242, 248, 0.14);
+}
+
+:root[data-theme="day"] .welcome-highlight strong {
+  color: #eaf6fb;
+}
+
+:root[data-theme="day"] .welcome-highlight span {
+  color: #c7dce8;
+}
+
+:root[data-theme="day"] .welcome-workflow__step {
+  background: rgba(15, 23, 42, 0.74);
+
+  border-color: rgba(226, 242, 248, 0.12);
+
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+}
+
+:root[data-theme="day"] .welcome-workflow__step h3 {
+  color: #eaf6fb;
+}
+
+:root[data-theme="day"] .welcome-workflow__step p {
+  color: #c7dce8;
+}
+
+:root[data-theme="day"] .welcome-communication {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(56, 189, 248, 0.14),
+      transparent 42%
+    ),
+    rgba(15, 23, 42, 0.74);
+
+  border-color: rgba(8, 145, 178, 0.32);
+
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.16);
+}
+
+:root[data-theme="day"] .welcome-communication__content h2 {
+  color: #eaf6fb;
+}
+
+:root[data-theme="day"] .welcome-communication__content > p:last-child {
+  color: #c7dce8;
+}
+
+:root[data-theme="day"] .welcome-communication__panel {
+  background: rgba(8, 18, 27, 0.82);
+
+  border-color: rgba(226, 242, 248, 0.14);
+}
+
+:root[data-theme="day"] .welcome-message {
+  background: rgba(8, 145, 178, 0.12);
+
+  border-color: rgba(56, 189, 248, 0.24);
+}
+
+:root[data-theme="day"] .welcome-message--response {
+  background: rgba(20, 184, 166, 0.12);
+
+  border-color: rgba(20, 184, 166, 0.26);
+}
+
+:root[data-theme="day"] .welcome-message p {
+  color: #c7dce8;
+}
+
+:root[data-theme="day"] .welcome-section .welcome-page__eyebrow,
+:root[data-theme="day"] .welcome-cta .welcome-page__eyebrow {
+  color: #0f766e;
+}
+
+:root[data-theme="day"] .welcome-feature-card__label,
+:root[data-theme="day"] .welcome-role-card__badge {
+  background: rgba(15, 118, 110, 0.1);
+  color: #0f766e;
+
+  border-color: rgba(15, 118, 110, 0.24);
+}
+
+:root[data-theme="day"] .welcome-plan__features li::before,
+:root[data-theme="day"] .welcome-role-card li::before {
+  color: #0f766e;
+}
+
+:root[data-theme="day"] .welcome-role-card__link {
+  color: #0369a1;
+}
+
 @media (max-width: 960px) {
   .welcome-about-grid,
   .welcome-membership-grid {

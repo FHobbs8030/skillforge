@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 import WelcomePage from "./pages/WelcomePage/WelcomePage";
 import DemoMission from "./pages/DemoMission/DemoMission";
@@ -17,6 +17,16 @@ import Footer from "./components/Footer/Footer";
 import useAuth from "./contexts/useAuth";
 
 import "./App.css";
+
+const THEME_STORAGE_KEY = "skillforge-theme";
+const DEFAULT_THEME_MODE = "night";
+const THEME_MODES = new Set(["day", "night"]);
+
+function getInitialThemeMode() {
+  const savedThemeMode = localStorage.getItem(THEME_STORAGE_KEY);
+
+  return THEME_MODES.has(savedThemeMode) ? savedThemeMode : DEFAULT_THEME_MODE;
+}
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, isAuthLoading } = useAuth();
@@ -58,6 +68,22 @@ function PublicOnlyRoute({ children }) {
 function App() {
   const location = useLocation();
   const { isAuthLoading } = useAuth();
+
+  const [themeMode, setThemeMode] = useState(getInitialThemeMode);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeMode;
+    document.documentElement.style.colorScheme =
+      themeMode === "day" ? "light" : "dark";
+
+    localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+  }, [themeMode]);
+
+  const handleThemeToggle = () => {
+    setThemeMode((currentThemeMode) =>
+      currentThemeMode === "night" ? "day" : "night",
+    );
+  };
 
   useLayoutEffect(() => {
     const resetScrollPosition = () => {
@@ -172,6 +198,8 @@ function App() {
           isDemoMission={isDemoMission}
           isHostPreview={isHostPreview}
           isCollaboratorPreview={isCollaboratorPreview}
+          themeMode={themeMode}
+          onToggleTheme={handleThemeToggle}
         />
 
         <main className={mainContentClassName}>

@@ -257,6 +257,92 @@
   --opacity-secondary-content: 0.7;
 }
 
+:root[data-theme="night"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="day"] {
+  color-scheme: light;
+
+  --color-bg-canvas: #c8dbe4;
+  --color-surface-card: #dbe8ee;
+  --color-surface-input: #eef6f9;
+
+  --color-text-primary: #10202d;
+  --color-text-secondary: #415466;
+  --color-text-muted: #5f7182;
+  --color-text-subtle: #304254;
+  --color-text-inverse: #ffffff;
+  --color-text-placeholder: #748697;
+
+  --color-disabled: #9aaab7;
+
+  --surface-header:
+    radial-gradient(
+      circle at 12% 0%,
+      rgba(8, 145, 178, 0.14),
+      transparent 34%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(190, 215, 226, 0.98),
+      rgba(159, 190, 205, 0.98)
+    );
+
+  --surface-workspace:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(20, 184, 166, 0.1),
+      transparent 32%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(196, 219, 229, 0.98),
+      rgba(169, 199, 213, 0.98)
+    );
+
+  --surface-footer:
+    radial-gradient(
+      circle at 80% 100%,
+      rgba(8, 145, 178, 0.12),
+      transparent 34%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(177, 206, 219, 0.98),
+      rgba(145, 179, 196, 0.98)
+    );
+
+  --border-brand: rgba(8, 145, 178, 0.32);
+  --border-subtle: rgba(15, 23, 42, 0.12);
+  --border-card: rgba(15, 23, 42, 0.13);
+  --border-card-hover: rgba(8, 145, 178, 0.32);
+  --border-focus: rgba(8, 145, 178, 0.75);
+  --border-header: rgba(8, 145, 178, 0.34);
+  --border-footer: rgba(8, 145, 178, 0.24);
+  --border-inverse-hover: rgba(15, 23, 42, 0.18);
+  --border-input: rgba(15, 23, 42, 0.18);
+  --border-focus-strong: rgba(8, 145, 178, 0.8);
+  --border-card-subtle: rgba(15, 23, 42, 0.1);
+
+  --shadow-workspace:
+    0 18px 45px rgba(15, 23, 42, 0.14), 0 0 28px rgba(8, 145, 178, 0.08);
+
+  --shadow-card-hover:
+    0 10px 24px rgba(15, 23, 42, 0.14), 0 0 18px rgba(20, 184, 166, 0.14);
+
+  --shadow-header:
+    0 10px 28px rgba(15, 23, 42, 0.16), 0 0 18px rgba(20, 184, 166, 0.08);
+
+  --shadow-footer:
+    0 -8px 24px rgba(15, 23, 42, 0.1), 0 0 18px rgba(20, 184, 166, 0.06);
+
+  --bg: var(--color-bg-canvas);
+  --card-bg: var(--color-surface-card);
+  --text: var(--color-text-primary);
+  --text-soft: var(--color-text-secondary);
+}
+
 html,
 body {
   min-height: 100vh;

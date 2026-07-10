@@ -803,3 +803,49 @@
     grid-template-columns: 1fr;
   }
 }
+
+:root[data-theme="day"] .project-history__metric,
+:root[data-theme="day"] .project-history__create-panel,
+:root[data-theme="day"] .project-history__panel,
+:root[data-theme="day"] .project-history__project-card,
+:root[data-theme="day"] .project-history__activity {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(8, 145, 178, 0.06),
+      transparent 34%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(219, 232, 238, 0.98),
+      rgba(199, 218, 228, 0.98)
+    );
+
+  border-color: rgba(15, 23, 42, 0.13);
+
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+}
+
+:root[data-theme="day"] .project-history__project-meta div,
+:root[data-theme="day"] .project-history__activity-state,
+:root[data-theme="day"] .project-history__state {
+  background: rgba(238, 246, 249, 0.72);
+
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme="day"] .project-history__field input,
+:root[data-theme="day"] .project-history__field select,
+:root[data-theme="day"] .project-history__field textarea {
+  background: rgba(238, 246, 249, 0.92);
+  color: var(--color-text-primary);
+
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+:root[data-theme="day"] .project-history__activity-details span {
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--color-text-secondary);
+
+  border-color: rgba(15, 23, 42, 0.12);
+}
