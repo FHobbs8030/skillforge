@@ -1,4 +1,6 @@
-# 🚀 SkillForge – Developer Learning & Collaboration Workspace
+# 🚀 SkillForge
+
+> A full-stack developer collaboration workspace for creating projects, connecting repositories, managing team access, and tracking project activity.
 
 [![React 19](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![Vite 8](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
@@ -11,210 +13,274 @@
 [![Netlify](https://img.shields.io/badge/Frontend-Netlify-00C7B7?logo=netlify&logoColor=white)](https://adorable-granita-db1df3.netlify.app/)
 [![Render](https://img.shields.io/badge/Backend-Render-46E3B7?logo=render&logoColor=white)](https://skillforge-api-cuw0.onrender.com)
 ![Status](https://img.shields.io/badge/Status-Production%20Live-brightgreen)
-![Phase](https://img.shields.io/badge/Phase-Authenticated%20Workspace-blue)
+![Current Phase](https://img.shields.io/badge/Phase-Project%20Collaboration-blue)
 
 ---
 
 ## 📌 Overview
 
-**SkillForge** is a full-stack developer learning and collaboration workspace designed for individual developers, project hosts, and distributed collaborators.
+**SkillForge** is a responsive full-stack application built to help developers organize projects, collaborate with distributed team members, connect GitHub repositories, and maintain a visible history of project activity.
 
-The project began as a developer learning tracker and has evolved into a broader product experience with:
+The application began as a developer learning tracker and has evolved into a role-aware collaboration platform with:
 
-- a public welcome and product-introduction flow
-- an interactive demo mission
-- host and collaborator workspace previews
-- secure account registration and sign-in
+- a public product experience and interactive demo
+- secure account registration and authentication
 - persistent authenticated sessions
-- a protected member dashboard
-- a protected account profile
-- GitHub API integration
-- responsive layouts for desktop, tablet, and mobile
+- editable user profiles
+- user-owned project workspaces
+- project creation, editing, and archival controls
+- GitHub repository connections
+- collaborator invitations and invitation responses
+- role-based project access
+- project membership management
+- activity timelines
+- persistent Day and Night themes
+- responsive layouts from desktop through 320px mobile screens
 
-The current milestone establishes the foundation for user-owned projects, learning activity, team work sections, progress tracking, and profile management.
-
----
-
-## 📊 Application Preview
-
-![SkillForge Dashboard](https://raw.githubusercontent.com/FHobbs8030/skillforge/main/frontend/src/assets/app.png)
-
-> Replace `frontend/src/assets/app.png` with an updated screenshot to refresh this preview without changing the README image path.
+SkillForge is designed around a simple product model: one account can hold different roles across different projects. A user may own one project, host another, collaborate on a third, and have read-only access to another.
 
 ---
 
-## 🌐 Live Deployment
+## 🌐 Live Application
 
-| Service | URL | Status |
+| Service | Link | Status |
 | --- | --- | --- |
-| Frontend application | [Open SkillForge](https://adorable-granita-db1df3.netlify.app/) | Live on Netlify |
+| Frontend | [Open SkillForge](https://adorable-granita-db1df3.netlify.app/) | Live on Netlify |
 | Backend API | [Open API](https://skillforge-api-cuw0.onrender.com) | Live on Render |
-| API health check | [Check API health](https://skillforge-api-cuw0.onrender.com/health) | Returns `{"status":"OK"}` |
-| Source repository | [FHobbs8030/skillforge](https://github.com/FHobbs8030/skillforge) | GitHub |
-
-Production data flow:
+| Health check | [Check API health](https://skillforge-api-cuw0.onrender.com/health) | Operational |
+| Repository | [FHobbs8030/skillforge](https://github.com/FHobbs8030/skillforge) | Source code |
 
 ```text
-Netlify frontend
-      ↓ HTTPS
+Netlify Frontend
+      ↓ HTTPS / JSON
 Render Express API
       ├── MongoDB Atlas
       └── GitHub REST API
 ```
 
-Netlify deploys the frontend from the `main` branch. Render hosts the Express API and connects it to MongoDB Atlas and the GitHub REST API.
+Netlify deploys the frontend from `main`. Render hosts the Express API, which communicates with MongoDB Atlas and the GitHub REST API.
 
 ---
 
-## ✨ Current Features
+## 📊 Application Preview
+
+SkillForge supports persistent **Day Mode** and **Night Mode** themes. Day Mode screenshots are shown on the left. The right column is reserved for matching Night Mode screenshots.
+
+> Save screenshots in `frontend/src/assets/` using the filenames shown below. The five Night Mode cells are already prepared for the matching files.
+
+<table>
+  <thead>
+    <tr>
+      <th width="50%" align="center">☀️ Day Mode</th>
+      <th width="50%" align="center">🌙 Night Mode</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center">
+        <img src="./frontend/src/assets/skillforge-day-01.png" alt="SkillForge Day Mode screenshot 1" width="100%" />
+      </td>
+      <td align="center">
+        <strong>Night Mode Screenshot 1</strong><br />
+        <sub>Add: <code>skillforge-night-01.png</code></sub>
+        <!-- Replace this placeholder with:
+        <img src="./frontend/src/assets/skillforge-night-01.png" alt="SkillForge Night Mode screenshot 1" width="100%" />
+        -->
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="./frontend/src/assets/skillforge-day-02.png" alt="SkillForge Day Mode screenshot 2" width="100%" />
+      </td>
+      <td align="center">
+        <strong>Night Mode Screenshot 2</strong><br />
+        <sub>Add: <code>skillforge-night-02.png</code></sub>
+        <!-- Replace this placeholder with:
+        <img src="./frontend/src/assets/skillforge-night-02.png" alt="SkillForge Night Mode screenshot 2" width="100%" />
+        -->
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="./frontend/src/assets/skillforge-day-03.png" alt="SkillForge Day Mode screenshot 3" width="100%" />
+      </td>
+      <td align="center">
+        <strong>Night Mode Screenshot 3</strong><br />
+        <sub>Add: <code>skillforge-night-03.png</code></sub>
+        <!-- Replace this placeholder with:
+        <img src="./frontend/src/assets/skillforge-night-03.png" alt="SkillForge Night Mode screenshot 3" width="100%" />
+        -->
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="./frontend/src/assets/skillforge-day-04.png" alt="SkillForge Day Mode screenshot 4" width="100%" />
+      </td>
+      <td align="center">
+        <strong>Night Mode Screenshot 4</strong><br />
+        <sub>Add: <code>skillforge-night-04.png</code></sub>
+        <!-- Replace this placeholder with:
+        <img src="./frontend/src/assets/skillforge-night-04.png" alt="SkillForge Night Mode screenshot 4" width="100%" />
+        -->
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="./frontend/src/assets/skillforge-day-05.png" alt="SkillForge Day Mode screenshot 5" width="100%" />
+      </td>
+      <td align="center">
+        <strong>Night Mode Screenshot 5</strong><br />
+        <sub>Add: <code>skillforge-night-05.png</code></sub>
+        <!-- Replace this placeholder with:
+        <img src="./frontend/src/assets/skillforge-night-05.png" alt="SkillForge Night Mode screenshot 5" width="100%" />
+        -->
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## ✨ Core Features
 
 ### Public Product Experience
 
-- Responsive welcome page with product messaging and navigation
-- Interactive demo mission for exploring the SkillForge concept
+- Responsive welcome page with product messaging
+- Interactive demo mission
 - Host workspace preview
 - Collaborator workspace preview
-- Responsive header and footer
-- Active navigation states
+- Public navigation with active-route states
 - External GitHub, LinkedIn, portfolio, and contact links
+- Day Mode contrast support across the public experience
 
-### Host Workspace Preview
+### Authentication and Sessions
 
-- Project overview widget
-- Work-section creation interface
-- Create-work-section modal
-- Section summary widget
-- Distributed team local-time widget
-- Responsive host dashboard layout
-- Mock project data for product validation
-
-### Collaborator Workspace Preview
-
-- Collaborator-focused project overview
-- Work-section visibility
-- Team communication interface
-- Responsive collaborator dashboard layout
-- Mock collaborator data for product validation
-
-### Authentication
-
-- Account registration with full-name, email, password, and membership validation
+- Account registration with full name, email, password, and membership selection
 - Free, Pro, and Team membership options
-- Duplicate-email protection
 - Password hashing with `bcryptjs`
 - JWT-based sign-in
 - Protected current-user endpoint
 - Persistent browser session restoration
 - Sign-out support
-- Public-only sign-in and sign-up routes
-- Protected `/app` and `/profile` routes
-- Redirect-to-sign-in behavior for unauthenticated users
+- Public-only and protected route guards
+- Duplicate-email protection
+- Normalized email storage
 
 ### Authenticated Dashboard
 
-- Dedicated member workspace at `/app`
-- Overview section
-- Workspace section
-- Activity section
-- Account section
-- Header section navigation
+- Dedicated member dashboard at `/app`
+- Overview, Workspace, Activity, and Account sections
 - Authenticated user identity display
-- Responsive dashboard cards and status panels
-- Mobile navigation support
+- Active-project metrics
+- Role-aware project access cards
+- Pending invitation panel
+- Accept and decline invitation actions
+- Automatic project refresh after invitation acceptance
+- Responsive authenticated navigation
 
-### Authenticated Profile
+### Profile Management
 
-- Dedicated protected profile at `/profile`
-- Member identity card
-- Full name and email display
-- Membership information
-- Account creation date
-- Account security summary
-- Development connection status
-- Planned profile and account controls
-- Responsive single-column mobile layout
-- Verified behavior down to 320px
-- Automatic scroll reset during route navigation
+- Protected profile page at `/profile`
+- Full name and email editing
+- Backend profile update validation
+- Duplicate-email protection
+- Immediate authenticated-user state refresh
+- Save, cancel, loading, success, and error states
+- Persistent profile changes in MongoDB
+- Responsive profile layout
 
-### Backend and Integration
+### Project Workspaces
 
-- Express 5 API
-- MongoDB Atlas connection
-- Mongoose user model
-- Unique normalized email addresses
-- JWT authentication middleware
-- Controlled CORS configuration
-- Environment-based token expiration
-- GitHub profile and repository lookup
-- API health endpoint
-- Structured validation and error responses
+- Protected project history page
+- Create-project workflow
+- Project summary metrics
+- Clickable project cards
+- Protected project detail pages
+- Project overview and access information
+- Role-aware content and controls
+- Project settings for authorized users
+- Project status and visibility management
+- Owner-only project archival
+- Responsive project layouts aligned with the authenticated header shell
+
+### GitHub Repository Connection
+
+- Connect a GitHub repository to a project
+- Validate GitHub HTTPS repository URLs
+- Retrieve repository metadata through the GitHub API
+- Display repository owner, name, URL, default branch, update date, and sync date
+- Update an existing project repository connection
+- Record repository connection activity in the project timeline
+- Restrict repository controls to authorized project roles
+
+### Collaboration and Invitations
+
+- Project member listing
+- Member name, email, project role, account membership, status, and joined date
+- Invite registered users by email
+- Assign Host, Collaborator, or Viewer access
+- Owner and Host invitation permissions
+- Validation for missing users and existing members
+- Pending invitation retrieval
+- Invitation acceptance and decline flows
+- Role-aware dashboard access after accepting an invitation
+- Read-only messaging for non-management roles
+
+### Activity History
+
+Project activity is persisted as timeline events, including:
+
+- project creation
+- project updates
+- project archival
+- repository connections
+- member invitations
+- invitation acceptance
+- invitation decline
+
+### Day and Night Themes
+
+- Persistent theme selection through `localStorage`
+- Authenticated header theme toggle
+- Night Mode preserves the original black, green, and cyan visual system
+- Day Mode uses a softer blue-gray color system
+- Theme-specific contrast passes for:
+  - Welcome
+  - Dashboard
+  - Projects
+  - Profile
+  - Collaborator Demo
 
 ---
 
-## 🆕 Authenticated Workspace Milestone
+## 👥 Project Roles
 
-The current `main` branch includes the complete authenticated-workspace foundation.
-
-| Milestone | Status |
+| Role | Typical Access |
 | --- | --- |
-| Welcome experience | Complete |
-| Demo mission | Complete |
-| Host workspace preview | Complete |
-| Collaborator workspace preview | Complete |
-| Authentication session foundation | Complete |
-| Protected route foundation | Complete |
-| Authenticated dashboard foundation | Complete |
-| Dashboard section navigation | Complete |
-| Authenticated profile foundation | Complete |
-| Responsive validation through 320px | Complete |
-| Profile editing | Planned next |
+| **Owner** | Full project control, project settings, member invitations, repository management, and lifecycle controls |
+| **Host** | Project management, member invitations, repository controls, and editable project settings |
+| **Collaborator** | Active project participation with role-aware workspace access |
+| **Viewer** | Read-only project access |
+| **Member** | Fallback project access when no specialized role applies |
 
-### Recent Engineering Improvements
-
-- Replaced the original single-page tracker interface with a routed product experience
-- Added authentication context and centralized session state
-- Added protected and public-only route guards
-- Added JWT restoration through `/auth/me`
-- Added dedicated sign-up and sign-in interfaces
-- Added responsive authenticated navigation
-- Added a dedicated member dashboard
-- Added route-aware section navigation
-- Added a protected profile experience
-- Consolidated and reorganized responsive header styles
-- Added route-change scroll restoration
-- Removed obsolete entry-tracker components and the original entry model
-- Added collaboration planning documentation
-- Validated successful Vite production builds after each milestone
+Role permissions are evaluated per project. A single SkillForge account can hold different roles across multiple projects.
 
 ---
 
-## ▶️ How to Explore SkillForge
+## 🧭 Primary Routes
 
-### Public Experience
-
-1. Open the [live application](https://adorable-granita-db1df3.netlify.app/).
-2. Review the welcome page and product overview.
-3. Open the demo mission.
-4. Explore the Host Demo workspace.
-5. Explore the Collaborator Demo workspace.
-
-### Create an Account
-
-1. Select **Sign Up**.
-2. Enter a full name and valid email address.
-3. Create a password with at least eight characters.
-4. Select a Free, Pro, or Team membership.
-5. Submit the registration form.
-6. Sign in with the new account credentials.
-
-### Authenticated Experience
-
-1. Sign in to restore the authenticated SkillForge session.
-2. Explore the member dashboard at `/app`.
-3. Use the dashboard section links to navigate between Overview, Workspace, Activity, and Account.
-4. Open the protected profile at `/profile`.
-5. Review account, membership, security, and development-connection information.
-6. Sign out when finished.
+| Route | Access | Purpose |
+| --- | --- | --- |
+| `/` | Public | Welcome and product introduction |
+| `/demo` | Public | Interactive SkillForge demo mission |
+| `/host-preview` | Public | Host workspace preview |
+| `/collaborator-preview` | Public | Collaborator workspace preview |
+| `/signup` | Public only | Account registration |
+| `/signin` | Public only | Account sign-in |
+| `/app` | Protected | Authenticated dashboard |
+| `/profile` | Protected | Profile and account management |
+| `/projects` | Protected | Project history and project creation |
+| `/projects/:projectId` | Protected | Role-aware project detail workspace |
 
 ---
 
@@ -224,25 +290,33 @@ The current `main` branch includes the complete authenticated-workspace foundati
 Browser
 └── React 19 + Vite 8
     ├── React Router
-    ├── AuthProvider / AuthContext
+    ├── Authentication context
+    ├── Theme context
     ├── Public-only route guards
     ├── Protected route guards
     ├── Welcome and demo experiences
-    ├── Host and collaborator previews
     ├── Authenticated dashboard
-    ├── Authenticated profile
+    ├── Profile management
+    ├── Project history
+    ├── Project detail workspaces
+    ├── Invitation response UI
     └── Responsive CSS system
             ↓ HTTPS / JSON
 Render
 └── Node.js + Express 5
-    ├── Request validation
-    ├── CORS controls
     ├── Authentication routes
+    ├── Project routes
+    ├── Request validation
     ├── JWT middleware
+    ├── Role and membership authorization
     ├── Password hashing
+    ├── GitHub API integration
     ├── Error handling
-    ├── MongoDB Atlas
-    └── GitHub REST API
+    └── MongoDB Atlas
+        ├── Users
+        ├── Projects
+        ├── Project memberships
+        └── Activity events
 ```
 
 ### Authentication Flow
@@ -252,7 +326,7 @@ Sign Up
   ↓
 Validate account fields
   ↓
-Hash password with bcrypt
+Hash password
   ↓
 Store user in MongoDB Atlas
 
@@ -262,13 +336,43 @@ Validate credentials
   ↓
 Compare password hash
   ↓
-Issue signed JWT
+Issue JWT
   ↓
-Store authenticated session
+Store browser session
   ↓
-Restore current user through GET /auth/me
+Restore user through GET /auth/me
   ↓
-Allow access to /app and /profile
+Allow protected route access
+```
+
+### Project Creation Flow
+
+```text
+Authenticated user
+  ↓
+Create project
+  ↓
+Create owner membership
+  ↓
+Create project_created activity event
+  ↓
+Open project detail workspace
+```
+
+### Invitation Flow
+
+```text
+Owner or Host invites registered user
+  ↓
+Create invited project membership
+  ↓
+Display invitation on recipient dashboard
+  ↓
+Recipient accepts or declines
+  ↓
+Update membership status
+  ↓
+Record invitation response in activity timeline
 ```
 
 ---
@@ -283,6 +387,7 @@ Allow access to /app and /profile
 - React Router 7
 - JavaScript
 - CSS custom properties
+- Context-based authentication and theme state
 - Responsive CSS
 - ESLint
 
@@ -297,7 +402,7 @@ Allow access to /app and /profile
 - `dotenv`
 - `node-fetch`
 
-### Database and APIs
+### Data and Integrations
 
 - MongoDB Atlas
 - GitHub REST API
@@ -310,20 +415,45 @@ Allow access to /app and /profile
 
 ---
 
-## 🔌 API Endpoints
+## 🔌 API Overview
+
+### Authentication
 
 | Method | Endpoint | Authentication | Purpose |
 | --- | --- | --- | --- |
-| `GET` | `/` | Public | Confirms that the SkillForge API is running |
-| `GET` | `/health` | Public | Returns the API health status |
-| `POST` | `/auth/signup` | Public | Creates a SkillForge user account |
-| `POST` | `/auth/signin` | Public | Validates credentials and returns a JWT |
-| `GET` | `/auth/me` | Bearer token | Returns the authenticated user |
-| `GET` | `/github/:username` | Public | Retrieves a GitHub profile and up to five repositories |
+| `POST` | `/auth/signup` | Public | Create an account |
+| `POST` | `/auth/signin` | Public | Validate credentials and return a JWT |
+| `GET` | `/auth/me` | Bearer token | Return the authenticated user |
+| `PATCH` | `/auth/me` | Bearer token | Update the authenticated profile |
 
-### Authorization Header
+### Projects
 
-Protected API requests use:
+Project routes are mounted under `/projects`.
+
+| Method | Endpoint | Purpose |
+| --- | --- |
+| `GET` | `/projects` | List projects for the authenticated user |
+| `POST` | `/projects` | Create a project and owner membership |
+| `GET` | `/projects/invitations/pending` | List pending invitations |
+| `PATCH` | `/projects/:projectId/invitations/accept` | Accept an invitation |
+| `PATCH` | `/projects/:projectId/invitations/decline` | Decline an invitation |
+| `GET` | `/projects/:projectId` | Load project detail |
+| `PATCH` | `/projects/:projectId` | Update project settings |
+| `PATCH` | `/projects/:projectId/archive` | Archive a project |
+| `GET` | `/projects/:projectId/activity` | Load project activity |
+| `GET` | `/projects/:projectId/members` | List project members |
+| `POST` | `/projects/:projectId/members/invite` | Invite a registered user |
+| `PUT` | `/projects/:projectId/repository` | Connect or update a GitHub repository |
+
+### Other Endpoints
+
+| Method | Endpoint | Authentication | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/` | Public | Confirm the API is running |
+| `GET` | `/health` | Public | Return API health status |
+| `GET` | `/github/:username` | Public | Retrieve a GitHub profile and repositories |
+
+Protected requests use:
 
 ```http
 Authorization: Bearer <jwt-token>
@@ -331,18 +461,22 @@ Authorization: Bearer <jwt-token>
 
 ---
 
-## 🔐 Security Foundation
+## 🔐 Security and Authorization
 
 - Passwords are never stored in plain text
 - Passwords are hashed with bcrypt
-- Duplicate email addresses are rejected
+- JWTs protect authenticated API routes
 - Email addresses are normalized before storage
-- JWTs use the `HS256` algorithm
-- JWT expiration is controlled through environment configuration
-- Protected requests are validated by authentication middleware
-- Password hashes are excluded from normal user responses
+- Duplicate accounts are rejected
+- Password hashes are excluded from normal responses
+- Project access requires an active membership
+- Project editing is restricted to Owners and Hosts
+- Repository management is restricted to Owners and Hosts
+- Member invitations are restricted to Owners and Hosts
+- Project archival is restricted to Owners
+- GitHub repository URLs are validated
 - Production CORS access is restricted to the deployed frontend
-- Localhost origins are permitted during development
+- Localhost origins are supported during development
 - Secrets are stored in environment variables
 - `.env` files and credentials must never be committed
 
@@ -356,27 +490,21 @@ skillforge/
 │   ├── middleware/
 │   │   └── auth.js
 │   ├── models/
+│   │   ├── ActivityEvent.js
+│   │   ├── Project.js
+│   │   ├── ProjectMembership.js
 │   │   └── User.js
+│   ├── routes/
+│   │   └── projects.js
 │   ├── package.json
 │   └── server.js
 ├── frontend/
 │   ├── docs/
-│   │   └── SKILLFORGE_COLLABORATION_PLAN.md
 │   ├── src/
 │   │   ├── assets/
 │   │   ├── components/
-│   │   │   ├── Auth/
-│   │   │   ├── Clock/
-│   │   │   ├── Footer/
-│   │   │   ├── Header/
-│   │   │   └── host/
 │   │   ├── contexts/
-│   │   │   ├── AuthContext.js
-│   │   │   ├── AuthProvider.jsx
-│   │   │   └── useAuth.js
 │   │   ├── data/
-│   │   │   ├── mockCollaboratorData.js
-│   │   │   └── mockHostData.js
 │   │   ├── pages/
 │   │   │   ├── AppDashboard/
 │   │   │   ├── AuthPage/
@@ -384,6 +512,8 @@ skillforge/
 │   │   │   ├── DemoMission/
 │   │   │   ├── HostDashboard/
 │   │   │   ├── ProfilePage/
+│   │   │   ├── ProjectDetail/
+│   │   │   ├── ProjectHistory/
 │   │   │   └── WelcomePage/
 │   │   ├── utils/
 │   │   │   └── api.js
@@ -397,50 +527,23 @@ skillforge/
 
 ---
 
-## ⚙️ Local Installation
+## ⚙️ Local Development
 
-Clone the repository:
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/FHobbs8030/skillforge.git
 cd skillforge
 ```
 
-### Backend Setup
+### 2. Install backend dependencies
 
 ```bash
 cd backend
 npm install
-npm run dev
 ```
 
-The local API runs on:
-
-```text
-http://localhost:3001
-```
-
-### Frontend Setup
-
-Open a second terminal:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Vite will display and open the local frontend URL.
-
----
-
-## 🌱 Environment Variables
-
-Create `frontend/.env`:
-
-```env
-VITE_API_URL=http://localhost:3001
-```
+### 3. Configure backend environment variables
 
 Create `backend/.env`:
 
@@ -452,103 +555,150 @@ JWT_SECRET=your_long_random_jwt_secret
 JWT_EXPIRES_IN=1h
 ```
 
-The deployed Netlify frontend uses:
+### 4. Start the backend
+
+```bash
+npm run dev
+```
+
+The local API runs at:
+
+```text
+http://localhost:3001
+```
+
+### 5. Install frontend dependencies
+
+Open a second terminal from the project root:
+
+```bash
+cd frontend
+npm install
+```
+
+### 6. Configure the frontend
+
+Create `frontend/.env`:
+
+```env
+VITE_API_URL=http://localhost:3001
+```
+
+### 7. Start the frontend
+
+```bash
+npm run dev
+```
+
+Vite will display the local frontend URL in the terminal.
+
+The deployed frontend uses:
 
 ```env
 VITE_API_URL=https://skillforge-api-cuw0.onrender.com
 ```
 
-Never commit `.env` files, MongoDB credentials, GitHub tokens, JWT secrets, or user passwords.
-
 ---
 
 ## ✅ Validation
 
-Frontend quality checks:
+Run the frontend checks from the repository root:
 
 ```bash
-cd frontend
-npm run lint
-npm run build
+npm --prefix frontend run lint
+npm --prefix frontend run build
 git diff --check
 ```
 
-Backend startup check:
+Check the backend project routes:
 
 ```bash
-cd backend
-npm run dev
+node --check backend/routes/projects.js
 ```
 
-The authenticated-workspace milestone has been verified for:
+Start the backend for runtime validation:
 
-- successful Vite production builds
-- clean whitespace validation
-- public route access
-- protected route redirects
-- account registration
-- account sign-in
+```bash
+npm --prefix backend run dev
+```
+
+Current functionality has been validated for:
+
+- frontend production builds
+- clean whitespace checks
+- public and protected routing
+- account registration and sign-in
 - persistent session restoration
-- current-user authentication
-- authenticated dashboard access
-- authenticated profile access
-- sign-out behavior
-- route navigation and active states
-- route-change scroll restoration
+- authenticated profile editing
+- project listing and creation
+- project detail navigation
+- project setting updates
+- project archival
+- GitHub repository connection
+- member listing and invitations
+- invitation acceptance and decline
+- role-aware dashboard access
+- project activity history
+- Day and Night theme persistence
 - responsive desktop, tablet, and mobile layouts
-- 320px profile and authenticated-header behavior
-- Netlify-to-Render API communication
+- Netlify-to-Render communication
 - MongoDB Atlas connectivity
 - GitHub API responses
-- API health endpoint availability
 
 ---
 
-## 🖼️ Screenshots and Project Planning
+## 🧩 Recent Milestones
 
-### Application Screenshot
-
-![SkillForge Dashboard](https://raw.githubusercontent.com/FHobbs8030/skillforge/main/frontend/src/assets/app.png)
-
-### Trello Planning Board
-
-![Trello Board](https://raw.githubusercontent.com/FHobbs8030/skillforge/stage-1-resubmit/frontend/src/assets/trello.png)
-
-The existing image paths are intentionally preserved. Updated screenshots can replace the existing image files without requiring README changes.
+| Milestone | Status |
+| --- | --- |
+| Public welcome and demo experience | Complete |
+| Authentication and session foundation | Complete |
+| Authenticated dashboard | Complete |
+| Profile editing | Complete |
+| Project data foundation | Complete |
+| Project history and activity UI | Complete |
+| Project detail workspace | Complete |
+| GitHub repository connection | Complete |
+| Project member listing | Complete |
+| Project member invitations | Complete |
+| Invitation response flow | Complete |
+| Role-based dashboard access | Complete |
+| Role-aware permission display | Complete |
+| Project creation UI | Complete |
+| Project editing UI | Complete |
+| Project lifecycle archive controls | Complete |
+| Persistent Day/Night theme toggle | Complete |
 
 ---
 
 ## 🛣️ Roadmap
 
-Planned improvements include:
+Potential next phases include:
 
-- functional profile editing
-- protected profile-update API
-- password-change workflow
-- account deletion safeguards
-- GitHub account connection controls
-- user-owned projects
-- persistent work sections
-- collaborator invitations
-- role-based project permissions
+- project member role editing
+- member removal and invitation cancellation
+- repository synchronization controls
+- project tasks and work sections
+- task assignment and completion tracking
+- comments and project communication
+- notifications
 - learning activity records
-- progress analytics and streaks
-- repository activity summaries
-- notification and activity systems
+- project progress analytics
+- GitHub activity summaries
 - automated frontend and backend tests
 - accessibility audits
-- improved production logging
+- production monitoring and structured logging
 - custom domain support
 
 ---
 
 ## 📍 Project Status
 
-### Authenticated Workspace Foundation — Complete
+### Project Collaboration Foundation — Complete
 
-SkillForge now provides a connected public experience and a protected authenticated-member foundation. The frontend, backend, database, authentication system, deployment services, and GitHub API integration are connected and operational.
+SkillForge now provides a connected public experience, secure authenticated accounts, editable profiles, project creation and management, GitHub repository connections, role-aware collaboration, invitation workflows, activity history, project lifecycle controls, and persistent Day/Night themes.
 
-The next development phase is the **Profile Editing Foundation**.
+The project is live and under active development.
 
 ---
 
