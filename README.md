@@ -81,11 +81,7 @@ SkillForge supports persistent **Day Mode** and **Night Mode** themes. Day Mode 
         <img src="./frontend/src/assets/skillforge-day-01.png" alt="SkillForge Day Mode screenshot 1" width="100%" />
       </td>
       <td align="center">
-        <strong>Night Mode Screenshot 1</strong><br />
-        <sub>Add: <code>skillforge-night-01.png</code></sub>
-        <!-- Replace this placeholder with:
         <img src="./frontend/src/assets/skillforge-night-01.png" alt="SkillForge Night Mode screenshot 1" width="100%" />
-        -->
       </td>
     </tr>
     <tr>
@@ -93,11 +89,7 @@ SkillForge supports persistent **Day Mode** and **Night Mode** themes. Day Mode 
         <img src="./frontend/src/assets/skillforge-day-02.png" alt="SkillForge Day Mode screenshot 2" width="100%" />
       </td>
       <td align="center">
-        <strong>Night Mode Screenshot 2</strong><br />
-        <sub>Add: <code>skillforge-night-02.png</code></sub>
-        <!-- Replace this placeholder with:
         <img src="./frontend/src/assets/skillforge-night-02.png" alt="SkillForge Night Mode screenshot 2" width="100%" />
-        -->
       </td>
     </tr>
     <tr>
@@ -105,11 +97,7 @@ SkillForge supports persistent **Day Mode** and **Night Mode** themes. Day Mode 
         <img src="./frontend/src/assets/skillforge-day-03.png" alt="SkillForge Day Mode screenshot 3" width="100%" />
       </td>
       <td align="center">
-        <strong>Night Mode Screenshot 3</strong><br />
-        <sub>Add: <code>skillforge-night-03.png</code></sub>
-        <!-- Replace this placeholder with:
         <img src="./frontend/src/assets/skillforge-night-03.png" alt="SkillForge Night Mode screenshot 3" width="100%" />
-        -->
       </td>
     </tr>
     <tr>
@@ -117,11 +105,7 @@ SkillForge supports persistent **Day Mode** and **Night Mode** themes. Day Mode 
         <img src="./frontend/src/assets/skillforge-day-04.png" alt="SkillForge Day Mode screenshot 4" width="100%" />
       </td>
       <td align="center">
-        <strong>Night Mode Screenshot 4</strong><br />
-        <sub>Add: <code>skillforge-night-04.png</code></sub>
-        <!-- Replace this placeholder with:
         <img src="./frontend/src/assets/skillforge-night-04.png" alt="SkillForge Night Mode screenshot 4" width="100%" />
-        -->
       </td>
     </tr>
     <tr>
@@ -129,11 +113,7 @@ SkillForge supports persistent **Day Mode** and **Night Mode** themes. Day Mode 
         <img src="./frontend/src/assets/skillforge-day-05.png" alt="SkillForge Day Mode screenshot 5" width="100%" />
       </td>
       <td align="center">
-        <strong>Night Mode Screenshot 5</strong><br />
-        <sub>Add: <code>skillforge-night-05.png</code></sub>
-        <!-- Replace this placeholder with:
         <img src="./frontend/src/assets/skillforge-night-05.png" alt="SkillForge Night Mode screenshot 5" width="100%" />
-        -->
       </td>
     </tr>
   </tbody>
