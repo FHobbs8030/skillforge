@@ -625,6 +625,55 @@
   }
 }
 
+:root[data-theme="day"] .profile-page__panel {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(8, 145, 178, 0.06),
+      transparent 34%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(219, 232, 238, 0.98),
+      rgba(199, 218, 228, 0.98)
+    );
+
+  border-color: rgba(15, 23, 42, 0.13);
+
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+}
+
+:root[data-theme="day"] .profile-page__security-item,
+:root[data-theme="day"] .profile-page__connection-list li {
+  background: rgba(238, 246, 249, 0.72);
+
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+:root[data-theme="day"] .profile-page__status,
+:root[data-theme="day"] .profile-page__membership-heading span {
+  color: #0f766e;
+
+  background: rgba(20, 184, 166, 0.12);
+
+  border-color: rgba(20, 184, 166, 0.28);
+}
+
+:root[data-theme="day"] .profile-page__security-item > span {
+  color: #0f766e;
+
+  background: rgba(20, 184, 166, 0.13);
+
+  border-color: rgba(20, 184, 166, 0.28);
+}
+
+:root[data-theme="day"] .profile-page__planned-actions span {
+  background: rgba(8, 145, 178, 0.08);
+  color: var(--color-text-secondary);
+
+  border-color: rgba(8, 145, 178, 0.18);
+}
+
 @media (max-width: 640px) {
   .profile-page__header {
     flex-direction: column;

@@ -899,6 +899,60 @@
   border-color: rgba(248, 113, 113, 0.28);
 }
 
+:root[data-theme="day"] .app-dashboard__metric,
+:root[data-theme="day"] .app-dashboard__panel {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(8, 145, 178, 0.06),
+      transparent 34%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(219, 232, 238, 0.98),
+      rgba(199, 218, 228, 0.98)
+    );
+
+  border-color: rgba(15, 23, 42, 0.13);
+
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+}
+
+:root[data-theme="day"] .app-dashboard__membership {
+  background: rgba(8, 145, 178, 0.08);
+
+  border-color: rgba(8, 145, 178, 0.18);
+}
+
+:root[data-theme="day"] .app-dashboard__membership-status,
+:root[data-theme="day"] .app-dashboard__readiness-item--complete
+  .app-dashboard__readiness-status,
+:root[data-theme="day"] .app-dashboard__readiness-item--complete
+  .app-dashboard__readiness-indicator {
+  color: #0f766e;
+}
+
+:root[data-theme="day"] .app-dashboard__readiness-item,
+:root[data-theme="day"] .app-dashboard__capability-list li,
+:root[data-theme="day"] .app-dashboard__invitation-item {
+  background: rgba(255, 255, 255, 0.72);
+
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme="day"] .app-dashboard__readiness-item--complete,
+:root[data-theme="day"] .app-dashboard__security-status {
+  background: rgba(20, 184, 166, 0.08);
+
+  border-color: rgba(20, 184, 166, 0.2);
+}
+
+:root[data-theme="day"] .app-dashboard__invitation-state {
+  background: rgba(255, 255, 255, 0.7);
+
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
 /* =========================
    RESPONSIVE
 ========================= */
