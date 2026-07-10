@@ -8,8 +8,11 @@ const ProjectMembership = require("../models/ProjectMembership");
 const User = require("../models/User");
 
 const requireAuth = require("../middleware/auth");
+const projectTaskRoutes = require("./projectTasks");
 
 const router = express.Router();
+
+router.use("/:projectId/tasks", projectTaskRoutes);
 
 const PROJECT_STATUSES = new Set([
   "planned",
