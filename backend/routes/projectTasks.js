@@ -92,6 +92,83 @@ router.get("/", requireAuth, async (req, res) => {
   }
 });
 
+router.get("/:taskId", requireAuth, async (req, res) => {
+  const { projectId, taskId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    return res.status(400).json({
+      error: "Invalid project ID.",
+    });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(taskId)) {
+    return res.status(400).json({
+      error: "Invalid task ID.",
+    });
+  }
+
+  try {
+    const membership = await ProjectMembership.findOne({
+      projectId,
+      userId: req.user._id,
+      status: "active",
+    }).lean();
+
+    if (!membership) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    const project = await Project.findById(projectId).lean();
+
+    if (!project) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    const task = await ProjectTask.findOne({
+      _id: taskId,
+      projectId,
+    })
+      .populate({
+        path: "assigneeId",
+        select: "fullName email",
+      })
+      .populate({
+        path: "createdById",
+        select: "fullName email",
+      })
+      .lean();
+
+    if (!task) {
+      return res.status(404).json({
+        error: "Task not found.",
+      });
+    }
+
+    return res.status(200).json({
+      project: {
+        id: project._id,
+        name: project.name,
+        status: project.status,
+      },
+      membership: {
+        role: membership.role,
+        status: membership.status,
+      },
+      task,
+    });
+  } catch (error) {
+    console.error("Project task detail route error:", error);
+
+    return res.status(500).json({
+      error: "Unable to load the project task. Please try again.",
+    });
+  }
+});
+
 router.post("/", requireAuth, async (req, res) => {
   const { projectId } = req.params;
 
