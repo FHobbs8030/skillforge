@@ -18,6 +18,7 @@ const ORGANIZATION_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ORGANIZATION_INVITATION_ROLES = new Set(["admin", "member"]);
+const ORGANIZATION_ASSIGNABLE_MEMBER_ROLES = new Set(["admin", "member"]);
 
 const ORGANIZATION_ROLE_ORDER = new Map([
   ["owner", 0],
@@ -619,6 +620,137 @@ router.get(
 
       return res.status(500).json({
         error: "Unable to load organization members. Please try again.",
+      });
+    }
+  },
+);
+
+router.patch(
+  "/:organizationId/members/:membershipId/role",
+  requireAuth,
+  requireOrganizationMembership,
+  requireOrganizationRole("owner"),
+  requireOrganizationWritable,
+  async (req, res) => {
+    const { membershipId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(membershipId)) {
+      return res.status(400).json({
+        error: "Invalid organization membership ID.",
+      });
+    }
+
+    const role =
+      typeof req.body?.role === "string"
+        ? req.body.role.trim().toLowerCase()
+        : "";
+
+    if (!ORGANIZATION_ASSIGNABLE_MEMBER_ROLES.has(role)) {
+      return res.status(400).json({
+        error: "Validation failed.",
+        fields: {
+          role: "Organization member role must be admin or member.",
+        },
+      });
+    }
+
+    const { organization, membership: currentUserMembership } =
+      req.organizationAccess;
+
+    try {
+      const targetMembership = await OrganizationMembership.findOne({
+        _id: membershipId,
+        organizationId: organization._id,
+      }).lean();
+
+      if (!targetMembership) {
+        return res.status(404).json({
+          error: "Organization member not found.",
+        });
+      }
+
+      if (targetMembership.status !== "active") {
+        return res.status(409).json({
+          error:
+            "Only active organization members can have their role changed.",
+        });
+      }
+
+      if (targetMembership.role === "owner") {
+        return res.status(409).json({
+          error:
+            "Organization ownership must be changed through ownership transfer.",
+        });
+      }
+
+      if (
+        targetMembership._id.toString() === currentUserMembership._id.toString()
+      ) {
+        return res.status(409).json({
+          error:
+            "The organization Owner cannot change their role through this route.",
+        });
+      }
+
+      if (targetMembership.role === role) {
+        return res.status(409).json({
+          error: `This organization member already has the ${role} role.`,
+        });
+      }
+
+      const updatedMembership = await OrganizationMembership.findOneAndUpdate(
+        {
+          _id: targetMembership._id,
+          organizationId: organization._id,
+          status: "active",
+          role: targetMembership.role,
+        },
+        {
+          role,
+        },
+        {
+          returnDocument: "after",
+          runValidators: true,
+        },
+      );
+
+      if (!updatedMembership) {
+        return res.status(409).json({
+          error:
+            "The organization membership changed before the role update completed.",
+        });
+      }
+
+      const populatedMembership = await OrganizationMembership.findById(
+        updatedMembership._id,
+      )
+        .populate({
+          path: "userId",
+          select: "fullName email",
+        })
+        .populate({
+          path: "invitedBy",
+          select: "fullName email",
+        })
+        .lean();
+
+      return res.status(200).json({
+        message: `Organization member role changed to ${role}.`,
+        member: formatOrganizationMember(populatedMembership),
+      });
+    } catch (error) {
+      if (error instanceof mongoose.Error.ValidationError) {
+        return res.status(400).json({
+          error: "Validation failed.",
+          fields: getMongooseValidationFields(error),
+        });
+      }
+
+      console.error("Organization member role route error:", error);
+
+      return res.status(500).json({
+        error:
+          "Unable to change the organization member role. Please try again.",
       });
     }
   },
