@@ -5,6 +5,9 @@ const Organization = require("../models/Organization");
 const OrganizationMembership = require("../models/OrganizationMembership");
 
 const requireAuth = require("../middleware/auth");
+const {
+  requireOrganizationMembership,
+} = require("../middleware/organizationAccess");
 
 const router = express.Router();
 
@@ -19,6 +22,18 @@ function getMongooseValidationFields(error) {
   );
 }
 
+function formatOrganizationResult(organization, membership) {
+  return {
+    ...organization,
+    id: organization._id,
+    membership: {
+      role: membership.role,
+      status: membership.status,
+      joinedAt: membership.joinedAt,
+    },
+  };
+}
+
 function normalizeOrganizationSlug(value) {
   if (typeof value !== "string") {
     return "";
@@ -31,6 +46,73 @@ function normalizeOrganizationSlug(value) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
+
+router.get("/", requireAuth, async (req, res) => {
+  try {
+    const memberships = await OrganizationMembership.find({
+      userId: req.user._id,
+      status: "active",
+    })
+      .sort({
+        updatedAt: -1,
+      })
+      .lean();
+
+    if (memberships.length === 0) {
+      return res.status(200).json({
+        organizations: [],
+      });
+    }
+
+    const membershipByOrganizationId = new Map(
+      memberships.map((membership) => [
+        membership.organizationId.toString(),
+        membership,
+      ]),
+    );
+
+    const organizations = await Organization.find({
+      _id: {
+        $in: memberships.map((membership) => membership.organizationId),
+      },
+    })
+      .sort({
+        updatedAt: -1,
+      })
+      .lean();
+
+    const organizationResults = organizations.map((organization) => {
+      const membership = membershipByOrganizationId.get(
+        organization._id.toString(),
+      );
+
+      return formatOrganizationResult(organization, membership);
+    });
+
+    return res.status(200).json({
+      organizations: organizationResults,
+    });
+  } catch (error) {
+    console.error("Organization list route error:", error);
+
+    return res.status(500).json({
+      error: "Unable to load organizations. Please try again.",
+    });
+  }
+});
+
+router.get(
+  "/:organizationId",
+  requireAuth,
+  requireOrganizationMembership,
+  (req, res) => {
+    const { organization, membership } = req.organizationAccess;
+
+    return res.status(200).json({
+      organization: formatOrganizationResult(organization, membership),
+    });
+  },
+);
 
 router.post("/", requireAuth, async (req, res) => {
   const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
