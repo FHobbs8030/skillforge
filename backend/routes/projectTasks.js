@@ -14,6 +14,7 @@ const router = express.Router({
 
 const TASK_CREATE_ROLES = new Set(["owner", "host"]);
 const TASK_MANAGE_ROLES = new Set(["owner", "host"]);
+const TASK_DELETE_ROLES = new Set(["owner"]);
 
 const TASK_STATUSES = new Set([
   "backlog",
@@ -589,6 +590,107 @@ router.patch("/:taskId", requireAuth, async (req, res) => {
 
     return res.status(500).json({
       error: "Unable to update the task. Please try again.",
+    });
+  }
+});
+
+router.delete("/:taskId", requireAuth, async (req, res) => {
+  const { projectId, taskId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    return res.status(400).json({
+      error: "Invalid project ID.",
+    });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(taskId)) {
+    return res.status(400).json({
+      error: "Invalid task ID.",
+    });
+  }
+
+  try {
+    const membership = await ProjectMembership.findOne({
+      projectId,
+      userId: req.user._id,
+      status: "active",
+    }).lean();
+
+    if (!membership) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    const project = await Project.findById(projectId).lean();
+
+    if (!project) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    if (!TASK_DELETE_ROLES.has(membership.role)) {
+      return res.status(403).json({
+        error: "Only project owners can permanently delete tasks.",
+      });
+    }
+
+    if (project.status === "archived") {
+      return res.status(409).json({
+        error: "Tasks cannot be deleted from an archived project.",
+      });
+    }
+
+    const task = await ProjectTask.findOne({
+      _id: taskId,
+      projectId,
+    }).lean();
+
+    if (!task) {
+      return res.status(404).json({
+        error: "Task not found.",
+      });
+    }
+
+    await ProjectTask.deleteOne({
+      _id: taskId,
+      projectId,
+    });
+
+    const activityEvent = await ActivityEvent.create({
+      projectId,
+      actorId: req.user._id,
+      eventType: "task_deleted",
+      source: "skillforge",
+      entityType: "project_task",
+      entityId: task._id.toString(),
+      metadata: {
+        taskId: task._id,
+        title: task.title,
+        status: task.status,
+        priority: task.priority,
+        assigneeId: task.assigneeId,
+        createdById: task.createdById,
+      },
+      occurredAt: new Date(),
+    });
+
+    return res.status(200).json({
+      message: "Task deleted successfully.",
+      deletedTask: {
+        id: task._id,
+        title: task.title,
+        status: task.status,
+        priority: task.priority,
+      },
+      activityEvent,
+    });
+  } catch (error) {
+    console.error("Project task deletion route error:", error);
+
+    return res.status(500).json({
+      error: "Unable to delete the task. Please try again.",
     });
   }
 });
