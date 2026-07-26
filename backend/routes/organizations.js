@@ -1,0 +1,157 @@
+const express = require("express");
+const mongoose = require("mongoose");
+
+const Organization = require("../models/Organization");
+const OrganizationMembership = require("../models/OrganizationMembership");
+
+const requireAuth = require("../middleware/auth");
+
+const router = express.Router();
+
+const ORGANIZATION_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function getMongooseValidationFields(error) {
+  return Object.fromEntries(
+    Object.entries(error.errors).map(([fieldName, fieldError]) => [
+      fieldName,
+      fieldError.message,
+    ]),
+  );
+}
+
+function normalizeOrganizationSlug(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+router.post("/", requireAuth, async (req, res) => {
+  const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
+
+  const description =
+    typeof req.body?.description === "string"
+      ? req.body.description.trim()
+      : "";
+
+  const requestedSlug =
+    typeof req.body?.slug === "string" && req.body.slug.trim()
+      ? req.body.slug
+      : name;
+
+  const slug = normalizeOrganizationSlug(requestedSlug);
+
+  const validationErrors = {};
+
+  if (name.length < 2) {
+    validationErrors.name =
+      "Organization name must contain at least 2 characters.";
+  } else if (name.length > 120) {
+    validationErrors.name =
+      "Organization name cannot exceed 120 characters.";
+  }
+
+  if (description.length > 1000) {
+    validationErrors.description =
+      "Organization description cannot exceed 1000 characters.";
+  }
+
+  if (slug.length < 2) {
+    validationErrors.slug =
+      "Organization slug must contain at least 2 characters.";
+  } else if (slug.length > 120) {
+    validationErrors.slug =
+      "Organization slug cannot exceed 120 characters.";
+  } else if (!ORGANIZATION_SLUG_PATTERN.test(slug)) {
+    validationErrors.slug =
+      "Organization slug may contain lowercase letters, numbers, and hyphens.";
+  }
+
+  if (Object.keys(validationErrors).length > 0) {
+    return res.status(400).json({
+      error: "Validation failed.",
+      fields: validationErrors,
+    });
+  }
+
+  const session = await mongoose.startSession();
+
+  let createdOrganization;
+  let createdMembership;
+
+  try {
+    await session.withTransaction(async () => {
+      const organizationDocuments = await Organization.create(
+        [
+          {
+            name,
+            slug,
+            description,
+            createdById: req.user._id,
+            status: "active",
+          },
+        ],
+        {
+          session,
+        },
+      );
+
+      createdOrganization = organizationDocuments[0];
+
+      const membershipDocuments = await OrganizationMembership.create(
+        [
+          {
+            organizationId: createdOrganization._id,
+            userId: req.user._id,
+            role: "owner",
+            status: "active",
+            joinedAt: new Date(),
+          },
+        ],
+        {
+          session,
+        },
+      );
+
+      createdMembership = membershipDocuments[0];
+    });
+
+    return res.status(201).json({
+      message: "Organization created successfully.",
+      organization: createdOrganization,
+      membership: createdMembership,
+    });
+  } catch (error) {
+    if (error instanceof mongoose.Error.ValidationError) {
+      return res.status(400).json({
+        error: "Validation failed.",
+        fields: getMongooseValidationFields(error),
+      });
+    }
+
+    if (error?.code === 11000) {
+      return res.status(409).json({
+        error: "An organization with this slug already exists.",
+        fields: {
+          slug: "Choose a different organization slug.",
+        },
+      });
+    }
+
+    console.error("Organization creation route error:", error);
+
+    return res.status(500).json({
+      error: "Unable to create the organization. Please try again.",
+    });
+  } finally {
+    await session.endSession();
+  }
+});
+
+module.exports = router;
