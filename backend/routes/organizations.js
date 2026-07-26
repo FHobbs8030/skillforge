@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 
 const Organization = require("../models/Organization");
 const OrganizationMembership = require("../models/OrganizationMembership");
+const User = require("../models/User");
 
 const requireAuth = require("../middleware/auth");
 const {
@@ -14,6 +15,9 @@ const {
 const router = express.Router();
 
 const ORGANIZATION_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ORGANIZATION_INVITATION_ROLES = new Set(["admin", "member"]);
 
 const ORGANIZATION_ROLE_ORDER = new Map([
   ["owner", 0],
@@ -59,6 +63,34 @@ function formatOrganizationMember(membership) {
     userId: user?._id ?? membership.userId,
     fullName: user?.fullName ?? "",
     email: user?.email ?? "",
+    role: membership.role,
+    status: membership.status,
+    invitedBy: invitedBy
+      ? {
+          id: invitedBy._id,
+          fullName: invitedBy.fullName,
+          email: invitedBy.email,
+        }
+      : null,
+    invitedAt: membership.invitedAt,
+    joinedAt: membership.joinedAt,
+    leftAt: membership.leftAt,
+    createdAt: membership.createdAt,
+    updatedAt: membership.updatedAt,
+  };
+}
+
+function formatOrganizationInvitation(membership) {
+  const organization = membership.organizationId;
+  const invitedBy = membership.invitedBy;
+
+  return {
+    id: membership._id,
+    organizationId: organization?._id ?? membership.organizationId,
+    organizationName: organization?.name ?? "Untitled organization",
+    organizationSlug: organization?.slug ?? "",
+    organizationDescription: organization?.description ?? "",
+    organizationStatus: organization?.status ?? "active",
     role: membership.role,
     status: membership.status,
     invitedBy: invitedBy
@@ -168,6 +200,185 @@ router.get("/", requireAuth, async (req, res) => {
     });
   }
 });
+
+router.get("/invitations/pending", requireAuth, async (req, res) => {
+  try {
+    const invitations = await OrganizationMembership.find({
+      userId: req.user._id,
+      status: "invited",
+    })
+      .populate({
+        path: "organizationId",
+        select: "name slug description status createdAt updatedAt",
+      })
+      .populate({
+        path: "invitedBy",
+        select: "fullName email",
+      })
+      .sort({
+        invitedAt: -1,
+        updatedAt: -1,
+      })
+      .lean();
+
+    return res.status(200).json({
+      invitations: invitations.map(formatOrganizationInvitation),
+    });
+  } catch (error) {
+    console.error("Pending organization invitations route error:", error);
+
+    return res.status(500).json({
+      error: "Unable to load organization invitations. Please try again.",
+    });
+  }
+});
+
+router.post(
+  "/:organizationId/invitations",
+  requireAuth,
+  requireOrganizationMembership,
+  requireOrganizationRole("owner", "admin"),
+  requireOrganizationWritable,
+  async (req, res) => {
+    const email =
+      typeof req.body?.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+
+    const role =
+      typeof req.body?.role === "string"
+        ? req.body.role.trim().toLowerCase()
+        : "member";
+
+    const validationErrors = {};
+
+    if (!email) {
+      validationErrors.email = "Email address is required.";
+    } else if (!EMAIL_PATTERN.test(email)) {
+      validationErrors.email = "Enter a valid email address.";
+    } else if (email.length > 254) {
+      validationErrors.email = "Email address is too long.";
+    }
+
+    if (!ORGANIZATION_INVITATION_ROLES.has(role)) {
+      validationErrors.role =
+        "Organization invitation role must be admin or member.";
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      return res.status(400).json({
+        error: "Validation failed.",
+        fields: validationErrors,
+      });
+    }
+
+    const currentUserMembership = req.organizationAccess.membership;
+
+    if (role === "admin" && currentUserMembership.role !== "owner") {
+      return res.status(403).json({
+        error: "Only the organization Owner can invite an Admin.",
+      });
+    }
+
+    try {
+      const targetUser = await User.findOne({
+        email,
+      }).lean();
+
+      if (!targetUser) {
+        return res.status(404).json({
+          error: "A SkillForge account with this email address was not found.",
+        });
+      }
+
+      const organizationId = req.organizationAccess.organization._id;
+
+      let membership = await OrganizationMembership.findOne({
+        organizationId,
+        userId: targetUser._id,
+      });
+
+      if (membership?.status === "active") {
+        return res.status(409).json({
+          error: "This user is already an active organization member.",
+        });
+      }
+
+      if (membership?.status === "invited") {
+        return res.status(409).json({
+          error: "This user already has a pending organization invitation.",
+        });
+      }
+
+      const invitedAt = new Date();
+      const restoredMembership = Boolean(membership);
+
+      if (membership) {
+        membership.role = role;
+        membership.status = "invited";
+        membership.invitedBy = req.user._id;
+        membership.invitedAt = invitedAt;
+        membership.joinedAt = null;
+        membership.leftAt = null;
+
+        await membership.save();
+      } else {
+        membership = await OrganizationMembership.create({
+          organizationId,
+          userId: targetUser._id,
+          role,
+          status: "invited",
+          invitedBy: req.user._id,
+          invitedAt,
+          joinedAt: null,
+          leftAt: null,
+        });
+      }
+
+      const populatedMembership = await OrganizationMembership.findById(
+        membership._id,
+      )
+        .populate({
+          path: "userId",
+          select: "fullName email",
+        })
+        .populate({
+          path: "invitedBy",
+          select: "fullName email",
+        })
+        .lean();
+
+      return res.status(201).json({
+        message: restoredMembership
+          ? "Organization invitation renewed successfully."
+          : "Organization invitation created successfully.",
+        invitation: formatOrganizationMember(populatedMembership),
+        restored: restoredMembership,
+      });
+    } catch (error) {
+      if (error instanceof mongoose.Error.ValidationError) {
+        return res.status(400).json({
+          error: "Validation failed.",
+          fields: getMongooseValidationFields(error),
+        });
+      }
+
+      if (error?.code === 11000) {
+        return res.status(409).json({
+          error:
+            "An organization membership already exists for this SkillForge user.",
+        });
+      }
+
+      console.error("Organization invitation route error:", error);
+
+      return res.status(500).json({
+        error:
+          "Unable to create the organization invitation. Please try again.",
+      });
+    }
+  },
+);
 
 router.get(
   "/:organizationId/members",
