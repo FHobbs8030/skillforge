@@ -48,6 +48,43 @@ async function requireOrganizationMembership(req, res, next) {
   }
 }
 
+function requireOrganizationRole(...allowedRoles) {
+  const allowedRoleSet = new Set(allowedRoles);
+
+  return (req, res, next) => {
+    const role = req.organizationAccess?.membership?.role;
+
+    if (!role || !allowedRoleSet.has(role)) {
+      return res.status(403).json({
+        error:
+          "You do not have permission to perform this organization action.",
+      });
+    }
+
+    return next();
+  };
+}
+
+function requireOrganizationWritable(req, res, next) {
+  const organization = req.organizationAccess?.organization;
+
+  if (!organization) {
+    return res.status(500).json({
+      error: "Organization access context is unavailable.",
+    });
+  }
+
+  if (organization.status === "archived") {
+    return res.status(409).json({
+      error: "Archived organizations cannot be modified.",
+    });
+  }
+
+  return next();
+}
+
 module.exports = {
   requireOrganizationMembership,
+  requireOrganizationRole,
+  requireOrganizationWritable,
 };

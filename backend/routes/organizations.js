@@ -7,6 +7,8 @@ const OrganizationMembership = require("../models/OrganizationMembership");
 const requireAuth = require("../middleware/auth");
 const {
   requireOrganizationMembership,
+  requireOrganizationRole,
+  requireOrganizationWritable,
 } = require("../middleware/organizationAccess");
 
 const router = express.Router();
@@ -111,6 +113,147 @@ router.get(
     return res.status(200).json({
       organization: formatOrganizationResult(organization, membership),
     });
+  },
+);
+
+router.patch(
+  "/:organizationId",
+  requireAuth,
+  requireOrganizationMembership,
+  requireOrganizationRole("owner", "admin"),
+  requireOrganizationWritable,
+  async (req, res) => {
+    const hasName = Object.prototype.hasOwnProperty.call(
+      req.body ?? {},
+      "name",
+    );
+
+    const hasDescription = Object.prototype.hasOwnProperty.call(
+      req.body ?? {},
+      "description",
+    );
+
+    const hasSlug = Object.prototype.hasOwnProperty.call(
+      req.body ?? {},
+      "slug",
+    );
+
+    if (!hasName && !hasDescription && !hasSlug) {
+      return res.status(400).json({
+        error: "Provide a name, description, or slug to update.",
+      });
+    }
+
+    const validationErrors = {};
+    const updates = {};
+
+    if (hasName) {
+      if (typeof req.body.name !== "string") {
+        validationErrors.name = "Organization name must be text.";
+      } else {
+        const name = req.body.name.trim();
+
+        if (name.length < 2) {
+          validationErrors.name =
+            "Organization name must contain at least 2 characters.";
+        } else if (name.length > 120) {
+          validationErrors.name =
+            "Organization name cannot exceed 120 characters.";
+        } else {
+          updates.name = name;
+        }
+      }
+    }
+
+    if (hasDescription) {
+      if (typeof req.body.description !== "string") {
+        validationErrors.description = "Organization description must be text.";
+      } else {
+        const description = req.body.description.trim();
+
+        if (description.length > 1000) {
+          validationErrors.description =
+            "Organization description cannot exceed 1000 characters.";
+        } else {
+          updates.description = description;
+        }
+      }
+    }
+
+    if (hasSlug) {
+      if (typeof req.body.slug !== "string") {
+        validationErrors.slug = "Organization slug must be text.";
+      } else {
+        const slug = normalizeOrganizationSlug(req.body.slug);
+
+        if (slug.length < 2) {
+          validationErrors.slug =
+            "Organization slug must contain at least 2 characters.";
+        } else if (slug.length > 120) {
+          validationErrors.slug =
+            "Organization slug cannot exceed 120 characters.";
+        } else if (!ORGANIZATION_SLUG_PATTERN.test(slug)) {
+          validationErrors.slug =
+            "Organization slug may contain lowercase letters, numbers, and hyphens.";
+        } else {
+          updates.slug = slug;
+        }
+      }
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      return res.status(400).json({
+        error: "Validation failed.",
+        fields: validationErrors,
+      });
+    }
+
+    try {
+      const updatedOrganization = await Organization.findByIdAndUpdate(
+        req.organizationAccess.organization._id,
+        updates,
+        {
+          returnDocument: "after",
+          runValidators: true,
+        },
+      ).lean();
+
+      if (!updatedOrganization) {
+        return res.status(404).json({
+          error: "Organization not found.",
+        });
+      }
+
+      return res.status(200).json({
+        message: "Organization updated successfully.",
+        organization: formatOrganizationResult(
+          updatedOrganization,
+          req.organizationAccess.membership,
+        ),
+      });
+    } catch (error) {
+      if (error instanceof mongoose.Error.ValidationError) {
+        return res.status(400).json({
+          error: "Validation failed.",
+          fields: getMongooseValidationFields(error),
+        });
+      }
+
+      if (error?.code === 11000) {
+        return res.status(409).json({
+          error: "An organization with this slug already exists.",
+          fields: {
+            slug: "Choose a different organization slug.",
+          },
+        });
+      }
+
+      console.error("Organization update route error:", error);
+
+      return res.status(500).json({
+        error: "Unable to update the organization. Please try again.",
+      });
+    }
   },
 );
 
