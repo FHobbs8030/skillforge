@@ -15,6 +15,19 @@ const router = express.Router();
 
 const ORGANIZATION_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+const ORGANIZATION_ROLE_ORDER = new Map([
+  ["owner", 0],
+  ["admin", 1],
+  ["member", 2],
+]);
+
+const ORGANIZATION_STATUS_ORDER = new Map([
+  ["active", 0],
+  ["invited", 1],
+  ["inactive", 2],
+  ["removed", 3],
+]);
+
 function getMongooseValidationFields(error) {
   return Object.fromEntries(
     Object.entries(error.errors).map(([fieldName, fieldError]) => [
@@ -34,6 +47,59 @@ function formatOrganizationResult(organization, membership) {
       joinedAt: membership.joinedAt,
     },
   };
+}
+
+function formatOrganizationMember(membership) {
+  const user = membership.userId;
+  const invitedBy = membership.invitedBy;
+
+  return {
+    id: membership._id,
+    organizationId: membership.organizationId,
+    userId: user?._id ?? membership.userId,
+    fullName: user?.fullName ?? "",
+    email: user?.email ?? "",
+    role: membership.role,
+    status: membership.status,
+    invitedBy: invitedBy
+      ? {
+          id: invitedBy._id,
+          fullName: invitedBy.fullName,
+          email: invitedBy.email,
+        }
+      : null,
+    invitedAt: membership.invitedAt,
+    joinedAt: membership.joinedAt,
+    leftAt: membership.leftAt,
+    createdAt: membership.createdAt,
+    updatedAt: membership.updatedAt,
+  };
+}
+
+function compareOrganizationMembers(firstMember, secondMember) {
+  const firstRoleOrder =
+    ORGANIZATION_ROLE_ORDER.get(firstMember.role) ?? Number.MAX_SAFE_INTEGER;
+
+  const secondRoleOrder =
+    ORGANIZATION_ROLE_ORDER.get(secondMember.role) ?? Number.MAX_SAFE_INTEGER;
+
+  if (firstRoleOrder !== secondRoleOrder) {
+    return firstRoleOrder - secondRoleOrder;
+  }
+
+  const firstStatusOrder =
+    ORGANIZATION_STATUS_ORDER.get(firstMember.status) ??
+    Number.MAX_SAFE_INTEGER;
+
+  const secondStatusOrder =
+    ORGANIZATION_STATUS_ORDER.get(secondMember.status) ??
+    Number.MAX_SAFE_INTEGER;
+
+  if (firstStatusOrder !== secondStatusOrder) {
+    return firstStatusOrder - secondStatusOrder;
+  }
+
+  return new Date(firstMember.createdAt) - new Date(secondMember.createdAt);
 }
 
 function normalizeOrganizationSlug(value) {
@@ -102,6 +168,58 @@ router.get("/", requireAuth, async (req, res) => {
     });
   }
 });
+
+router.get(
+  "/:organizationId/members",
+  requireAuth,
+  requireOrganizationMembership,
+  async (req, res) => {
+    const { organization, membership: currentUserMembership } =
+      req.organizationAccess;
+
+    try {
+      const memberships = await OrganizationMembership.find({
+        organizationId: organization._id,
+      })
+        .populate({
+          path: "userId",
+          select: "fullName email",
+        })
+        .populate({
+          path: "invitedBy",
+          select: "fullName email",
+        })
+        .lean();
+
+      const members = memberships
+        .map(formatOrganizationMember)
+        .sort(compareOrganizationMembers);
+
+      const currentMembership =
+        members.find(
+          (member) =>
+            member.id.toString() === currentUserMembership._id.toString(),
+        ) ?? null;
+
+      return res.status(200).json({
+        organization: {
+          id: organization._id,
+          name: organization.name,
+          slug: organization.slug,
+          status: organization.status,
+        },
+        currentMembership,
+        members,
+      });
+    } catch (error) {
+      console.error("Organization member directory route error:", error);
+
+      return res.status(500).json({
+        error: "Unable to load organization members. Please try again.",
+      });
+    }
+  },
+);
 
 router.get(
   "/:organizationId",
