@@ -11,6 +11,7 @@ const ProjectMembership = require("./models/ProjectMembership");
 const ActivityEvent = require("./models/ActivityEvent");
 
 const requireAuth = require("./middleware/auth");
+const organizationRoutes = require("./routes/organizations");
 const projectRoutes = require("./routes/projects");
 
 require("dotenv").config();
@@ -59,6 +60,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/organizations", organizationRoutes);
 app.use("/projects", projectRoutes);
 
 app.get("/", (req, res) => {
