@@ -257,6 +257,65 @@ router.patch(
   },
 );
 
+router.patch(
+  "/:organizationId/archive",
+  requireAuth,
+  requireOrganizationMembership,
+  requireOrganizationRole("owner"),
+  async (req, res) => {
+    const existingOrganization = req.organizationAccess.organization;
+
+    if (existingOrganization.status === "archived") {
+      return res.status(409).json({
+        error: "This organization is already archived.",
+      });
+    }
+
+    const archivedAt = new Date();
+
+    try {
+      const archivedOrganization = await Organization.findByIdAndUpdate(
+        existingOrganization._id,
+        {
+          status: "archived",
+          archivedAt,
+        },
+        {
+          returnDocument: "after",
+          runValidators: true,
+        },
+      ).lean();
+
+      if (!archivedOrganization) {
+        return res.status(404).json({
+          error: "Organization not found.",
+        });
+      }
+
+      return res.status(200).json({
+        message: "Organization archived successfully.",
+        organization: formatOrganizationResult(
+          archivedOrganization,
+          req.organizationAccess.membership,
+        ),
+      });
+    } catch (error) {
+      if (error instanceof mongoose.Error.ValidationError) {
+        return res.status(400).json({
+          error: "Validation failed.",
+          fields: getMongooseValidationFields(error),
+        });
+      }
+
+      console.error("Organization archive route error:", error);
+
+      return res.status(500).json({
+        error: "Unable to archive the organization. Please try again.",
+      });
+    }
+  },
+);
+
 router.post("/", requireAuth, async (req, res) => {
   const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
 
