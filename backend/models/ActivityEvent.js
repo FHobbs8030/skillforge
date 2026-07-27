@@ -7,7 +7,13 @@ const activityEventSchema = new mongoose.Schema(
     projectId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
-      required: [true, "Project is required."],
+      default: null,
+    },
+
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      default: null,
     },
 
     actorId: {
@@ -72,6 +78,15 @@ const activityEventSchema = new mongoose.Schema(
   },
 );
 
+activityEventSchema.pre("validate", function validateActivityScope() {
+  if (!this.projectId && !this.organizationId) {
+    this.invalidate(
+      "projectId",
+      "Activity event requires a project or organization.",
+    );
+  }
+});
+
 activityEventSchema.index({
   projectId: 1,
   occurredAt: -1,
@@ -79,6 +94,17 @@ activityEventSchema.index({
 
 activityEventSchema.index({
   projectId: 1,
+  eventType: 1,
+  occurredAt: -1,
+});
+
+activityEventSchema.index({
+  organizationId: 1,
+  occurredAt: -1,
+});
+
+activityEventSchema.index({
+  organizationId: 1,
   eventType: 1,
   occurredAt: -1,
 });
