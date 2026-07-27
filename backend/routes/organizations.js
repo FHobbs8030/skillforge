@@ -1686,14 +1686,98 @@ router.patch(
       });
     }
 
+    const session = await mongoose.startSession();
+
+    let updatedOrganizationId;
+
     try {
-      const updatedOrganization = await Organization.findByIdAndUpdate(
-        req.organizationAccess.organization._id,
-        updates,
-        {
-          returnDocument: "after",
-          runValidators: true,
-        },
+      await session.withTransaction(async () => {
+        const currentOrganization = await Organization.findById(
+          req.organizationAccess.organization._id,
+        )
+          .session(session)
+          .lean();
+
+        if (!currentOrganization) {
+          throw Object.assign(new Error("Organization not found."), {
+            statusCode: 404,
+          });
+        }
+
+        if (currentOrganization.status === "archived") {
+          throw Object.assign(
+            new Error("Archived organizations cannot be updated."),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        const effectiveUpdates = {};
+        const previousValues = {};
+        const currentValues = {};
+
+        for (const [fieldName, fieldValue] of Object.entries(updates)) {
+          if (currentOrganization[fieldName] !== fieldValue) {
+            effectiveUpdates[fieldName] = fieldValue;
+            previousValues[fieldName] = currentOrganization[fieldName];
+            currentValues[fieldName] = fieldValue;
+          }
+        }
+
+        const changedFields = Object.keys(effectiveUpdates);
+
+        if (changedFields.length === 0) {
+          throw Object.assign(
+            new Error("The organization already has these values."),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        const updatedOrganization = await Organization.findOneAndUpdate(
+          {
+            _id: currentOrganization._id,
+            status: "active",
+            updatedAt: currentOrganization.updatedAt,
+          },
+          effectiveUpdates,
+          {
+            returnDocument: "after",
+            runValidators: true,
+            session,
+          },
+        );
+
+        if (!updatedOrganization) {
+          throw Object.assign(
+            new Error("The organization changed before the update completed."),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        await createOrganizationActivityEvent({
+          organizationId: updatedOrganization._id,
+          actorId: req.user._id,
+          eventType: "organization_updated",
+          entityType: "organization",
+          entityId: updatedOrganization._id,
+          metadata: {
+            changedFields,
+            previousValues,
+            currentValues,
+          },
+          session,
+        });
+
+        updatedOrganizationId = updatedOrganization._id;
+      });
+
+      const updatedOrganization = await Organization.findById(
+        updatedOrganizationId,
       ).lean();
 
       if (!updatedOrganization) {
@@ -1710,6 +1794,12 @@ router.patch(
         ),
       });
     } catch (error) {
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+        });
+      }
+
       if (error instanceof mongoose.Error.ValidationError) {
         return res.status(400).json({
           error: "Validation failed.",
@@ -1731,6 +1821,8 @@ router.patch(
       return res.status(500).json({
         error: "Unable to update the organization. Please try again.",
       });
+    } finally {
+      await session.endSession();
     }
   },
 );
@@ -1741,27 +1833,80 @@ router.patch(
   requireOrganizationMembership,
   requireOrganizationRole("owner"),
   async (req, res) => {
-    const existingOrganization = req.organizationAccess.organization;
+    const session = await mongoose.startSession();
 
-    if (existingOrganization.status === "archived") {
-      return res.status(409).json({
-        error: "This organization is already archived.",
-      });
-    }
-
-    const archivedAt = new Date();
+    let archivedOrganizationId;
 
     try {
-      const archivedOrganization = await Organization.findByIdAndUpdate(
-        existingOrganization._id,
-        {
-          status: "archived",
-          archivedAt,
-        },
-        {
-          returnDocument: "after",
-          runValidators: true,
-        },
+      await session.withTransaction(async () => {
+        const currentOrganization = await Organization.findById(
+          req.organizationAccess.organization._id,
+        )
+          .session(session)
+          .lean();
+
+        if (!currentOrganization) {
+          throw Object.assign(new Error("Organization not found."), {
+            statusCode: 404,
+          });
+        }
+
+        if (currentOrganization.status === "archived") {
+          throw Object.assign(
+            new Error("This organization is already archived."),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        const archivedAt = new Date();
+
+        const archivedOrganization = await Organization.findOneAndUpdate(
+          {
+            _id: currentOrganization._id,
+            status: "active",
+            updatedAt: currentOrganization.updatedAt,
+          },
+          {
+            status: "archived",
+            archivedAt,
+          },
+          {
+            returnDocument: "after",
+            runValidators: true,
+            session,
+          },
+        );
+
+        if (!archivedOrganization) {
+          throw Object.assign(
+            new Error("The organization changed before archiving completed."),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        await createOrganizationActivityEvent({
+          organizationId: archivedOrganization._id,
+          actorId: req.user._id,
+          eventType: "organization_archived",
+          entityType: "organization",
+          entityId: archivedOrganization._id,
+          metadata: {
+            previousStatus: "active",
+            status: archivedOrganization.status,
+            archivedAt: archivedOrganization.archivedAt,
+          },
+          session,
+        });
+
+        archivedOrganizationId = archivedOrganization._id;
+      });
+
+      const archivedOrganization = await Organization.findById(
+        archivedOrganizationId,
       ).lean();
 
       if (!archivedOrganization) {
@@ -1778,6 +1923,12 @@ router.patch(
         ),
       });
     } catch (error) {
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+        });
+      }
+
       if (error instanceof mongoose.Error.ValidationError) {
         return res.status(400).json({
           error: "Validation failed.",
@@ -1790,6 +1941,8 @@ router.patch(
       return res.status(500).json({
         error: "Unable to archive the organization. Please try again.",
       });
+    } finally {
+      await session.endSession();
     }
   },
 );
@@ -1880,6 +2033,22 @@ router.post("/", requireAuth, async (req, res) => {
       );
 
       createdMembership = membershipDocuments[0];
+
+      await createOrganizationActivityEvent({
+        organizationId: createdOrganization._id,
+        actorId: req.user._id,
+        eventType: "organization_created",
+        entityType: "organization",
+        entityId: createdOrganization._id,
+        metadata: {
+          name: createdOrganization.name,
+          slug: createdOrganization.slug,
+          status: createdOrganization.status,
+          ownerMembershipId: createdMembership._id,
+          ownerUserId: createdMembership.userId,
+        },
+        session,
+      });
     });
 
     return res.status(201).json({
