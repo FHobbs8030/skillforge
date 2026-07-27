@@ -867,72 +867,118 @@ router.patch(
     const { organization, membership: currentUserMembership } =
       req.organizationAccess;
 
+    const session = await mongoose.startSession();
+
+    let updatedMembershipId;
+
     try {
-      const targetMembership = await OrganizationMembership.findOne({
-        _id: membershipId,
-        organizationId: organization._id,
-      }).lean();
-
-      if (!targetMembership) {
-        return res.status(404).json({
-          error: "Organization member not found.",
-        });
-      }
-
-      if (targetMembership.status !== "active") {
-        return res.status(409).json({
-          error:
-            "Only active organization members can have their role changed.",
-        });
-      }
-
-      if (targetMembership.role === "owner") {
-        return res.status(409).json({
-          error:
-            "Organization ownership must be changed through ownership transfer.",
-        });
-      }
-
-      if (
-        targetMembership._id.toString() === currentUserMembership._id.toString()
-      ) {
-        return res.status(409).json({
-          error:
-            "The organization Owner cannot change their role through this route.",
-        });
-      }
-
-      if (targetMembership.role === role) {
-        return res.status(409).json({
-          error: `This organization member already has the ${role} role.`,
-        });
-      }
-
-      const updatedMembership = await OrganizationMembership.findOneAndUpdate(
-        {
-          _id: targetMembership._id,
+      await session.withTransaction(async () => {
+        const targetMembership = await OrganizationMembership.findOne({
+          _id: membershipId,
           organizationId: organization._id,
-          status: "active",
-          role: targetMembership.role,
-        },
-        {
-          role,
-        },
-        {
-          returnDocument: "after",
-          runValidators: true,
-        },
-      );
+        })
+          .session(session)
+          .lean();
 
-      if (!updatedMembership) {
-        return res.status(409).json({
-          error:
-            "The organization membership changed before the role update completed.",
+        if (!targetMembership) {
+          throw Object.assign(new Error("Organization member not found."), {
+            statusCode: 404,
+          });
+        }
+
+        if (targetMembership.status !== "active") {
+          throw Object.assign(
+            new Error(
+              "Only active organization members can have their role changed.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        if (targetMembership.role === "owner") {
+          throw Object.assign(
+            new Error(
+              "Organization ownership must be changed through ownership transfer.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        if (
+          targetMembership._id.toString() ===
+          currentUserMembership._id.toString()
+        ) {
+          throw Object.assign(
+            new Error(
+              "The organization Owner cannot change their role through this route.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        if (targetMembership.role === role) {
+          throw Object.assign(
+            new Error(`This organization member already has the ${role} role.`),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        const updatedMembership = await OrganizationMembership.findOneAndUpdate(
+          {
+            _id: targetMembership._id,
+            organizationId: organization._id,
+            status: "active",
+            role: targetMembership.role,
+          },
+          {
+            role,
+          },
+          {
+            returnDocument: "after",
+            runValidators: true,
+            session,
+          },
+        );
+
+        if (!updatedMembership) {
+          throw Object.assign(
+            new Error(
+              "The organization membership changed before the role update completed.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        await createOrganizationActivityEvent({
+          organizationId: organization._id,
+          actorId: req.user._id,
+          eventType: "organization_member_role_changed",
+          entityType: "organization_membership",
+          entityId: updatedMembership._id,
+          metadata: {
+            memberUserId: updatedMembership.userId,
+            previousRole: targetMembership.role,
+            role: updatedMembership.role,
+            status: updatedMembership.status,
+          },
+          session,
         });
-      }
+
+        updatedMembershipId = updatedMembership._id;
+      });
 
       const populatedMembership = await OrganizationMembership.findById(
-        updatedMembership._id,
+        updatedMembershipId,
       )
         .populate({
           path: "userId",
@@ -949,6 +995,12 @@ router.patch(
         member: formatOrganizationMember(populatedMembership),
       });
     } catch (error) {
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+        });
+      }
+
       if (error instanceof mongoose.Error.ValidationError) {
         return res.status(400).json({
           error: "Validation failed.",
@@ -962,6 +1014,8 @@ router.patch(
         error:
           "Unable to change the organization member role. Please try again.",
       });
+    } finally {
+      await session.endSession();
     }
   },
 );
@@ -984,75 +1038,122 @@ router.patch(
     const { organization, membership: currentUserMembership } =
       req.organizationAccess;
 
+    const session = await mongoose.startSession();
+
+    let deactivatedMembershipId;
+
     try {
-      const targetMembership = await OrganizationMembership.findOne({
-        _id: membershipId,
-        organizationId: organization._id,
-      }).lean();
+      await session.withTransaction(async () => {
+        const targetMembership = await OrganizationMembership.findOne({
+          _id: membershipId,
+          organizationId: organization._id,
+        })
+          .session(session)
+          .lean();
 
-      if (!targetMembership) {
-        return res.status(404).json({
-          error: "Organization member not found.",
-        });
-      }
+        if (!targetMembership) {
+          throw Object.assign(new Error("Organization member not found."), {
+            statusCode: 404,
+          });
+        }
 
-      if (targetMembership.role === "owner") {
-        return res.status(409).json({
-          error:
-            "The organization Owner cannot be deactivated. Transfer ownership first.",
-        });
-      }
+        if (targetMembership.role === "owner") {
+          throw Object.assign(
+            new Error(
+              "The organization Owner cannot be deactivated. Transfer ownership first.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
 
-      if (
-        targetMembership._id.toString() === currentUserMembership._id.toString()
-      ) {
-        return res.status(409).json({
-          error: "You cannot deactivate your own organization membership.",
-        });
-      }
+        if (
+          targetMembership._id.toString() ===
+          currentUserMembership._id.toString()
+        ) {
+          throw Object.assign(
+            new Error(
+              "You cannot deactivate your own organization membership.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
 
-      if (
-        currentUserMembership.role === "admin" &&
-        targetMembership.role !== "member"
-      ) {
-        return res.status(403).json({
-          error: "Organization Admins can only deactivate Members.",
-        });
-      }
+        if (
+          currentUserMembership.role === "admin" &&
+          targetMembership.role !== "member"
+        ) {
+          throw Object.assign(
+            new Error("Organization Admins can only deactivate Members."),
+            {
+              statusCode: 403,
+            },
+          );
+        }
 
-      if (targetMembership.status !== "active") {
-        return res.status(409).json({
-          error: "Only active organization members can be deactivated.",
-        });
-      }
+        if (targetMembership.status !== "active") {
+          throw Object.assign(
+            new Error("Only active organization members can be deactivated."),
+            {
+              statusCode: 409,
+            },
+          );
+        }
 
-      const deactivatedMembership =
-        await OrganizationMembership.findOneAndUpdate(
-          {
-            _id: targetMembership._id,
-            organizationId: organization._id,
-            status: "active",
-            role: targetMembership.role,
-          },
-          {
+        const deactivatedMembership =
+          await OrganizationMembership.findOneAndUpdate(
+            {
+              _id: targetMembership._id,
+              organizationId: organization._id,
+              status: "active",
+              role: targetMembership.role,
+            },
+            {
+              status: "inactive",
+              leftAt: new Date(),
+            },
+            {
+              returnDocument: "after",
+              runValidators: true,
+              session,
+            },
+          );
+
+        if (!deactivatedMembership) {
+          throw Object.assign(
+            new Error(
+              "The organization membership changed before deactivation completed.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        await createOrganizationActivityEvent({
+          organizationId: organization._id,
+          actorId: req.user._id,
+          eventType: "organization_member_deactivated",
+          entityType: "organization_membership",
+          entityId: deactivatedMembership._id,
+          metadata: {
+            memberUserId: deactivatedMembership.userId,
+            role: deactivatedMembership.role,
+            previousStatus: "active",
             status: "inactive",
-            leftAt: new Date(),
+            leftAt: deactivatedMembership.leftAt,
           },
-          {
-            returnDocument: "after",
-            runValidators: true,
-          },
-        );
-
-      if (!deactivatedMembership) {
-        return res.status(409).json({
-          error:
-            "The organization membership changed before deactivation completed.",
+          session,
         });
-      }
+
+        deactivatedMembershipId = deactivatedMembership._id;
+      });
 
       const populatedMembership = await OrganizationMembership.findById(
-        deactivatedMembership._id,
+        deactivatedMembershipId,
       )
         .populate({
           path: "userId",
@@ -1069,6 +1170,12 @@ router.patch(
         member: formatOrganizationMember(populatedMembership),
       });
     } catch (error) {
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+        });
+      }
+
       if (error instanceof mongoose.Error.ValidationError) {
         return res.status(400).json({
           error: "Validation failed.",
@@ -1082,6 +1189,8 @@ router.patch(
         error:
           "Unable to deactivate the organization member. Please try again.",
       });
+    } finally {
+      await session.endSession();
     }
   },
 );
@@ -1104,76 +1213,123 @@ router.patch(
     const { organization, membership: currentUserMembership } =
       req.organizationAccess;
 
+    const session = await mongoose.startSession();
+
+    let reactivatedMembershipId;
+
     try {
-      const targetMembership = await OrganizationMembership.findOne({
-        _id: membershipId,
-        organizationId: organization._id,
-      }).lean();
+      await session.withTransaction(async () => {
+        const targetMembership = await OrganizationMembership.findOne({
+          _id: membershipId,
+          organizationId: organization._id,
+        })
+          .session(session)
+          .lean();
 
-      if (!targetMembership) {
-        return res.status(404).json({
-          error: "Organization member not found.",
-        });
-      }
+        if (!targetMembership) {
+          throw Object.assign(new Error("Organization member not found."), {
+            statusCode: 404,
+          });
+        }
 
-      if (targetMembership.role === "owner") {
-        return res.status(409).json({
-          error:
-            "The organization Owner cannot be reactivated through this route.",
-        });
-      }
+        if (targetMembership.role === "owner") {
+          throw Object.assign(
+            new Error(
+              "The organization Owner cannot be reactivated through this route.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
 
-      if (
-        targetMembership._id.toString() === currentUserMembership._id.toString()
-      ) {
-        return res.status(409).json({
-          error: "You cannot reactivate your own organization membership.",
-        });
-      }
+        if (
+          targetMembership._id.toString() ===
+          currentUserMembership._id.toString()
+        ) {
+          throw Object.assign(
+            new Error(
+              "You cannot reactivate your own organization membership.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
 
-      if (
-        currentUserMembership.role === "admin" &&
-        targetMembership.role !== "member"
-      ) {
-        return res.status(403).json({
-          error: "Organization Admins can only reactivate Members.",
-        });
-      }
+        if (
+          currentUserMembership.role === "admin" &&
+          targetMembership.role !== "member"
+        ) {
+          throw Object.assign(
+            new Error("Organization Admins can only reactivate Members."),
+            {
+              statusCode: 403,
+            },
+          );
+        }
 
-      if (targetMembership.status !== "inactive") {
-        return res.status(409).json({
-          error: "Only inactive organization members can be reactivated.",
-        });
-      }
+        if (targetMembership.status !== "inactive") {
+          throw Object.assign(
+            new Error("Only inactive organization members can be reactivated."),
+            {
+              statusCode: 409,
+            },
+          );
+        }
 
-      const reactivatedMembership =
-        await OrganizationMembership.findOneAndUpdate(
-          {
-            _id: targetMembership._id,
-            organizationId: organization._id,
-            status: "inactive",
-            role: targetMembership.role,
-          },
-          {
+        const reactivatedMembership =
+          await OrganizationMembership.findOneAndUpdate(
+            {
+              _id: targetMembership._id,
+              organizationId: organization._id,
+              status: "inactive",
+              role: targetMembership.role,
+            },
+            {
+              status: "active",
+              joinedAt: new Date(),
+              leftAt: null,
+            },
+            {
+              returnDocument: "after",
+              runValidators: true,
+              session,
+            },
+          );
+
+        if (!reactivatedMembership) {
+          throw Object.assign(
+            new Error(
+              "The organization membership changed before reactivation completed.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        await createOrganizationActivityEvent({
+          organizationId: organization._id,
+          actorId: req.user._id,
+          eventType: "organization_member_reactivated",
+          entityType: "organization_membership",
+          entityId: reactivatedMembership._id,
+          metadata: {
+            memberUserId: reactivatedMembership.userId,
+            role: reactivatedMembership.role,
+            previousStatus: "inactive",
             status: "active",
-            joinedAt: new Date(),
-            leftAt: null,
+            joinedAt: reactivatedMembership.joinedAt,
           },
-          {
-            returnDocument: "after",
-            runValidators: true,
-          },
-        );
-
-      if (!reactivatedMembership) {
-        return res.status(409).json({
-          error:
-            "The organization membership changed before reactivation completed.",
+          session,
         });
-      }
+
+        reactivatedMembershipId = reactivatedMembership._id;
+      });
 
       const populatedMembership = await OrganizationMembership.findById(
-        reactivatedMembership._id,
+        reactivatedMembershipId,
       )
         .populate({
           path: "userId",
@@ -1190,6 +1346,12 @@ router.patch(
         member: formatOrganizationMember(populatedMembership),
       });
     } catch (error) {
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+        });
+      }
+
       if (error instanceof mongoose.Error.ValidationError) {
         return res.status(400).json({
           error: "Validation failed.",
@@ -1203,6 +1365,8 @@ router.patch(
         error:
           "Unable to reactivate the organization member. Please try again.",
       });
+    } finally {
+      await session.endSession();
     }
   },
 );
