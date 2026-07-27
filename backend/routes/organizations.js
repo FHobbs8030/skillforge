@@ -756,6 +756,247 @@ router.patch(
   },
 );
 
+router.patch(
+  "/:organizationId/members/:membershipId/deactivate",
+  requireAuth,
+  requireOrganizationMembership,
+  requireOrganizationRole("owner", "admin"),
+  requireOrganizationWritable,
+  async (req, res) => {
+    const { membershipId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(membershipId)) {
+      return res.status(400).json({
+        error: "Invalid organization membership ID.",
+      });
+    }
+
+    const { organization, membership: currentUserMembership } =
+      req.organizationAccess;
+
+    try {
+      const targetMembership = await OrganizationMembership.findOne({
+        _id: membershipId,
+        organizationId: organization._id,
+      }).lean();
+
+      if (!targetMembership) {
+        return res.status(404).json({
+          error: "Organization member not found.",
+        });
+      }
+
+      if (targetMembership.role === "owner") {
+        return res.status(409).json({
+          error:
+            "The organization Owner cannot be deactivated. Transfer ownership first.",
+        });
+      }
+
+      if (
+        targetMembership._id.toString() === currentUserMembership._id.toString()
+      ) {
+        return res.status(409).json({
+          error: "You cannot deactivate your own organization membership.",
+        });
+      }
+
+      if (
+        currentUserMembership.role === "admin" &&
+        targetMembership.role !== "member"
+      ) {
+        return res.status(403).json({
+          error: "Organization Admins can only deactivate Members.",
+        });
+      }
+
+      if (targetMembership.status !== "active") {
+        return res.status(409).json({
+          error: "Only active organization members can be deactivated.",
+        });
+      }
+
+      const deactivatedMembership =
+        await OrganizationMembership.findOneAndUpdate(
+          {
+            _id: targetMembership._id,
+            organizationId: organization._id,
+            status: "active",
+            role: targetMembership.role,
+          },
+          {
+            status: "inactive",
+            leftAt: new Date(),
+          },
+          {
+            returnDocument: "after",
+            runValidators: true,
+          },
+        );
+
+      if (!deactivatedMembership) {
+        return res.status(409).json({
+          error:
+            "The organization membership changed before deactivation completed.",
+        });
+      }
+
+      const populatedMembership = await OrganizationMembership.findById(
+        deactivatedMembership._id,
+      )
+        .populate({
+          path: "userId",
+          select: "fullName email",
+        })
+        .populate({
+          path: "invitedBy",
+          select: "fullName email",
+        })
+        .lean();
+
+      return res.status(200).json({
+        message: "Organization member deactivated.",
+        member: formatOrganizationMember(populatedMembership),
+      });
+    } catch (error) {
+      if (error instanceof mongoose.Error.ValidationError) {
+        return res.status(400).json({
+          error: "Validation failed.",
+          fields: getMongooseValidationFields(error),
+        });
+      }
+
+      console.error("Organization member deactivation route error:", error);
+
+      return res.status(500).json({
+        error:
+          "Unable to deactivate the organization member. Please try again.",
+      });
+    }
+  },
+);
+
+router.patch(
+  "/:organizationId/members/:membershipId/reactivate",
+  requireAuth,
+  requireOrganizationMembership,
+  requireOrganizationRole("owner", "admin"),
+  requireOrganizationWritable,
+  async (req, res) => {
+    const { membershipId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(membershipId)) {
+      return res.status(400).json({
+        error: "Invalid organization membership ID.",
+      });
+    }
+
+    const { organization, membership: currentUserMembership } =
+      req.organizationAccess;
+
+    try {
+      const targetMembership = await OrganizationMembership.findOne({
+        _id: membershipId,
+        organizationId: organization._id,
+      }).lean();
+
+      if (!targetMembership) {
+        return res.status(404).json({
+          error: "Organization member not found.",
+        });
+      }
+
+      if (targetMembership.role === "owner") {
+        return res.status(409).json({
+          error:
+            "The organization Owner cannot be reactivated through this route.",
+        });
+      }
+
+      if (
+        targetMembership._id.toString() === currentUserMembership._id.toString()
+      ) {
+        return res.status(409).json({
+          error: "You cannot reactivate your own organization membership.",
+        });
+      }
+
+      if (
+        currentUserMembership.role === "admin" &&
+        targetMembership.role !== "member"
+      ) {
+        return res.status(403).json({
+          error: "Organization Admins can only reactivate Members.",
+        });
+      }
+
+      if (targetMembership.status !== "inactive") {
+        return res.status(409).json({
+          error: "Only inactive organization members can be reactivated.",
+        });
+      }
+
+      const reactivatedMembership =
+        await OrganizationMembership.findOneAndUpdate(
+          {
+            _id: targetMembership._id,
+            organizationId: organization._id,
+            status: "inactive",
+            role: targetMembership.role,
+          },
+          {
+            status: "active",
+            joinedAt: new Date(),
+            leftAt: null,
+          },
+          {
+            returnDocument: "after",
+            runValidators: true,
+          },
+        );
+
+      if (!reactivatedMembership) {
+        return res.status(409).json({
+          error:
+            "The organization membership changed before reactivation completed.",
+        });
+      }
+
+      const populatedMembership = await OrganizationMembership.findById(
+        reactivatedMembership._id,
+      )
+        .populate({
+          path: "userId",
+          select: "fullName email",
+        })
+        .populate({
+          path: "invitedBy",
+          select: "fullName email",
+        })
+        .lean();
+
+      return res.status(200).json({
+        message: "Organization member reactivated.",
+        member: formatOrganizationMember(populatedMembership),
+      });
+    } catch (error) {
+      if (error instanceof mongoose.Error.ValidationError) {
+        return res.status(400).json({
+          error: "Validation failed.",
+          fields: getMongooseValidationFields(error),
+        });
+      }
+
+      console.error("Organization member reactivation route error:", error);
+
+      return res.status(500).json({
+        error:
+          "Unable to reactivate the organization member. Please try again.",
+      });
+    }
+  },
+);
+
 router.get(
   "/:organizationId",
   requireAuth,
