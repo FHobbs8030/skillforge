@@ -475,57 +475,95 @@ router.patch(
       });
     }
 
+    const session = await mongoose.startSession();
+
+    let acceptedInvitationId;
+
     try {
-      const pendingInvitation = await OrganizationMembership.findOne({
-        organizationId,
-        userId: req.user._id,
-        status: "invited",
-      }).lean();
-
-      if (!pendingInvitation) {
-        return res.status(404).json({
-          error: "Organization invitation not found.",
-        });
-      }
-
-      const organization = await Organization.findById(organizationId).lean();
-
-      if (!organization) {
-        return res.status(404).json({
-          error: "Organization invitation not found.",
-        });
-      }
-
-      if (organization.status === "archived") {
-        return res.status(409).json({
-          error: "Archived organization invitations cannot be accepted.",
-        });
-      }
-
-      const acceptedInvitation = await OrganizationMembership.findOneAndUpdate(
-        {
-          _id: pendingInvitation._id,
+      await session.withTransaction(async () => {
+        const pendingInvitation = await OrganizationMembership.findOne({
+          organizationId,
+          userId: req.user._id,
           status: "invited",
-        },
-        {
-          status: "active",
-          joinedAt: new Date(),
-          leftAt: null,
-        },
-        {
-          returnDocument: "after",
-          runValidators: true,
-        },
-      );
+        })
+          .session(session)
+          .lean();
 
-      if (!acceptedInvitation) {
-        return res.status(409).json({
-          error: "This organization invitation is no longer pending.",
+        if (!pendingInvitation) {
+          throw Object.assign(new Error("Organization invitation not found."), {
+            statusCode: 404,
+          });
+        }
+
+        const organization = await Organization.findById(organizationId)
+          .session(session)
+          .lean();
+
+        if (!organization) {
+          throw Object.assign(new Error("Organization invitation not found."), {
+            statusCode: 404,
+          });
+        }
+
+        if (organization.status === "archived") {
+          throw Object.assign(
+            new Error("Archived organization invitations cannot be accepted."),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        const acceptedInvitation =
+          await OrganizationMembership.findOneAndUpdate(
+            {
+              _id: pendingInvitation._id,
+              organizationId,
+              userId: req.user._id,
+              status: "invited",
+            },
+            {
+              status: "active",
+              joinedAt: new Date(),
+              leftAt: null,
+            },
+            {
+              returnDocument: "after",
+              runValidators: true,
+              session,
+            },
+          );
+
+        if (!acceptedInvitation) {
+          throw Object.assign(
+            new Error("This organization invitation is no longer pending."),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        await createOrganizationActivityEvent({
+          organizationId: organization._id,
+          actorId: req.user._id,
+          eventType: "organization_invitation_accepted",
+          entityType: "organization_membership",
+          entityId: acceptedInvitation._id,
+          metadata: {
+            memberUserId: req.user._id,
+            role: acceptedInvitation.role,
+            previousStatus: "invited",
+            status: "active",
+            invitedBy: acceptedInvitation.invitedBy,
+          },
+          session,
         });
-      }
+
+        acceptedInvitationId = acceptedInvitation._id;
+      });
 
       const populatedInvitation = await OrganizationMembership.findById(
-        acceptedInvitation._id,
+        acceptedInvitationId,
       )
         .populate({
           path: "organizationId",
@@ -542,6 +580,12 @@ router.patch(
         invitation: formatOrganizationInvitation(populatedInvitation),
       });
     } catch (error) {
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+        });
+      }
+
       if (error instanceof mongoose.Error.ValidationError) {
         return res.status(400).json({
           error: "Validation failed.",
@@ -555,6 +599,8 @@ router.patch(
         error:
           "Unable to accept the organization invitation. Please try again.",
       });
+    } finally {
+      await session.endSession();
     }
   },
 );
@@ -571,57 +617,95 @@ router.patch(
       });
     }
 
+    const session = await mongoose.startSession();
+
+    let declinedInvitationId;
+
     try {
-      const pendingInvitation = await OrganizationMembership.findOne({
-        organizationId,
-        userId: req.user._id,
-        status: "invited",
-      }).lean();
-
-      if (!pendingInvitation) {
-        return res.status(404).json({
-          error: "Organization invitation not found.",
-        });
-      }
-
-      const organization = await Organization.findById(organizationId).lean();
-
-      if (!organization) {
-        return res.status(404).json({
-          error: "Organization invitation not found.",
-        });
-      }
-
-      if (organization.status === "archived") {
-        return res.status(409).json({
-          error: "Archived organization invitations cannot be declined.",
-        });
-      }
-
-      const declinedInvitation = await OrganizationMembership.findOneAndUpdate(
-        {
-          _id: pendingInvitation._id,
+      await session.withTransaction(async () => {
+        const pendingInvitation = await OrganizationMembership.findOne({
+          organizationId,
+          userId: req.user._id,
           status: "invited",
-        },
-        {
-          status: "removed",
-          joinedAt: null,
-          leftAt: new Date(),
-        },
-        {
-          returnDocument: "after",
-          runValidators: true,
-        },
-      );
+        })
+          .session(session)
+          .lean();
 
-      if (!declinedInvitation) {
-        return res.status(409).json({
-          error: "This organization invitation is no longer pending.",
+        if (!pendingInvitation) {
+          throw Object.assign(new Error("Organization invitation not found."), {
+            statusCode: 404,
+          });
+        }
+
+        const organization = await Organization.findById(organizationId)
+          .session(session)
+          .lean();
+
+        if (!organization) {
+          throw Object.assign(new Error("Organization invitation not found."), {
+            statusCode: 404,
+          });
+        }
+
+        if (organization.status === "archived") {
+          throw Object.assign(
+            new Error("Archived organization invitations cannot be declined."),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        const declinedInvitation =
+          await OrganizationMembership.findOneAndUpdate(
+            {
+              _id: pendingInvitation._id,
+              organizationId,
+              userId: req.user._id,
+              status: "invited",
+            },
+            {
+              status: "removed",
+              joinedAt: null,
+              leftAt: new Date(),
+            },
+            {
+              returnDocument: "after",
+              runValidators: true,
+              session,
+            },
+          );
+
+        if (!declinedInvitation) {
+          throw Object.assign(
+            new Error("This organization invitation is no longer pending."),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        await createOrganizationActivityEvent({
+          organizationId: organization._id,
+          actorId: req.user._id,
+          eventType: "organization_invitation_declined",
+          entityType: "organization_membership",
+          entityId: declinedInvitation._id,
+          metadata: {
+            memberUserId: req.user._id,
+            role: declinedInvitation.role,
+            previousStatus: "invited",
+            status: "removed",
+            invitedBy: declinedInvitation.invitedBy,
+          },
+          session,
         });
-      }
+
+        declinedInvitationId = declinedInvitation._id;
+      });
 
       const populatedInvitation = await OrganizationMembership.findById(
-        declinedInvitation._id,
+        declinedInvitationId,
       )
         .populate({
           path: "organizationId",
@@ -638,6 +722,12 @@ router.patch(
         invitation: formatOrganizationInvitation(populatedInvitation),
       });
     } catch (error) {
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+        });
+      }
+
       if (error instanceof mongoose.Error.ValidationError) {
         return res.status(400).json({
           error: "Validation failed.",
@@ -651,6 +741,8 @@ router.patch(
         error:
           "Unable to decline the organization invitation. Please try again.",
       });
+    } finally {
+      await session.endSession();
     }
   },
 );
