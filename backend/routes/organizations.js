@@ -997,6 +997,197 @@ router.patch(
   },
 );
 
+router.patch(
+  "/:organizationId/ownership/transfer",
+  requireAuth,
+  requireOrganizationMembership,
+  requireOrganizationRole("owner"),
+  requireOrganizationWritable,
+  async (req, res) => {
+    const membershipId =
+      typeof req.body?.membershipId === "string"
+        ? req.body.membershipId.trim()
+        : "";
+
+    if (!mongoose.Types.ObjectId.isValid(membershipId)) {
+      return res.status(400).json({
+        error: "Validation failed.",
+        fields: {
+          membershipId: "Enter a valid organization membership ID.",
+        },
+      });
+    }
+
+    const { organization, membership: currentOwnerMembership } =
+      req.organizationAccess;
+
+    if (membershipId === currentOwnerMembership._id.toString()) {
+      return res.status(409).json({
+        error: "This membership already owns the organization.",
+      });
+    }
+
+    const session = await mongoose.startSession();
+
+    let previousOwnerMembershipId;
+    let newOwnerMembershipId;
+
+    try {
+      await session.withTransaction(async () => {
+        const targetMembership = await OrganizationMembership.findOne({
+          _id: membershipId,
+          organizationId: organization._id,
+        })
+          .session(session)
+          .lean();
+
+        if (!targetMembership) {
+          throw Object.assign(new Error("Organization member not found."), {
+            statusCode: 404,
+          });
+        }
+
+        if (targetMembership.status !== "active") {
+          throw Object.assign(
+            new Error(
+              "Ownership can only be transferred to an active organization member.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        if (targetMembership.role === "owner") {
+          throw Object.assign(
+            new Error("This member already owns the organization."),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        const previousOwner = await OrganizationMembership.findOneAndUpdate(
+          {
+            _id: currentOwnerMembership._id,
+            organizationId: organization._id,
+            userId: req.user._id,
+            role: "owner",
+            status: "active",
+          },
+          {
+            role: "admin",
+          },
+          {
+            returnDocument: "after",
+            runValidators: true,
+            session,
+          },
+        );
+
+        if (!previousOwner) {
+          throw Object.assign(
+            new Error(
+              "Organization ownership changed before the transfer completed.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        const newOwner = await OrganizationMembership.findOneAndUpdate(
+          {
+            _id: targetMembership._id,
+            organizationId: organization._id,
+            status: "active",
+            role: targetMembership.role,
+          },
+          {
+            role: "owner",
+          },
+          {
+            returnDocument: "after",
+            runValidators: true,
+            session,
+          },
+        );
+
+        if (!newOwner) {
+          throw Object.assign(
+            new Error(
+              "The target membership changed before the transfer completed.",
+            ),
+            {
+              statusCode: 409,
+            },
+          );
+        }
+
+        previousOwnerMembershipId = previousOwner._id;
+        newOwnerMembershipId = newOwner._id;
+      });
+
+      const [previousOwner, newOwner] = await Promise.all([
+        OrganizationMembership.findById(previousOwnerMembershipId)
+          .populate({
+            path: "userId",
+            select: "fullName email",
+          })
+          .populate({
+            path: "invitedBy",
+            select: "fullName email",
+          })
+          .lean(),
+        OrganizationMembership.findById(newOwnerMembershipId)
+          .populate({
+            path: "userId",
+            select: "fullName email",
+          })
+          .populate({
+            path: "invitedBy",
+            select: "fullName email",
+          })
+          .lean(),
+      ]);
+
+      return res.status(200).json({
+        message: "Organization ownership transferred successfully.",
+        previousOwner: formatOrganizationMember(previousOwner),
+        newOwner: formatOrganizationMember(newOwner),
+      });
+    } catch (error) {
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+        });
+      }
+
+      if (error instanceof mongoose.Error.ValidationError) {
+        return res.status(400).json({
+          error: "Validation failed.",
+          fields: getMongooseValidationFields(error),
+        });
+      }
+
+      if (error?.code === 11000) {
+        return res.status(409).json({
+          error:
+            "The organization already has an active Owner. Ownership was not transferred.",
+        });
+      }
+
+      console.error("Organization ownership transfer route error:", error);
+
+      return res.status(500).json({
+        error: "Unable to transfer organization ownership. Please try again.",
+      });
+    } finally {
+      await session.endSession();
+    }
+  },
+);
+
 router.get(
   "/:organizationId",
   requireAuth,
