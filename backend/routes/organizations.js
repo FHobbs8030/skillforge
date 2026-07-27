@@ -1498,6 +1498,25 @@ router.patch(
           );
         }
 
+        await createOrganizationActivityEvent({
+          organizationId: organization._id,
+          actorId: req.user._id,
+          eventType: "organization_ownership_transferred",
+          entityType: "organization",
+          entityId: organization._id,
+          metadata: {
+            previousOwnerMembershipId: previousOwner._id,
+            previousOwnerUserId: previousOwner.userId,
+            previousOwnerRoleBefore: "owner",
+            previousOwnerRoleAfter: previousOwner.role,
+            newOwnerMembershipId: newOwner._id,
+            newOwnerUserId: newOwner.userId,
+            newOwnerRoleBefore: targetMembership.role,
+            newOwnerRoleAfter: newOwner.role,
+          },
+          session,
+        });
+
         previousOwnerMembershipId = previousOwner._id;
         newOwnerMembershipId = newOwner._id;
       });
