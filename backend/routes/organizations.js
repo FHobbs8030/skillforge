@@ -325,70 +325,120 @@ router.post(
       }
 
       const organizationId = req.organizationAccess.organization._id;
+      const session = await mongoose.startSession();
 
-      let membership = await OrganizationMembership.findOne({
-        organizationId,
-        userId: targetUser._id,
-      });
+      let membership;
+      let restoredMembership = false;
 
-      if (membership?.status === "active") {
-        return res.status(409).json({
-          error: "This user is already an active organization member.",
+      try {
+        await session.withTransaction(async () => {
+          membership = await OrganizationMembership.findOne({
+            organizationId,
+            userId: targetUser._id,
+          }).session(session);
+
+          if (membership?.status === "active") {
+            throw Object.assign(
+              new Error("This user is already an active organization member."),
+              {
+                statusCode: 409,
+              },
+            );
+          }
+
+          if (membership?.status === "invited") {
+            throw Object.assign(
+              new Error(
+                "This user already has a pending organization invitation.",
+              ),
+              {
+                statusCode: 409,
+              },
+            );
+          }
+
+          const invitedAt = new Date();
+          restoredMembership = Boolean(membership);
+
+          if (membership) {
+            membership.role = role;
+            membership.status = "invited";
+            membership.invitedBy = req.user._id;
+            membership.invitedAt = invitedAt;
+            membership.joinedAt = null;
+            membership.leftAt = null;
+
+            await membership.save({
+              session,
+            });
+          } else {
+            const memberships = await OrganizationMembership.create(
+              [
+                {
+                  organizationId,
+                  userId: targetUser._id,
+                  role,
+                  status: "invited",
+                  invitedBy: req.user._id,
+                  invitedAt,
+                  joinedAt: null,
+                  leftAt: null,
+                },
+              ],
+              {
+                session,
+              },
+            );
+
+            membership = memberships[0];
+          }
+
+          await createOrganizationActivityEvent({
+            organizationId,
+            actorId: req.user._id,
+            eventType: "organization_member_invited",
+            entityType: "organization_membership",
+            entityId: membership._id,
+            metadata: {
+              targetUserId: targetUser._id,
+              targetEmail: targetUser.email,
+              role,
+              restored: restoredMembership,
+            },
+            session,
+          });
         });
-      }
 
-      if (membership?.status === "invited") {
-        return res.status(409).json({
-          error: "This user already has a pending organization invitation.",
+        const populatedMembership = await OrganizationMembership.findById(
+          membership._id,
+        )
+          .populate({
+            path: "userId",
+            select: "fullName email",
+          })
+          .populate({
+            path: "invitedBy",
+            select: "fullName email",
+          })
+          .lean();
+
+        return res.status(201).json({
+          message: restoredMembership
+            ? "Organization invitation renewed successfully."
+            : "Organization invitation created successfully.",
+          invitation: formatOrganizationMember(populatedMembership),
+          restored: restoredMembership,
         });
+      } finally {
+        await session.endSession();
       }
-
-      const invitedAt = new Date();
-      const restoredMembership = Boolean(membership);
-
-      if (membership) {
-        membership.role = role;
-        membership.status = "invited";
-        membership.invitedBy = req.user._id;
-        membership.invitedAt = invitedAt;
-        membership.joinedAt = null;
-        membership.leftAt = null;
-
-        await membership.save();
-      } else {
-        membership = await OrganizationMembership.create({
-          organizationId,
-          userId: targetUser._id,
-          role,
-          status: "invited",
-          invitedBy: req.user._id,
-          invitedAt,
-          joinedAt: null,
-          leftAt: null,
-        });
-      }
-
-      const populatedMembership = await OrganizationMembership.findById(
-        membership._id,
-      )
-        .populate({
-          path: "userId",
-          select: "fullName email",
-        })
-        .populate({
-          path: "invitedBy",
-          select: "fullName email",
-        })
-        .lean();
-
-      return res.status(201).json({
-        message: restoredMembership
-          ? "Organization invitation renewed successfully."
-          : "Organization invitation created successfully.",
-        invitation: formatOrganizationMember(populatedMembership),
-        restored: restoredMembership,
-      });
     } catch (error) {
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+        });
+      }
+
       if (error instanceof mongoose.Error.ValidationError) {
         return res.status(400).json({
           error: "Validation failed.",
