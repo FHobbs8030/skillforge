@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 
+const ActivityEvent = require("../models/ActivityEvent");
 const Organization = require("../models/Organization");
 const OrganizationMembership = require("../models/OrganizationMembership");
 const User = require("../models/User");
@@ -40,6 +41,37 @@ function getMongooseValidationFields(error) {
       fieldError.message,
     ]),
   );
+}
+
+async function createOrganizationActivityEvent({
+  organizationId,
+  actorId,
+  eventType,
+  entityType,
+  entityId,
+  metadata = {},
+  session = null,
+}) {
+  const activityEvent = new ActivityEvent({
+    organizationId,
+    actorId,
+    eventType,
+    source: "skillforge",
+    entityType,
+    entityId: entityId?.toString() ?? "",
+    metadata,
+    occurredAt: new Date(),
+  });
+
+  if (session) {
+    await activityEvent.save({
+      session,
+    });
+  } else {
+    await activityEvent.save();
+  }
+
+  return activityEvent;
 }
 
 function formatOrganizationResult(organization, membership) {
@@ -620,6 +652,42 @@ router.get(
 
       return res.status(500).json({
         error: "Unable to load organization members. Please try again.",
+      });
+    }
+  },
+);
+
+router.get(
+  "/:organizationId/activity",
+  requireAuth,
+  requireOrganizationMembership,
+  async (req, res) => {
+    const { organization } = req.organizationAccess;
+
+    try {
+      const activityEvents = await ActivityEvent.find({
+        organizationId: organization._id,
+      })
+        .sort({
+          occurredAt: -1,
+        })
+        .limit(50)
+        .lean();
+
+      return res.status(200).json({
+        organization: {
+          id: organization._id,
+          name: organization.name,
+          slug: organization.slug,
+          status: organization.status,
+        },
+        activityEvents,
+      });
+    } catch (error) {
+      console.error("Organization activity route error:", error);
+
+      return res.status(500).json({
+        error: "Unable to load organization activity. Please try again.",
       });
     }
   },
@@ -1422,8 +1490,7 @@ router.post("/", requireAuth, async (req, res) => {
     validationErrors.name =
       "Organization name must contain at least 2 characters.";
   } else if (name.length > 120) {
-    validationErrors.name =
-      "Organization name cannot exceed 120 characters.";
+    validationErrors.name = "Organization name cannot exceed 120 characters.";
   }
 
   if (description.length > 1000) {
@@ -1435,8 +1502,7 @@ router.post("/", requireAuth, async (req, res) => {
     validationErrors.slug =
       "Organization slug must contain at least 2 characters.";
   } else if (slug.length > 120) {
-    validationErrors.slug =
-      "Organization slug cannot exceed 120 characters.";
+    validationErrors.slug = "Organization slug cannot exceed 120 characters.";
   } else if (!ORGANIZATION_SLUG_PATTERN.test(slug)) {
     validationErrors.slug =
       "Organization slug may contain lowercase letters, numbers, and hyphens.";
