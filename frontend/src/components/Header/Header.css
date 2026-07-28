@@ -1289,3 +1289,100 @@
     font-size: 0.68rem;
   }
 }
+
+/* =========================
+   RESPONSIVE: 360PX AUTHENTICATED AVATAR
+========================= */
+
+@media (max-width: 360px) {
+  .header--authenticated .header__account {
+    gap: var(--space-2);
+  }
+
+  .header--authenticated .header__user {
+    flex: 0 0 40px;
+
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+
+    padding: 2px;
+
+    box-sizing: border-box;
+  }
+
+  .header--authenticated .header__avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .header--authenticated .header__username {
+    display: none;
+  }
+}
+
+/* =========================
+   RESPONSIVE: 360PX AUTHENTICATED FLEX STACK
+========================= */
+
+@media (max-width: 360px) {
+  .header--authenticated .header__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .header--authenticated .header__left {
+    align-self: center;
+
+    width: auto;
+    max-width: none;
+  }
+
+  .header--authenticated .header__logo-link {
+    display: flex;
+    justify-content: center;
+  }
+
+  .header--authenticated .header__logo {
+    width: auto;
+    max-width: 140px;
+    height: 44px;
+  }
+
+  .header--authenticated .header__right {
+    width: 100%;
+  }
+
+  .header--authenticated .header__authenticated-controls {
+    width: 100%;
+  }
+
+  .header--authenticated .header__account {
+    justify-content: center;
+
+    width: 100%;
+
+    flex-wrap: nowrap;
+  }
+
+  .header--authenticated .header__nav {
+    justify-content: center;
+    flex-wrap: wrap;
+
+    width: 100%;
+    max-width: 100%;
+
+    gap: 0.45rem 0.75rem;
+    padding: var(--space-1) 0 var(--space-2);
+
+    overflow: visible;
+  }
+
+  .header--authenticated .header__nav a {
+    font-size: 0.72rem;
+  }
+}

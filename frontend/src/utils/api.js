@@ -418,3 +418,133 @@ export function connectProjectRepository({ token, projectId, repositoryUrl }) {
     }),
   });
 }
+
+export function getOrganizations(token) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/organizations", {
+    method: "GET",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function getPendingOrganizationInvitations(token) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/organizations/invitations/pending", {
+    method: "GET",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function createOrganization({
+  token,
+  name,
+  description = "",
+  slug = "",
+}) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  const normalizedName = typeof name === "string" ? name.trim() : "";
+  const normalizedDescription =
+    typeof description === "string" ? description.trim() : "";
+  const normalizedSlug = typeof slug === "string" ? slug.trim() : "";
+
+  if (!normalizedName) {
+    return Promise.reject(new Error("Organization name is required."));
+  }
+
+  const requestBody = {
+    name: normalizedName,
+    description: normalizedDescription,
+  };
+
+  if (normalizedSlug) {
+    requestBody.slug = normalizedSlug;
+  }
+
+  return apiRequest("/organizations", {
+    method: "POST",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+
+    body: JSON.stringify(requestBody),
+  });
+}
+
+export function getOrganizationById({ token, organizationId }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!organizationId) {
+    return Promise.reject(new Error("Organization ID is required."));
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(organizationId)}`,
+    {
+      method: "GET",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function getOrganizationMembers({ token, organizationId }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!organizationId) {
+    return Promise.reject(new Error("Organization ID is required."));
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(organizationId)}/members`,
+    {
+      method: "GET",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function getOrganizationActivity({ token, organizationId }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!organizationId) {
+    return Promise.reject(new Error("Organization ID is required."));
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(organizationId)}/activity`,
+    {
+      method: "GET",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}

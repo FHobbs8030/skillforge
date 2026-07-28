@@ -754,3 +754,19 @@ input:focus {
 
   box-shadow: none;
 }
+
+.main-content--organizations,
+.main-content--organization-workspace {
+  justify-content: flex-start;
+}
+
+.main-inner--organizations,
+.main-inner--organization-workspace {
+  display: block;
+
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+
+  overflow: visible;
+}

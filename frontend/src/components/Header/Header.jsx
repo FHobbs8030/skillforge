@@ -403,6 +403,13 @@ function Header({
                     Projects
                   </NavLink>
 
+                  <NavLink
+                    to="/organizations"
+                    className={getPrimaryNavClassName}
+                  >
+                    Organizations
+                  </NavLink>
+
                   <NavLink to="/profile" end className={getPrimaryNavClassName}>
                     Profile
                   </NavLink>
@@ -490,6 +497,13 @@ function Header({
 
                 <NavLink to="/projects" className={getPrimaryNavClassName}>
                   Projects
+                </NavLink>
+
+                <NavLink
+                  to="/organizations"
+                  className={getPrimaryNavClassName}
+                >
+                  Organizations
                 </NavLink>
 
                 <NavLink to="/profile" end className={getPrimaryNavClassName}>
