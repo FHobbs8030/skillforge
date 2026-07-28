@@ -85,6 +85,21 @@ organizationMembershipSchema.index({
   status: 1,
 });
 
+organizationMembershipSchema.index(
+  {
+    organizationId: 1,
+    role: 1,
+  },
+  {
+    unique: true,
+    name: "one_active_owner_per_organization",
+    partialFilterExpression: {
+      role: "owner",
+      status: "active",
+    },
+  },
+);
+
 module.exports = mongoose.model(
   "OrganizationMembership",
   organizationMembershipSchema,
