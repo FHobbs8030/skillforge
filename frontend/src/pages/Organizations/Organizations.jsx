@@ -9,6 +9,8 @@ import {
   getPendingOrganizationInvitations,
 } from "../../utils/api";
 
+import CreateOrganizationPanel from "./CreateOrganizationPanel";
+
 import "./Organizations.css";
 
 function normalizeOrganizations(response) {
@@ -361,6 +363,9 @@ function Organizations() {
           Back to dashboard
         </Link>
       </header>
+
+      <CreateOrganizationPanel />
+
 
       <div
         className="organizations__metrics"
