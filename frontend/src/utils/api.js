@@ -548,3 +548,55 @@ export function getOrganizationActivity({ token, organizationId }) {
     },
   );
 }
+
+export function acceptOrganizationInvitation({
+  token,
+  organizationId,
+}) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!organizationId) {
+    return Promise.reject(new Error("Organization ID is required."));
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(
+      organizationId,
+    )}/invitations/accept`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function declineOrganizationInvitation({
+  token,
+  organizationId,
+}) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!organizationId) {
+    return Promise.reject(new Error("Organization ID is required."));
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(
+      organizationId,
+    )}/invitations/decline`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}

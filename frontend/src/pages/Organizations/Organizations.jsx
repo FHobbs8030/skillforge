@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 
 import useAuth from "../../contexts/useAuth";
 import {
+  acceptOrganizationInvitation,
+  declineOrganizationInvitation,
   getOrganizations,
   getPendingOrganizationInvitations,
 } from "../../utils/api";
@@ -46,6 +48,24 @@ function getOrganizationId(organization) {
     organization?.id ||
     organization?._id ||
     organization?.organizationId ||
+    ""
+  );
+}
+
+function getInvitationId(invitation) {
+  return (
+    invitation?.id ||
+    invitation?._id ||
+    invitation?.organizationId ||
+    ""
+  );
+}
+
+function getInvitationOrganizationId(invitation) {
+  return (
+    invitation?.organizationId ||
+    invitation?.organization?.id ||
+    invitation?.organization?._id ||
     ""
   );
 }
@@ -106,6 +126,11 @@ function Organizations() {
   const [organizationsError, setOrganizationsError] = useState("");
   const [invitationsError, setInvitationsError] = useState("");
 
+  const [invitationActionById, setInvitationActionById] = useState({});
+  const [invitationErrorById, setInvitationErrorById] = useState({});
+  const [invitationSuccessMessage, setInvitationSuccessMessage] =
+    useState("");
+
   useEffect(() => {
     let isActive = true;
 
@@ -159,6 +184,131 @@ function Organizations() {
       isActive = false;
     };
   }, [token]);
+
+  async function handleInvitationResponse({
+    invitation,
+    action,
+  }) {
+    const invitationId = getInvitationId(invitation);
+    const organizationId =
+      getInvitationOrganizationId(invitation);
+
+    if (!invitationId || !organizationId) {
+      setInvitationErrorById((currentErrors) => ({
+        ...currentErrors,
+        [invitationId || organizationId || "unknown"]:
+          "This invitation is missing its organization identity.",
+      }));
+
+      return;
+    }
+
+    if (invitationActionById[invitationId]) {
+      return;
+    }
+
+    setInvitationActionById((currentActions) => ({
+      ...currentActions,
+      [invitationId]: action,
+    }));
+
+    setInvitationErrorById((currentErrors) => {
+      const nextErrors = {
+        ...currentErrors,
+      };
+
+      delete nextErrors[invitationId];
+
+      return nextErrors;
+    });
+
+    setInvitationSuccessMessage("");
+
+    try {
+      if (action === "accept") {
+        await acceptOrganizationInvitation({
+          token,
+          organizationId,
+        });
+      } else {
+        await declineOrganizationInvitation({
+          token,
+          organizationId,
+        });
+      }
+
+      setInvitations((currentInvitations) =>
+        currentInvitations.filter(
+          (currentInvitation) =>
+            getInvitationId(currentInvitation) !== invitationId,
+        ),
+      );
+
+      const [organizationResult, invitationResult] =
+        await Promise.allSettled([
+          getOrganizations(token),
+          getPendingOrganizationInvitations(token),
+        ]);
+
+      if (organizationResult.status === "fulfilled") {
+        setOrganizations(
+          normalizeOrganizations(organizationResult.value),
+        );
+
+        setOrganizationsError("");
+      } else {
+        setOrganizationsError(
+          action === "accept"
+            ? "The invitation was accepted, but the organization directory could not be refreshed. Reload the page to try again."
+            : organizationResult.reason?.message ||
+                "Organizations could not be refreshed.",
+        );
+      }
+
+      if (invitationResult.status === "fulfilled") {
+        setInvitations(
+          normalizeInvitations(invitationResult.value),
+        );
+
+        setInvitationsError("");
+      } else {
+        setInvitationsError(
+          "The invitation response succeeded, but pending invitations could not be refreshed. Reload the page to try again.",
+        );
+      }
+
+      setInvitationSuccessMessage(
+        action === "accept"
+          ? `You joined ${
+              invitation.organizationName ||
+              "the organization"
+            }.`
+          : `Invitation to ${
+              invitation.organizationName ||
+              "the organization"
+            } declined.`,
+      );
+    } catch (error) {
+      setInvitationErrorById((currentErrors) => ({
+        ...currentErrors,
+        [invitationId]:
+          error?.message ||
+          `The organization invitation could not be ${
+            action === "accept" ? "accepted" : "declined"
+          }. Please try again.`,
+      }));
+    } finally {
+      setInvitationActionById((currentActions) => {
+        const nextActions = {
+          ...currentActions,
+        };
+
+        delete nextActions[invitationId];
+
+        return nextActions;
+      });
+    }
+  }
 
   const organizationStats = useMemo(() => {
     const ownedOrganizations = organizations.filter(
@@ -272,6 +422,16 @@ function Organizations() {
           </span>
         </article>
       </div>
+
+      {invitationSuccessMessage && (
+        <p
+          className="organizations__feedback"
+          role="status"
+          aria-live="polite"
+        >
+          {invitationSuccessMessage}
+        </p>
+      )}
 
       <div className="organizations__workspace-grid">
         <article className="organizations__panel">
@@ -436,58 +596,104 @@ function Organizations() {
             !invitationsError &&
             invitations.length > 0 && (
               <div className="organizations__invitation-list">
-                {invitations.map((invitation) => (
-                  <article
-                    key={
-                      invitation.id ||
-                      invitation._id ||
-                      invitation.organizationId
-                    }
-                    className="organizations__invitation"
-                  >
-                    <div className="organizations__invitation-heading">
-                      <div>
-                        <h3 className="organizations__card-title">
-                          {invitation.organizationName ||
-                            "Untitled organization"}
-                        </h3>
+                {invitations.map((invitation) => {
+                  const invitationId =
+                    getInvitationId(invitation);
 
-                        <p className="organizations__card-slug">
-                          {invitation.organizationSlug
-                            ? `/${invitation.organizationSlug}`
-                            : "Slug not available"}
-                        </p>
+                  const activeAction =
+                    invitationActionById[invitationId];
+
+                  const invitationError =
+                    invitationErrorById[invitationId];
+
+                  return (
+                    <article
+                      key={invitationId}
+                      className="organizations__invitation"
+                      aria-busy={Boolean(activeAction)}
+                    >
+                      <div className="organizations__invitation-heading">
+                        <div>
+                          <h3 className="organizations__card-title">
+                            {invitation.organizationName ||
+                              "Untitled organization"}
+                          </h3>
+
+                          <p className="organizations__card-slug">
+                            {invitation.organizationSlug
+                              ? `/${invitation.organizationSlug}`
+                              : "Slug not available"}
+                          </p>
+                        </div>
+
+                        <span className="organizations__badge organizations__badge--role">
+                          {formatLabel(invitation.role)}
+                        </span>
                       </div>
 
-                      <span className="organizations__badge organizations__badge--role">
-                        {formatLabel(invitation.role)}
-                      </span>
-                    </div>
+                      <p className="organizations__card-description">
+                        {invitation.organizationDescription ||
+                          "No organization description has been added."}
+                      </p>
 
-                    <p className="organizations__card-description">
-                      {invitation.organizationDescription ||
-                        "No organization description has been added."}
-                    </p>
+                      <div className="organizations__invitation-meta">
+                        <span>
+                          Invited by{" "}
+                          {invitation.invitedBy?.fullName ||
+                            invitation.invitedBy?.email ||
+                            "a SkillForge member"}
+                        </span>
 
-                    <div className="organizations__invitation-meta">
-                      <span>
-                        Invited by{" "}
-                        {invitation.invitedBy?.fullName ||
-                          invitation.invitedBy?.email ||
-                          "a SkillForge member"}
-                      </span>
+                        <span>
+                          {formatDate(invitation.invitedAt)}
+                        </span>
+                      </div>
 
-                      <span>
-                        {formatDate(invitation.invitedAt)}
-                      </span>
-                    </div>
+                      {invitationError && (
+                        <p
+                          className="organizations__invitation-error"
+                          role="alert"
+                        >
+                          {invitationError}
+                        </p>
+                      )}
 
-                    <p className="organizations__response-note">
-                      Invitation response controls will be connected in
-                      the next checkpoint.
-                    </p>
-                  </article>
-                ))}
+                      <div className="organizations__invitation-actions">
+                        <button
+                          className="organizations__invitation-button organizations__invitation-button--accept"
+                          type="button"
+                          disabled={Boolean(activeAction)}
+                          onClick={() =>
+                            handleInvitationResponse({
+                              invitation,
+                              action: "accept",
+                            })
+                          }
+                        >
+                          {activeAction === "accept"
+                            ? "Accepting..."
+                            : "Accept invitation"}
+                        </button>
+
+                        <button
+                          className="organizations__invitation-button organizations__invitation-button--decline"
+                          type="button"
+                          disabled={Boolean(activeAction)}
+                          onClick={() =>
+                            handleInvitationResponse({
+                              invitation,
+                              action: "decline",
+                            })
+                          }
+                        >
+                          {activeAction === "decline"
+                            ? "Declining..."
+                            : "Decline"}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
         </article>

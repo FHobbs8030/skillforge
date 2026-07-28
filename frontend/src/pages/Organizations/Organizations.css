@@ -351,3 +351,118 @@
     justify-content: flex-start;
   }
 }
+
+/* ORGANIZATION INVITATION RESPONSE CONTROLS */
+
+.organizations__feedback {
+  margin: 0;
+  padding: var(--space-4);
+
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.1);
+
+  border: 1px solid rgba(34, 197, 94, 0.38);
+  border-radius: var(--radius-md);
+
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.5;
+}
+
+.organizations__invitation-error {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3);
+
+  color: var(--color-danger-text);
+  background: var(--color-danger-background);
+
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-sm);
+
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.organizations__invitation-actions {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+
+  border-top: 1px solid var(--border-card);
+}
+
+.organizations__invitation-button {
+  appearance: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: var(--control-height);
+  padding: var(--space-button-y) var(--space-4);
+
+  border-radius: var(--radius-pill);
+
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+
+  cursor: pointer;
+
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    opacity var(--transition-base),
+    transform var(--transition-base);
+}
+
+.organizations__invitation-button--accept {
+  color: var(--color-text-inverse);
+  background: var(--button-gradient);
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+
+  box-shadow: var(--shadow-button);
+}
+
+.organizations__invitation-button--accept:hover:not(:disabled) {
+  transform: translateY(-1px);
+
+  box-shadow: var(--shadow-button-hover);
+}
+
+.organizations__invitation-button--decline {
+  color: var(--color-danger-text);
+  background: var(--color-danger-background);
+
+  border: 1px solid var(--color-danger-border);
+}
+
+.organizations__invitation-button--decline:hover:not(:disabled) {
+  color: var(--color-danger-text-hover);
+  background: var(--color-danger-background-hover);
+
+  border-color: var(--color-danger-border-hover);
+
+  transform: translateY(-1px);
+}
+
+.organizations__invitation-button:focus-visible {
+  outline: var(--focus-ring-width) solid var(--border-focus-strong);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.organizations__invitation-button:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 560px) {
+  .organizations__invitation-button {
+    width: 100%;
+  }
+}
