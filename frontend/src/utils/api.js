@@ -587,6 +587,133 @@ export function getOrganizationMembers({ token, organizationId }) {
   );
 }
 
+export function changeOrganizationMemberRole({
+  token,
+  organizationId,
+  membershipId,
+  role,
+}) {
+  if (!token) {
+    return Promise.reject(
+      new Error("Authentication token is required."),
+    );
+  }
+
+  if (!organizationId) {
+    return Promise.reject(
+      new Error("Organization ID is required."),
+    );
+  }
+
+  if (!membershipId) {
+    return Promise.reject(
+      new Error("Organization membership ID is required."),
+    );
+  }
+
+  const normalizedRole =
+    typeof role === "string"
+      ? role.trim().toLowerCase()
+      : "";
+
+  if (!["admin", "member"].includes(normalizedRole)) {
+    return Promise.reject(
+      new Error("Organization member role must be admin or member."),
+    );
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(
+      organizationId,
+    )}/members/${encodeURIComponent(membershipId)}/role`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify({
+        role: normalizedRole,
+      }),
+    },
+  );
+}
+
+export function deactivateOrganizationMember({
+  token,
+  organizationId,
+  membershipId,
+}) {
+  if (!token) {
+    return Promise.reject(
+      new Error("Authentication token is required."),
+    );
+  }
+
+  if (!organizationId) {
+    return Promise.reject(
+      new Error("Organization ID is required."),
+    );
+  }
+
+  if (!membershipId) {
+    return Promise.reject(
+      new Error("Organization membership ID is required."),
+    );
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(
+      organizationId,
+    )}/members/${encodeURIComponent(membershipId)}/deactivate`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function reactivateOrganizationMember({
+  token,
+  organizationId,
+  membershipId,
+}) {
+  if (!token) {
+    return Promise.reject(
+      new Error("Authentication token is required."),
+    );
+  }
+
+  if (!organizationId) {
+    return Promise.reject(
+      new Error("Organization ID is required."),
+    );
+  }
+
+  if (!membershipId) {
+    return Promise.reject(
+      new Error("Organization membership ID is required."),
+    );
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(
+      organizationId,
+    )}/members/${encodeURIComponent(membershipId)}/reactivate`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
 export function getOrganizationActivity({ token, organizationId }) {
   if (!token) {
     return Promise.reject(new Error("Authentication token is required."));
