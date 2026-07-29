@@ -600,3 +600,53 @@ export function declineOrganizationInvitation({
     },
   );
 }
+
+export function updateOrganization({
+  token,
+  organizationId,
+  name,
+  slug,
+  description = "",
+}) {
+  if (!token) {
+    return Promise.reject(
+      new Error("Authentication token is required."),
+    );
+  }
+
+  if (!organizationId) {
+    return Promise.reject(
+      new Error("Organization ID is required."),
+    );
+  }
+
+  const normalizedName =
+    typeof name === "string" ? name.trim() : "";
+
+  const normalizedSlug =
+    typeof slug === "string"
+      ? slug.trim().toLowerCase()
+      : "";
+
+  const normalizedDescription =
+    typeof description === "string"
+      ? description.trim()
+      : "";
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(organizationId)}`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify({
+        name: normalizedName,
+        slug: normalizedSlug,
+        description: normalizedDescription,
+      }),
+    },
+  );
+}
