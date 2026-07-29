@@ -324,9 +324,15 @@ function Header({
           >
             <img src={logo} alt="SkillForge" className="header__logo" />
           </Link>
+
+          {isAuthenticated && !isWelcomePage && !isDemoMission && (
+            <div className="header__clock header__brand-clock">
+              <Clock />
+            </div>
+          )}
         </div>
 
-        {!isWelcomePage && !isDemoMission && (
+        {!isAuthenticated && !isWelcomePage && !isDemoMission && (
           <div className="header__clock">
             <Clock />
           </div>
