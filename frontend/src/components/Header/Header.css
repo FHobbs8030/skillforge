@@ -1641,3 +1641,55 @@
     0 0 0 2px rgba(8, 145, 178, 0.07),
     0 5px 13px rgba(15, 23, 42, 0.16);
 }
+
+/* =========================
+   LARGE DESKTOP AUTHENTICATED IDENTITY SCALE
+========================= */
+
+@media (min-width: 1100px) {
+  .header--authenticated .header__logo {
+    width: clamp(190px, 15vw, 240px);
+    max-width: none;
+    height: auto;
+  }
+
+  .header--authenticated .header__left {
+    align-self: center;
+
+    gap: 8px;
+  }
+
+  .header--authenticated .header__account {
+    grid-template-columns: 90px 110px;
+
+    column-gap: 10px;
+    row-gap: 10px;
+
+    width: 210px;
+    min-width: 210px;
+    max-width: 210px;
+
+    padding: 3px 0 2px;
+  }
+
+  .header--authenticated .header__user {
+    gap: 6px;
+  }
+
+  .header--authenticated .header__avatar {
+    width: 84px;
+    height: 84px;
+  }
+
+  .header--authenticated .header__username {
+    width: 192px;
+    max-width: 192px;
+
+    line-height: 1.25;
+  }
+
+  .header--authenticated .header__theme-toggle,
+  .header--authenticated .header__nav-link--signout {
+    min-height: 38px;
+  }
+}
