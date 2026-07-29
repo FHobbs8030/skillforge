@@ -6,6 +6,7 @@ import useAuth from "../../contexts/useAuth";
 import {
   archiveOrganization,
   getOrganizationById,
+  getOrganizationMembers,
   updateOrganization,
 } from "../../utils/api";
 
@@ -113,6 +114,16 @@ function OrganizationWorkspace() {
 
   const [archiveError, setArchiveError] = useState("");
 
+  const [members, setMembers] = useState([]);
+
+  const [currentMembership, setCurrentMembership] =
+    useState(null);
+
+  const [isMembersLoading, setIsMembersLoading] =
+    useState(true);
+
+  const [membersError, setMembersError] = useState("");
+
   useEffect(() => {
     let isActive = true;
 
@@ -158,6 +169,60 @@ function OrganizationWorkspace() {
 
     if (token && organizationId) {
       loadOrganization();
+    }
+
+    return () => {
+      isActive = false;
+    };
+  }, [token, organizationId]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadMembers() {
+      setIsMembersLoading(true);
+      setMembersError("");
+
+      try {
+        const response = await getOrganizationMembers({
+          token,
+          organizationId,
+        });
+
+        if (!isActive) {
+          return;
+        }
+
+        setMembers(
+          Array.isArray(response?.members)
+            ? response.members
+            : [],
+        );
+
+        setCurrentMembership(
+          response?.currentMembership || null,
+        );
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
+        setMembers([]);
+        setCurrentMembership(null);
+
+        setMembersError(
+          error?.message ||
+            "The organization members could not be loaded.",
+        );
+      } finally {
+        if (isActive) {
+          setIsMembersLoading(false);
+        }
+      }
+    }
+
+    if (token && organizationId) {
+      loadMembers();
     }
 
     return () => {
@@ -800,17 +865,153 @@ function OrganizationWorkspace() {
       )}
 
       <div className="organization-workspace__grid">
-        <article className="organization-workspace__panel">
-          <p className="organization-workspace__panel-kicker">Members</p>
+        <article className="organization-workspace__panel organization-workspace__panel--members">
+          <div className="organization-workspace__members-header">
+            <div>
+              <p className="organization-workspace__panel-kicker">
+                Members
+              </p>
 
-          <h2 className="organization-workspace__panel-title">
-            Membership directory
-          </h2>
+              <h2 className="organization-workspace__panel-title">
+                Membership directory
+              </h2>
 
-          <p className="organization-workspace__panel-copy">
-            Owner, Admin, Member, invited, and inactive membership states will
-            be rendered here.
-          </p>
+              <p className="organization-workspace__panel-copy">
+                Review organization members, roles,
+                invitation states, and membership status.
+              </p>
+            </div>
+
+            {!isMembersLoading && !membersError && (
+              <span className="organization-workspace__members-count">
+                {members.length}{" "}
+                {members.length === 1 ? "member" : "members"}
+              </span>
+            )}
+          </div>
+
+          {isMembersLoading && (
+            <div
+              className="organization-workspace__members-state"
+              role="status"
+              aria-live="polite"
+            >
+              Loading organization members...
+            </div>
+          )}
+
+          {!isMembersLoading && membersError && (
+            <div
+              className="organization-workspace__members-error"
+              role="alert"
+            >
+              {membersError}
+            </div>
+          )}
+
+          {!isMembersLoading &&
+            !membersError &&
+            members.length === 0 && (
+              <div className="organization-workspace__members-state">
+                No organization memberships were found.
+              </div>
+            )}
+
+          {!isMembersLoading &&
+            !membersError &&
+            members.length > 0 && (
+              <div className="organization-workspace__member-list">
+                {members.map((member) => {
+                  const isCurrentMember =
+                    currentMembership?.id?.toString() ===
+                    member.id?.toString();
+
+                  const membershipDate =
+                    member.status === "invited"
+                      ? member.invitedAt
+                      : member.status === "active"
+                        ? member.joinedAt
+                        : member.leftAt ||
+                          member.updatedAt;
+
+                  const membershipDateLabel =
+                    member.status === "invited"
+                      ? "Invited"
+                      : member.status === "active"
+                        ? "Joined"
+                        : member.status === "inactive"
+                          ? "Deactivated"
+                          : member.status === "removed"
+                            ? "Removed"
+                            : "Updated";
+
+                  return (
+                    <article
+                      className={`organization-workspace__member-card${
+                        isCurrentMember
+                          ? " organization-workspace__member-card--current"
+                          : ""
+                      }`}
+                      key={member.id}
+                    >
+                      <div className="organization-workspace__member-heading">
+                        <div>
+                          <div className="organization-workspace__member-name-row">
+                            <h3 className="organization-workspace__member-name">
+                              {member.fullName ||
+                                "Unnamed member"}
+                            </h3>
+
+                            {isCurrentMember && (
+                              <span className="organization-workspace__current-member-badge">
+                                You
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="organization-workspace__member-email">
+                            {member.email ||
+                              "Email unavailable"}
+                          </p>
+                        </div>
+
+                        <div className="organization-workspace__member-badges">
+                          <span
+                            className={`organization-workspace__member-badge organization-workspace__member-badge--${member.role}`}
+                          >
+                            {formatLabel(member.role)}
+                          </span>
+
+                          <span
+                            className={`organization-workspace__member-badge organization-workspace__member-badge--${member.status}`}
+                          >
+                            {formatLabel(member.status)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <dl className="organization-workspace__member-details">
+                        <div>
+                          <dt>{membershipDateLabel}</dt>
+                          <dd>{formatDate(membershipDate)}</dd>
+                        </div>
+
+                        {member.invitedBy && (
+                          <div>
+                            <dt>Invited by</dt>
+                            <dd>
+                              {member.invitedBy.fullName ||
+                                member.invitedBy.email ||
+                                "Organization member"}
+                            </dd>
+                          </div>
+                        )}
+                      </dl>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
         </article>
 
         <article className="organization-workspace__panel">
