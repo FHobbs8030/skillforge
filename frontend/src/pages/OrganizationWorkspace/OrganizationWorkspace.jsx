@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import useAuth from "../../contexts/useAuth";
+import {
+  getUserAvatarUrl,
+  getUserInitials,
+} from "../../utils/avatar";
 
 import {
   archiveOrganization,
@@ -1280,6 +1284,9 @@ function OrganizationWorkspace() {
                     currentMembership?.id?.toString() ===
                     member.id?.toString();
 
+                  const memberAvatarUrl = getUserAvatarUrl(member);
+                  const memberInitials = getUserInitials(member);
+
                   const membershipDate =
                     member.status === "invited"
                       ? member.invitedAt
@@ -1309,24 +1316,42 @@ function OrganizationWorkspace() {
                       key={member.id}
                     >
                       <div className="organization-workspace__member-heading">
-                        <div>
-                          <div className="organization-workspace__member-name-row">
-                            <h3 className="organization-workspace__member-name">
-                              {member.fullName ||
-                                "Unnamed member"}
-                            </h3>
+                        <div className="organization-workspace__member-identity">
+                          {memberAvatarUrl ? (
+                            <img
+                              className="organization-workspace__member-avatar"
+                              src={memberAvatarUrl}
+                              alt={`${member.fullName || "Organization member"} avatar`}
+                              loading="lazy"
+                            />
+                          ) : (
+                            <span
+                              className="organization-workspace__member-avatar organization-workspace__member-avatar--fallback"
+                              aria-hidden="true"
+                            >
+                              {memberInitials}
+                            </span>
+                          )}
 
-                            {isCurrentMember && (
-                              <span className="organization-workspace__current-member-badge">
-                                You
-                              </span>
-                            )}
+                          <div className="organization-workspace__member-copy">
+                            <div className="organization-workspace__member-name-row">
+                              <h3 className="organization-workspace__member-name">
+                                {member.fullName ||
+                                  "Unnamed member"}
+                              </h3>
+
+                              {isCurrentMember && (
+                                <span className="organization-workspace__current-member-badge">
+                                  You
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="organization-workspace__member-email">
+                              {member.email ||
+                                "Email unavailable"}
+                            </p>
                           </div>
-
-                          <p className="organization-workspace__member-email">
-                            {member.email ||
-                              "Email unavailable"}
-                          </p>
                         </div>
 
                         <div className="organization-workspace__member-badges">

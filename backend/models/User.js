@@ -1,5 +1,64 @@
 const mongoose = require("mongoose");
 
+const avatarSchema = new mongoose.Schema(
+  {
+    url: {
+      type: String,
+      trim: true,
+      maxLength: [2048, "Avatar URL cannot exceed 2048 characters."],
+    },
+
+    source: {
+      type: String,
+      enum: {
+        values: ["github", "upload"],
+        message: "Avatar source must be GitHub or Upload.",
+      },
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
+const githubIdentitySchema = new mongoose.Schema(
+  {
+    userId: {
+      type: String,
+      trim: true,
+    },
+
+    username: {
+      type: String,
+      trim: true,
+      maxLength: [100, "GitHub username cannot exceed 100 characters."],
+    },
+
+    profileUrl: {
+      type: String,
+      trim: true,
+      maxLength: [2048, "GitHub profile URL cannot exceed 2048 characters."],
+    },
+
+    avatarUrl: {
+      type: String,
+      trim: true,
+      maxLength: [2048, "GitHub avatar URL cannot exceed 2048 characters."],
+    },
+
+    connectedAt: {
+      type: Date,
+    },
+
+    lastSyncedAt: {
+      type: Date,
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
 const userSchema = new mongoose.Schema(
   {
     fullName: {
@@ -35,10 +94,30 @@ const userSchema = new mongoose.Schema(
       default: "free",
       required: true,
     },
+
+    avatar: {
+      type: avatarSchema,
+      default: undefined,
+    },
+
+    github: {
+      type: githubIdentitySchema,
+      default: undefined,
+    },
   },
   {
     timestamps: true,
     versionKey: false,
+  },
+);
+
+userSchema.index(
+  {
+    "github.userId": 1,
+  },
+  {
+    unique: true,
+    sparse: true,
   },
 );
 

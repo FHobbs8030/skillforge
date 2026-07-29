@@ -86,6 +86,24 @@ function formatOrganizationResult(organization, membership) {
   };
 }
 
+function formatPublicUserIdentity(user) {
+  return {
+    avatar: user?.avatar?.url
+      ? {
+          url: user.avatar.url,
+          source: user.avatar.source ?? null,
+        }
+      : null,
+    github: user?.github?.username
+      ? {
+          username: user.github.username,
+          profileUrl: user.github.profileUrl ?? "",
+          avatarUrl: user.github.avatarUrl ?? "",
+        }
+      : null,
+  };
+}
+
 function formatOrganizationMember(membership) {
   const user = membership.userId;
   const invitedBy = membership.invitedBy;
@@ -96,6 +114,7 @@ function formatOrganizationMember(membership) {
     userId: user?._id ?? membership.userId,
     fullName: user?.fullName ?? "",
     email: user?.email ?? "",
+    ...formatPublicUserIdentity(user),
     role: membership.role,
     status: membership.status,
     invitedBy: invitedBy
@@ -414,7 +433,7 @@ router.post(
         )
           .populate({
             path: "userId",
-            select: "fullName email",
+            select: "fullName email avatar github",
           })
           .populate({
             path: "invitedBy",
@@ -761,7 +780,7 @@ router.get(
       })
         .populate({
           path: "userId",
-          select: "fullName email",
+          select: "fullName email avatar github",
         })
         .populate({
           path: "invitedBy",
@@ -982,7 +1001,7 @@ router.patch(
       )
         .populate({
           path: "userId",
-          select: "fullName email",
+          select: "fullName email avatar github",
         })
         .populate({
           path: "invitedBy",
@@ -1157,7 +1176,7 @@ router.patch(
       )
         .populate({
           path: "userId",
-          select: "fullName email",
+          select: "fullName email avatar github",
         })
         .populate({
           path: "invitedBy",
@@ -1333,7 +1352,7 @@ router.patch(
       )
         .populate({
           path: "userId",
-          select: "fullName email",
+          select: "fullName email avatar github",
         })
         .populate({
           path: "invitedBy",
@@ -1525,7 +1544,7 @@ router.patch(
         OrganizationMembership.findById(previousOwnerMembershipId)
           .populate({
             path: "userId",
-            select: "fullName email",
+            select: "fullName email avatar github",
           })
           .populate({
             path: "invitedBy",
@@ -1535,7 +1554,7 @@ router.patch(
         OrganizationMembership.findById(newOwnerMembershipId)
           .populate({
             path: "userId",
-            select: "fullName email",
+            select: "fullName email avatar github",
           })
           .populate({
             path: "invitedBy",

@@ -296,6 +296,24 @@ router.get("/", requireAuth, async (req, res) => {
   }
 });
 
+function formatPublicUserIdentity(user) {
+  return {
+    avatar: user?.avatar?.url
+      ? {
+          url: user.avatar.url,
+          source: user.avatar.source ?? null,
+        }
+      : null,
+    github: user?.github?.username
+      ? {
+          username: user.github.username,
+          profileUrl: user.github.profileUrl ?? "",
+          avatarUrl: user.github.avatarUrl ?? "",
+        }
+      : null,
+  };
+}
+
 function formatInvitationMembership(projectMembership) {
   const project = projectMembership.projectId;
   const invitedBy = projectMembership.invitedBy;
@@ -875,7 +893,7 @@ router.get("/:projectId/members", requireAuth, async (req, res) => {
     })
       .populate({
         path: "userId",
-        select: "fullName email membership createdAt",
+        select: "fullName email membership avatar github createdAt",
       })
       .sort({
         joinedAt: 1,
@@ -905,6 +923,7 @@ router.get("/:projectId/members", requireAuth, async (req, res) => {
           userId: user?._id || projectMember.userId,
           fullName: user?.fullName || "Unknown member",
           email: user?.email || "",
+          ...formatPublicUserIdentity(user),
           accountMembership: user?.membership || "free",
           role: projectMember.role,
           status: projectMember.status,
@@ -1046,7 +1065,7 @@ router.post("/:projectId/members/invite", requireAuth, async (req, res) => {
     )
       .populate({
         path: "userId",
-        select: "fullName email membership createdAt",
+        select: "fullName email membership avatar github createdAt",
       })
       .lean();
 
@@ -1058,6 +1077,7 @@ router.post("/:projectId/members/invite", requireAuth, async (req, res) => {
       userId: user?._id || populatedMembership.userId,
       fullName: user?.fullName || "Unknown member",
       email: user?.email || "",
+      ...formatPublicUserIdentity(user),
       accountMembership: user?.membership || "free",
       role: populatedMembership.role,
       status: populatedMembership.status,

@@ -4,6 +4,11 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import Clock from "../Clock/Clock";
 
 import useAuth from "../../contexts/useAuth";
+import {
+  getUserAvatarUrl,
+  getUserDisplayName,
+  getUserInitials,
+} from "../../utils/avatar";
 
 import logo from "../../assets/logo.png";
 
@@ -63,66 +68,6 @@ const emptySectionLinks = [];
 const getPrimaryNavClassName = ({ isActive }) => {
   return `header__nav-link${isActive ? " header__nav-link--active" : ""}`;
 };
-
-function getUserDisplayName(user) {
-  if (!user) {
-    return "SkillForge Member";
-  }
-
-  const combinedName = [user.firstName, user.lastName]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-
-  return (
-    user.fullName ||
-    user.name ||
-    combinedName ||
-    user.username ||
-    user.email ||
-    "SkillForge Member"
-  );
-}
-
-function getUserInitials(user) {
-  const displayName = getUserDisplayName(user);
-
-  if (displayName.includes("@")) {
-    return displayName.charAt(0).toUpperCase();
-  }
-
-  const nameParts = displayName.trim().split(/\s+/).filter(Boolean);
-
-  if (nameParts.length === 0) {
-    return "SF";
-  }
-
-  if (nameParts.length === 1) {
-    return nameParts[0].slice(0, 2).toUpperCase();
-  }
-
-  return `${nameParts[0][0]}${
-    nameParts[nameParts.length - 1][0]
-  }`.toUpperCase();
-}
-
-function getUserAvatarUrl(user) {
-  if (!user) {
-    return "";
-  }
-
-  return (
-    user.avatarUrl ||
-    user.avatarURL ||
-    user.avatar_url ||
-    user.profileImage ||
-    user.profileImageUrl ||
-    user.image ||
-    user.photoUrl ||
-    user.githubAvatarUrl ||
-    ""
-  );
-}
 
 function ThemeToggle({ themeMode, onToggleTheme }) {
   const isNightMode = themeMode !== "day";

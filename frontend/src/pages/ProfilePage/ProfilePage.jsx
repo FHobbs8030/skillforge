@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 
 import useAuth from "../../contexts/useAuth";
+import {
+  getUserAvatarUrl,
+  getUserDisplayName,
+  getUserInitials,
+} from "../../utils/avatar";
 
 import "./ProfilePage.css";
 
@@ -21,32 +26,6 @@ const membershipDetails = {
       "Collaborative SkillForge access designed for distributed project teams.",
   },
 };
-
-function getDisplayName(user) {
-  return (
-    user?.fullName ||
-    user?.name ||
-    user?.username ||
-    user?.email ||
-    "SkillForge Member"
-  );
-}
-
-function getInitials(displayName) {
-  if (!displayName || displayName.includes("@")) {
-    return displayName?.charAt(0).toUpperCase() || "SF";
-  }
-
-  const nameParts = displayName.trim().split(/\s+/).filter(Boolean);
-
-  if (nameParts.length === 1) {
-    return nameParts[0].slice(0, 2).toUpperCase();
-  }
-
-  return `${nameParts[0][0]}${
-    nameParts[nameParts.length - 1][0]
-  }`.toUpperCase();
-}
 
 function formatAccountDate(dateValue) {
   if (!dateValue) {
@@ -174,8 +153,11 @@ function ProfilePage() {
     });
   }, [currentUser, isEditing]);
 
-  const displayName = getDisplayName(currentUser);
-  const initials = getInitials(displayName);
+  const displayName = getUserDisplayName(currentUser);
+  const initials = getUserInitials(currentUser);
+  const avatarUrl = getUserAvatarUrl(currentUser);
+  const githubUsername = currentUser?.github?.username || "";
+  const isGitHubConnected = Boolean(githubUsername);
 
   const membershipKey = currentUser?.membership?.toLowerCase() || "free";
 
@@ -290,9 +272,17 @@ function ProfilePage() {
       <div className="profile-page__grid">
         <article className="profile-page__panel profile-page__identity-panel">
           <div className="profile-page__identity-heading">
-            <div className="profile-page__avatar" aria-hidden="true">
-              {initials}
-            </div>
+            {avatarUrl ? (
+              <img
+                className="profile-page__avatar"
+                src={avatarUrl}
+                alt={`${displayName} avatar`}
+              />
+            ) : (
+              <div className="profile-page__avatar" aria-hidden="true">
+                {initials}
+              </div>
+            )}
 
             <div>
               <p className="profile-page__panel-eyebrow">Member Identity</p>
@@ -317,6 +307,17 @@ function ProfilePage() {
             <div>
               <dt>Membership</dt>
               <dd>{membership.label}</dd>
+            </div>
+
+            <div>
+              <dt>Avatar Source</dt>
+              <dd>
+                {avatarUrl
+                  ? currentUser?.avatar?.source === "github"
+                    ? "Verified GitHub account"
+                    : "Profile image"
+                  : "SkillForge initials"}
+              </dd>
             </div>
 
             <div>
@@ -412,8 +413,8 @@ function ProfilePage() {
             <h2>Development accounts</h2>
 
             <p className="profile-page__connections-description">
-              External development services will be connected to your SkillForge
-              profile during future integration phases.
+              Connect verified development identities to your SkillForge
+              account and control which identity supplies your profile avatar.
             </p>
           </div>
 
@@ -421,10 +422,22 @@ function ProfilePage() {
             <li>
               <div>
                 <strong>GitHub</strong>
-                <p>Repository and contribution activity</p>
+                <p>
+                  {isGitHubConnected
+                    ? `Verified as @${githubUsername}`
+                    : "Connect a verified GitHub account to use its avatar."}
+                </p>
               </div>
 
-              <span>Not Connected</span>
+              <span
+                className={
+                  isGitHubConnected
+                    ? "profile-page__connection-status--connected"
+                    : undefined
+                }
+              >
+                {isGitHubConnected ? "Connected" : "Not Connected"}
+              </span>
             </li>
 
             <li>
