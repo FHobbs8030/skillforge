@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
+  disconnectGitHubAccount as disconnectGitHubAccountRequest,
   getCurrentUser,
   updateProfile as updateProfileRequest,
 } from "../utils/api";
@@ -130,6 +131,64 @@ function AuthProvider({ children }) {
     [authSession?.token],
   );
 
+  const refreshCurrentUser = useCallback(async () => {
+    const token = authSession?.token;
+
+    if (!token) {
+      throw new Error("You must be signed in to refresh your profile.");
+    }
+
+    const response = await getCurrentUser(token);
+
+    if (!response?.user) {
+      throw new Error("The server returned an incomplete user response.");
+    }
+
+    updateStoredUser(token, response.user);
+
+    setAuthSession((currentSession) => {
+      if (!currentSession || currentSession.token !== token) {
+        return currentSession;
+      }
+
+      return {
+        ...currentSession,
+        user: response.user,
+      };
+    });
+
+    return response;
+  }, [authSession?.token]);
+
+  const disconnectGitHubAccount = useCallback(async () => {
+    const token = authSession?.token;
+
+    if (!token) {
+      throw new Error("You must be signed in to disconnect GitHub.");
+    }
+
+    const response = await disconnectGitHubAccountRequest(token);
+
+    if (!response?.user) {
+      throw new Error("The server returned an incomplete user response.");
+    }
+
+    updateStoredUser(token, response.user);
+
+    setAuthSession((currentSession) => {
+      if (!currentSession || currentSession.token !== token) {
+        return currentSession;
+      }
+
+      return {
+        ...currentSession,
+        user: response.user,
+      };
+    });
+
+    return response;
+  }, [authSession?.token]);
+
   useEffect(() => {
     let isActive = true;
 
@@ -190,8 +249,18 @@ function AuthProvider({ children }) {
       signIn,
       signOut,
       updateCurrentUser,
+      refreshCurrentUser,
+      disconnectGitHubAccount,
     }),
-    [authSession, isAuthLoading, signIn, signOut, updateCurrentUser],
+    [
+      authSession,
+      isAuthLoading,
+      signIn,
+      signOut,
+      updateCurrentUser,
+      refreshCurrentUser,
+      disconnectGitHubAccount,
+    ],
   );
 
   return (

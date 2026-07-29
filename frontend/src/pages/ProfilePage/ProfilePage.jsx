@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import useAuth from "../../contexts/useAuth";
+import { startGitHubConnection } from "../../utils/api";
 import {
   getUserAvatarUrl,
   getUserDisplayName,
@@ -127,8 +128,37 @@ function getProfileUpdateError(error) {
   };
 }
 
+function getGitHubConnectionError(reason) {
+  const messages = {
+    cancelled: "GitHub authorization was cancelled.",
+    github_error: "GitHub could not complete the authorization request.",
+    missing_response: "GitHub returned an incomplete authorization response.",
+    invalid_state:
+      "The GitHub authorization request expired or was already used. Try connecting again.",
+    configuration:
+      "The GitHub connection is not configured correctly on the server.",
+    account_in_use:
+      "That GitHub account is already connected to another SkillForge account.",
+    skillforge_account_missing:
+      "The associated SkillForge account could not be found.",
+    connection_failed:
+      "SkillForge could not complete the GitHub connection. Try again.",
+  };
+
+  return (
+    messages[reason] ||
+    "SkillForge could not complete the GitHub connection. Try again."
+  );
+}
+
 function ProfilePage() {
-  const { currentUser, updateCurrentUser } = useAuth();
+  const {
+    token,
+    currentUser,
+    updateCurrentUser,
+    refreshCurrentUser,
+    disconnectGitHubAccount,
+  } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -142,6 +172,10 @@ function ProfilePage() {
   const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  const [isGitHubBusy, setIsGitHubBusy] = useState(false);
+  const [githubMessage, setGitHubMessage] = useState("");
+  const [githubError, setGitHubError] = useState("");
+
   useEffect(() => {
     if (isEditing) {
       return;
@@ -153,6 +187,64 @@ function ProfilePage() {
     });
   }, [currentUser, isEditing]);
 
+  useEffect(() => {
+    const searchParameters = new URLSearchParams(window.location.search);
+    const githubStatus = searchParameters.get("github");
+
+    if (!githubStatus) {
+      return undefined;
+    }
+
+    const reason = searchParameters.get("reason") || "";
+
+    searchParameters.delete("github");
+    searchParameters.delete("reason");
+
+    const remainingSearch = searchParameters.toString();
+
+    const cleanUrl = `${window.location.pathname}${
+      remainingSearch ? `?${remainingSearch}` : ""
+    }${window.location.hash}`;
+
+    window.history.replaceState({}, "", cleanUrl);
+
+    let isActive = true;
+
+    if (githubStatus === "connected") {
+      setIsGitHubBusy(true);
+      setGitHubError("");
+
+      refreshCurrentUser()
+        .then(() => {
+          if (isActive) {
+            setGitHubMessage(
+              "GitHub was connected and your verified avatar was synchronized.",
+            );
+          }
+        })
+        .catch((error) => {
+          if (isActive) {
+            setGitHubError(
+              error?.message ||
+                "GitHub connected, but SkillForge could not refresh your profile.",
+            );
+          }
+        })
+        .finally(() => {
+          if (isActive) {
+            setIsGitHubBusy(false);
+          }
+        });
+    } else if (githubStatus === "error") {
+      setGitHubMessage("");
+      setGitHubError(getGitHubConnectionError(reason));
+    }
+
+    return () => {
+      isActive = false;
+    };
+  }, [refreshCurrentUser]);
+
   const displayName = getUserDisplayName(currentUser);
   const initials = getUserInitials(currentUser);
   const avatarUrl = getUserAvatarUrl(currentUser);
@@ -162,6 +254,65 @@ function ProfilePage() {
   const membershipKey = currentUser?.membership?.toLowerCase() || "free";
 
   const membership = membershipDetails[membershipKey] || membershipDetails.free;
+
+  const handleGitHubConnect = async () => {
+    setIsGitHubBusy(true);
+    setGitHubMessage("");
+    setGitHubError("");
+
+    try {
+      const response = await startGitHubConnection(token);
+
+      if (
+        !response?.authorizationUrl ||
+        !response.authorizationUrl.startsWith(
+          "https://github.com/login/oauth/authorize",
+        )
+      ) {
+        throw new Error(
+          "The server returned an invalid GitHub authorization URL.",
+        );
+      }
+
+      window.location.assign(response.authorizationUrl);
+    } catch (error) {
+      setGitHubError(
+        error?.message ||
+          "SkillForge could not start the GitHub connection.",
+      );
+
+      setIsGitHubBusy(false);
+    }
+  };
+
+  const handleGitHubDisconnect = async () => {
+    const confirmed = window.confirm(
+      "Disconnect your verified GitHub account from SkillForge?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsGitHubBusy(true);
+    setGitHubMessage("");
+    setGitHubError("");
+
+    try {
+      await disconnectGitHubAccount();
+
+      setGitHubMessage(
+        "GitHub was disconnected. SkillForge is now using your initials avatar.",
+      );
+    } catch (error) {
+      setGitHubError(
+        error?.message ||
+          "SkillForge could not disconnect GitHub. Try again.",
+      );
+    } finally {
+      setIsGitHubBusy(false);
+    }
+  };
 
   const handleEditProfile = () => {
     setFormValues({
@@ -429,15 +580,38 @@ function ProfilePage() {
                 </p>
               </div>
 
-              <span
-                className={
-                  isGitHubConnected
-                    ? "profile-page__connection-status--connected"
-                    : undefined
-                }
-              >
-                {isGitHubConnected ? "Connected" : "Not Connected"}
-              </span>
+              <div className="profile-page__connection-actions">
+                <span
+                  className={`profile-page__connection-status${
+                    isGitHubConnected
+                      ? " profile-page__connection-status--connected"
+                      : ""
+                  }`}
+                >
+                  {isGitHubConnected ? "Connected" : "Not Connected"}
+                </span>
+
+                <button
+                  className={`profile-page__connection-button${
+                    isGitHubConnected
+                      ? " profile-page__connection-button--disconnect"
+                      : ""
+                  }`}
+                  type="button"
+                  onClick={
+                    isGitHubConnected
+                      ? handleGitHubDisconnect
+                      : handleGitHubConnect
+                  }
+                  disabled={isGitHubBusy}
+                >
+                  {isGitHubBusy
+                    ? "Working..."
+                    : isGitHubConnected
+                      ? "Disconnect"
+                      : "Connect GitHub"}
+                </button>
+              </div>
             </li>
 
             <li>
@@ -458,6 +632,25 @@ function ProfilePage() {
               <span>Planned</span>
             </li>
           </ul>
+
+          {githubMessage && (
+            <div
+              className="profile-page__connection-message"
+              role="status"
+              aria-live="polite"
+            >
+              {githubMessage}
+            </div>
+          )}
+
+          {githubError && (
+            <div
+              className="profile-page__connection-message profile-page__connection-message--error"
+              role="alert"
+            >
+              {githubError}
+            </div>
+          )}
         </article>
       </div>
 

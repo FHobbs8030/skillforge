@@ -9,10 +9,12 @@ const User = require("./models/User");
 const Project = require("./models/Project");
 const ProjectMembership = require("./models/ProjectMembership");
 const ActivityEvent = require("./models/ActivityEvent");
+const GitHubOAuthState = require("./models/GitHubOAuthState");
 
 const requireAuth = require("./middleware/auth");
 const organizationRoutes = require("./routes/organizations");
 const projectRoutes = require("./routes/projects");
+const githubAuthRoutes = require("./routes/githubAuth");
 
 require("dotenv").config();
 
@@ -60,6 +62,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/auth/github", githubAuthRoutes);
 app.use("/organizations", organizationRoutes);
 app.use("/projects", projectRoutes);
 
@@ -478,6 +481,7 @@ async function startServer() {
       Project.init(),
       ProjectMembership.init(),
       ActivityEvent.init(),
+      GitHubOAuthState.init(),
     ]);
 
     console.log("MongoDB connected");

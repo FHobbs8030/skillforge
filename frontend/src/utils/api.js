@@ -115,6 +115,34 @@ export function updateProfile({ token, fullName, email }) {
   });
 }
 
+export function startGitHubConnection(token) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/auth/github/connect", {
+    method: "POST",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function disconnectGitHubAccount(token) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/auth/github", {
+    method: "DELETE",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
 export function getGitHubUser(username) {
   const normalizedUsername = username.trim();
 
