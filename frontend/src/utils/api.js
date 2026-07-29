@@ -650,3 +650,31 @@ export function updateOrganization({
     },
   );
 }
+
+export function archiveOrganization({
+  token,
+  organizationId,
+}) {
+  if (!token) {
+    return Promise.reject(
+      new Error("Authentication token is required."),
+    );
+  }
+
+  if (!organizationId) {
+    return Promise.reject(
+      new Error("Organization ID is required."),
+    );
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(organizationId)}/archive`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}

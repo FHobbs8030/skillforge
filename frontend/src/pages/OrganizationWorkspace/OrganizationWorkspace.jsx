@@ -3,7 +3,11 @@ import { Link, useParams } from "react-router-dom";
 
 import useAuth from "../../contexts/useAuth";
 
-import { getOrganizationById, updateOrganization } from "../../utils/api";
+import {
+  archiveOrganization,
+  getOrganizationById,
+  updateOrganization,
+} from "../../utils/api";
 
 import "./OrganizationWorkspace.css";
 
@@ -102,6 +106,13 @@ function OrganizationWorkspace() {
 
   const [successMessage, setSuccessMessage] = useState("");
 
+  const [isArchiveConfirming, setIsArchiveConfirming] =
+    useState(false);
+
+  const [isArchiving, setIsArchiving] = useState(false);
+
+  const [archiveError, setArchiveError] = useState("");
+
   useEffect(() => {
     let isActive = true;
 
@@ -163,6 +174,8 @@ function OrganizationWorkspace() {
   const isArchived = organizationStatus === "archived";
 
   const canEdit = ["owner", "admin"].includes(role) && !isArchived;
+
+  const canArchive = role === "owner" && !isArchived;
 
   const normalizedForm = useMemo(
     () => ({
@@ -286,6 +299,68 @@ function OrganizationWorkspace() {
       );
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  function handleBeginArchive() {
+    setArchiveError("");
+    setSuccessMessage("");
+    setIsArchiveConfirming(true);
+  }
+
+  function handleCancelArchive() {
+    if (isArchiving) {
+      return;
+    }
+
+    setArchiveError("");
+    setIsArchiveConfirming(false);
+  }
+
+  function handleArchiveConfirmationKeyDown(event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+    }
+  }
+
+  async function handleArchiveOrganization() {
+    if (isArchiving || !canArchive) {
+      return;
+    }
+
+    setIsArchiving(true);
+    setArchiveError("");
+    setSuccessMessage("");
+
+    try {
+      const response = await archiveOrganization({
+        token,
+        organizationId,
+      });
+
+      if (!response?.organization) {
+        throw new Error(
+          "The organization was archived, but the server returned an incomplete response.",
+        );
+      }
+
+      setOrganization(response.organization);
+      resetProfileForm(response.organization);
+
+      setIsEditing(false);
+      setIsArchiveConfirming(false);
+
+      setSuccessMessage(
+        response.message ||
+          "Organization archived successfully.",
+      );
+    } catch (error) {
+      setArchiveError(
+        error?.message ||
+          "The organization could not be archived.",
+      );
+    } finally {
+      setIsArchiving(false);
     }
   }
 
@@ -639,6 +714,90 @@ function OrganizationWorkspace() {
           </dl>
         )}
       </article>
+
+      {canArchive && (
+        <article
+          className="organization-workspace__danger-zone"
+          aria-labelledby="organization-archive-title"
+        >
+          <div className="organization-workspace__danger-header">
+            <div>
+              <p className="organization-workspace__danger-kicker">
+                Danger zone
+              </p>
+
+              <h2
+                className="organization-workspace__panel-title"
+                id="organization-archive-title"
+              >
+                Archive organization
+              </h2>
+
+              <p className="organization-workspace__danger-copy">
+                Archiving makes this organization read-only and
+                disables profile, membership, invitation, and role
+                changes.
+              </p>
+            </div>
+
+            {!isArchiveConfirming && (
+              <button
+                className="organization-workspace__archive-button"
+                type="button"
+                onClick={handleBeginArchive}
+              >
+                Archive organization
+              </button>
+            )}
+          </div>
+
+          {archiveError && (
+            <p
+              className="organization-workspace__archive-error"
+              role="alert"
+            >
+              {archiveError}
+            </p>
+          )}
+
+          {isArchiveConfirming && (
+            <div className="organization-workspace__archive-confirmation">
+              <strong>
+                Archive {organization.name}?
+              </strong>
+
+              <p>
+                This change takes effect immediately. The
+                organization workspace will remain available in
+                read-only mode.
+              </p>
+
+              <div className="organization-workspace__archive-actions">
+                <button
+                  className="organization-workspace__confirm-archive-button"
+                  type="button"
+                  disabled={isArchiving}
+                  onClick={handleArchiveOrganization}
+                  onKeyDown={handleArchiveConfirmationKeyDown}
+                >
+                  {isArchiving
+                    ? "Archiving organization..."
+                    : "Confirm archive"}
+                </button>
+
+                <button
+                  className="organization-workspace__dismiss-archive-button"
+                  type="button"
+                  disabled={isArchiving}
+                  onClick={handleCancelArchive}
+                >
+                  Keep organization active
+                </button>
+              </div>
+            </div>
+          )}
+        </article>
+      )}
 
       <div className="organization-workspace__grid">
         <article className="organization-workspace__panel">

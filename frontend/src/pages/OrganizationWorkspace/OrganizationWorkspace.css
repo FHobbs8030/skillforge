@@ -530,3 +530,198 @@
     width: 100%;
   }
 }
+
+.organization-workspace__danger-zone {
+  min-width: 0;
+  padding: clamp(1rem, 3vw, 1.5rem);
+
+  background: rgba(69, 10, 10, 0.16);
+
+  border: 1px solid rgba(239, 68, 68, 0.42);
+  border-radius: var(--radius-card);
+}
+
+.organization-workspace__danger-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: var(--space-5);
+}
+
+.organization-workspace__danger-kicker {
+  margin: 0 0 var(--space-2);
+
+  color: #f87171;
+
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.organization-workspace__danger-copy {
+  max-width: 70ch;
+
+  margin: var(--space-4) 0 0;
+
+  color: var(--color-text-secondary);
+
+  line-height: 1.65;
+}
+
+.organization-workspace__archive-button,
+.organization-workspace__confirm-archive-button,
+.organization-workspace__dismiss-archive-button {
+  appearance: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: var(--control-height);
+  padding: var(--space-button-y) var(--space-4);
+
+  border-radius: var(--radius-pill);
+
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+
+  cursor: pointer;
+
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    opacity var(--transition-base),
+    transform var(--transition-base);
+}
+
+.organization-workspace__archive-button,
+.organization-workspace__confirm-archive-button {
+  color: #fff;
+  background: rgba(185, 28, 28, 0.88);
+
+  border: 1px solid rgba(248, 113, 113, 0.7);
+
+  box-shadow: 0 8px 20px rgba(127, 29, 29, 0.25);
+}
+
+.organization-workspace__archive-button:hover,
+.organization-workspace__confirm-archive-button:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.94);
+
+  transform: translateY(-1px);
+}
+
+.organization-workspace__dismiss-archive-button {
+  color: var(--color-text-secondary);
+  background: transparent;
+
+  border: 1px solid var(--border-card);
+}
+
+.organization-workspace__dismiss-archive-button:hover:not(:disabled) {
+  color: var(--color-text-primary);
+
+  border-color: var(--border-focus-strong);
+
+  transform: translateY(-1px);
+}
+
+.organization-workspace__archive-button:focus-visible,
+.organization-workspace__confirm-archive-button:focus-visible,
+.organization-workspace__dismiss-archive-button:focus-visible {
+  outline: var(--focus-ring-width) solid
+    var(--border-focus-strong);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.organization-workspace__confirm-archive-button:disabled,
+.organization-workspace__dismiss-archive-button:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+  transform: none;
+}
+
+.organization-workspace__archive-error {
+  margin: var(--space-5) 0 0;
+  padding: var(--space-3);
+
+  color: var(--color-danger-text);
+  background: var(--color-danger-background);
+
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-sm);
+
+  line-height: 1.5;
+}
+
+.organization-workspace__archive-confirmation {
+  display: grid;
+
+  gap: var(--space-3);
+
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+
+  background: rgba(69, 10, 10, 0.22);
+
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  border-radius: var(--radius-md);
+}
+
+.organization-workspace__archive-confirmation strong {
+  color: #fca5a5;
+
+  font-size: var(--font-size-lg);
+}
+
+.organization-workspace__archive-confirmation p {
+  margin: 0;
+
+  color: var(--color-text-secondary);
+
+  line-height: 1.65;
+}
+
+.organization-workspace__archive-actions {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: var(--space-3);
+}
+
+:root[data-theme="day"]
+  .organization-workspace__danger-zone {
+  background: rgba(254, 226, 226, 0.58);
+}
+
+:root[data-theme="day"]
+  .organization-workspace__archive-confirmation {
+  background: rgba(254, 202, 202, 0.42);
+}
+
+@media (max-width: 760px) {
+  .organization-workspace__danger-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .organization-workspace__archive-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .organization-workspace__archive-actions {
+    flex-direction: column;
+  }
+
+  .organization-workspace__confirm-archive-button,
+  .organization-workspace__dismiss-archive-button {
+    width: 100%;
+  }
+}
