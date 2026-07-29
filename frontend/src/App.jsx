@@ -53,15 +53,35 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+function getRequestedDestination(location) {
+  const requestedLocation = location.state?.from;
+
+  if (!requestedLocation?.pathname) {
+    return "/app";
+  }
+
+  return [
+    requestedLocation.pathname,
+    requestedLocation.search || "",
+    requestedLocation.hash || "",
+  ].join("");
+}
+
 function PublicOnlyRoute({ children }) {
   const { isAuthenticated, isAuthLoading } = useAuth();
+  const location = useLocation();
 
   if (isAuthLoading) {
     return null;
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/app" replace />;
+    return (
+      <Navigate
+        to={getRequestedDestination(location)}
+        replace
+      />
+    );
   }
 
   return children;

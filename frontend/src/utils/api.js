@@ -1,3 +1,6 @@
+export const SESSION_EXPIRED_EVENT =
+  "skillforge:session-expired";
+
 const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, "");
 
 function getApiUrl(path) {
@@ -10,7 +13,12 @@ function getApiUrl(path) {
   return `${BASE_URL}${path}`;
 }
 
-async function checkResponse(response) {
+async function checkResponse(
+  response,
+  {
+    isAuthenticatedRequest = false,
+  } = {},
+) {
   const contentType = response.headers.get("content-type") || "";
 
   let responseData = null;
@@ -30,6 +38,16 @@ async function checkResponse(response) {
   }
 
   if (!response.ok) {
+    if (
+      response.status === 401 &&
+      isAuthenticatedRequest &&
+      typeof window !== "undefined"
+    ) {
+      window.dispatchEvent(
+        new CustomEvent(SESSION_EXPIRED_EVENT),
+      );
+    }
+
     const requestError = new Error(
       responseData?.error ||
         responseData?.message ||
@@ -46,16 +64,29 @@ async function checkResponse(response) {
 }
 
 async function apiRequest(path, options = {}) {
+  const requestHeaders = {
+    "Content-Type": "application/json",
+    ...options.headers,
+  };
+
+  const authorizationHeader =
+    requestHeaders.Authorization ||
+    requestHeaders.authorization ||
+    "";
+
+  const isAuthenticatedRequest =
+    typeof authorizationHeader === "string" &&
+    /^Bearer\s+\S+/i.test(authorizationHeader);
+
   const response = await fetch(getApiUrl(path), {
     ...options,
 
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
+    headers: requestHeaders,
   });
 
-  return checkResponse(response);
+  return checkResponse(response, {
+    isAuthenticatedRequest,
+  });
 }
 
 export function signUpUser({ fullName, email, password, membership }) {

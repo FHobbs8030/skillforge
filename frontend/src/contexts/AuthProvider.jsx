@@ -1,14 +1,62 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   disconnectGitHubAccount as disconnectGitHubAccountRequest,
   getCurrentUser,
+  SESSION_EXPIRED_EVENT,
   updateProfile as updateProfileRequest,
 } from "../utils/api";
 import AuthContext from "./AuthContext";
 
 const AUTH_TOKEN_KEY = "skillforgeAuthToken";
 const AUTH_USER_KEY = "skillforgeAuthUser";
+
+const SESSION_EXPIRED_MESSAGE =
+  "Your SkillForge session expired before the requested action completed. Sign in again to continue.";
+
+const SESSION_EXPIRED_STORAGE_KEY =
+  "skillforgeSessionExpiredMessage";
+
+function storeSessionExpiredMessage() {
+  sessionStorage.setItem(
+    SESSION_EXPIRED_STORAGE_KEY,
+    SESSION_EXPIRED_MESSAGE,
+  );
+}
+
+function createLocationSnapshot(location) {
+  return {
+    pathname: location.pathname,
+    search: location.search || "",
+    hash: location.hash || "",
+  };
+}
+
+function isProtectedPath(pathname) {
+  return (
+    pathname === "/app" ||
+    pathname === "/projects" ||
+    pathname.startsWith("/projects/") ||
+    pathname === "/organizations" ||
+    pathname.startsWith("/organizations/") ||
+    pathname === "/profile"
+  );
+}
+
+function createSessionExpiredNavigationState(location) {
+  return {
+    from: createLocationSnapshot(location),
+    sessionExpired: true,
+    sessionExpiredMessage: SESSION_EXPIRED_MESSAGE,
+  };
+}
 
 function clearStorage(storage) {
   storage.removeItem(AUTH_TOKEN_KEY);
@@ -71,10 +119,20 @@ function readStoredSession() {
 }
 
 function AuthProvider({ children }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [authSession, setAuthSession] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
+  const currentLocationRef = useRef(location);
+  const isHandlingSessionExpiryRef = useRef(false);
+
+  currentLocationRef.current = location;
+
   const signIn = useCallback(({ token, user, rememberMe = false }) => {
+    isHandlingSessionExpiryRef.current = false;
+
     const selectedStorage = rememberMe
       ? window.localStorage
       : window.sessionStorage;
@@ -190,6 +248,44 @@ function AuthProvider({ children }) {
   }, [authSession?.token]);
 
   useEffect(() => {
+    const handleSessionExpired = () => {
+      if (
+        !authSession?.token ||
+        isHandlingSessionExpiryRef.current
+      ) {
+        return;
+      }
+
+      isHandlingSessionExpiryRef.current = true;
+
+      const currentLocation = currentLocationRef.current;
+
+      storeSessionExpiredMessage();
+      clearAllAuthStorage();
+      setAuthSession(null);
+
+      navigate("/signin", {
+        replace: true,
+        state: createSessionExpiredNavigationState(
+          currentLocation,
+        ),
+      });
+    };
+
+    window.addEventListener(
+      SESSION_EXPIRED_EVENT,
+      handleSessionExpired,
+    );
+
+    return () => {
+      window.removeEventListener(
+        SESSION_EXPIRED_EVENT,
+        handleSessionExpired,
+      );
+    };
+  }, [authSession?.token, navigate]);
+
+  useEffect(() => {
     let isActive = true;
 
     async function restoreSession() {
@@ -219,13 +315,31 @@ function AuthProvider({ children }) {
           user: response.user,
           rememberMe: storedSession.rememberMe,
         });
-      } catch {
+      } catch (error) {
         if (!isActive) {
           return;
         }
 
         clearAllAuthStorage();
         setAuthSession(null);
+
+        const currentLocation = currentLocationRef.current;
+
+        if (
+          error?.status === 401 &&
+          isProtectedPath(currentLocation.pathname)
+        ) {
+          isHandlingSessionExpiryRef.current = true;
+
+          storeSessionExpiredMessage();
+
+          navigate("/signin", {
+            replace: true,
+            state: createSessionExpiredNavigationState(
+              currentLocation,
+            ),
+          });
+        }
       } finally {
         if (isActive) {
           setIsAuthLoading(false);
@@ -238,7 +352,7 @@ function AuthProvider({ children }) {
     return () => {
       isActive = false;
     };
-  }, [signIn]);
+  }, [navigate, signIn]);
 
   const contextValue = useMemo(
     () => ({
