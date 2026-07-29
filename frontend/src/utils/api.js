@@ -678,3 +678,56 @@ export function archiveOrganization({
     },
   );
 }
+
+export function createOrganizationInvitation({
+  token,
+  organizationId,
+  email,
+  role = "member",
+}) {
+  if (!token) {
+    return Promise.reject(
+      new Error("Authentication token is required."),
+    );
+  }
+
+  if (!organizationId) {
+    return Promise.reject(
+      new Error("Organization ID is required."),
+    );
+  }
+
+  const normalizedEmail =
+    typeof email === "string"
+      ? email.trim().toLowerCase()
+      : "";
+
+  const normalizedRole =
+    typeof role === "string"
+      ? role.trim().toLowerCase()
+      : "member";
+
+  if (!normalizedEmail) {
+    return Promise.reject(
+      new Error("Email address is required."),
+    );
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(
+      organizationId,
+    )}/invitations`,
+    {
+      method: "POST",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify({
+        email: normalizedEmail,
+        role: normalizedRole,
+      }),
+    },
+  );
+}

@@ -5,6 +5,7 @@ import useAuth from "../../contexts/useAuth";
 
 import {
   archiveOrganization,
+  createOrganizationInvitation,
   getOrganizationById,
   getOrganizationMembers,
   updateOrganization,
@@ -85,6 +86,42 @@ function validateProfile({ name, slug, description }) {
   return errors;
 }
 
+const MEMBER_ROLE_ORDER = {
+  owner: 0,
+  admin: 1,
+  member: 2,
+};
+
+const MEMBER_STATUS_ORDER = {
+  active: 0,
+  invited: 1,
+  inactive: 2,
+  removed: 3,
+};
+
+function compareWorkspaceMembers(firstMember, secondMember) {
+  const roleDifference =
+    (MEMBER_ROLE_ORDER[firstMember.role] ?? 99) -
+    (MEMBER_ROLE_ORDER[secondMember.role] ?? 99);
+
+  if (roleDifference !== 0) {
+    return roleDifference;
+  }
+
+  const statusDifference =
+    (MEMBER_STATUS_ORDER[firstMember.status] ?? 99) -
+    (MEMBER_STATUS_ORDER[secondMember.status] ?? 99);
+
+  if (statusDifference !== 0) {
+    return statusDifference;
+  }
+
+  return (
+    new Date(firstMember.createdAt || 0) -
+    new Date(secondMember.createdAt || 0)
+  );
+}
+
 function OrganizationWorkspace() {
   const { organizationId } = useParams();
   const { token } = useAuth();
@@ -123,6 +160,24 @@ function OrganizationWorkspace() {
     useState(true);
 
   const [membersError, setMembersError] = useState("");
+
+  const [invitationForm, setInvitationForm] =
+    useState({
+      email: "",
+      role: "member",
+    });
+
+  const [invitationFieldErrors, setInvitationFieldErrors] =
+    useState({});
+
+  const [invitationError, setInvitationError] =
+    useState("");
+
+  const [invitationSuccess, setInvitationSuccess] =
+    useState("");
+
+  const [isInviting, setIsInviting] =
+    useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -241,6 +296,9 @@ function OrganizationWorkspace() {
   const canEdit = ["owner", "admin"].includes(role) && !isArchived;
 
   const canArchive = role === "owner" && !isArchived;
+
+  const canInvite =
+    ["owner", "admin"].includes(role) && !isArchived;
 
   const normalizedForm = useMemo(
     () => ({
@@ -364,6 +422,147 @@ function OrganizationWorkspace() {
       );
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  function handleInvitationChange(event) {
+    const { name, value } = event.target;
+
+    setInvitationForm((currentForm) => ({
+      ...currentForm,
+      [name]:
+        name === "email"
+          ? value
+          : value.toLowerCase(),
+    }));
+
+    setInvitationFieldErrors((currentErrors) => ({
+      ...currentErrors,
+      [name]: "",
+    }));
+
+    setInvitationError("");
+    setInvitationSuccess("");
+  }
+
+  function handleInvitationKeyDown(event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+    }
+  }
+
+  async function handleInvitationSubmit(event) {
+    event.preventDefault();
+
+    if (isInviting || !canInvite) {
+      return;
+    }
+
+    const normalizedEmail =
+      invitationForm.email.trim().toLowerCase();
+
+    const normalizedRole =
+      role === "admin"
+        ? "member"
+        : invitationForm.role;
+
+    const validationErrors = {};
+
+    if (!normalizedEmail) {
+      validationErrors.email =
+        "Email address is required.";
+    } else if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        normalizedEmail,
+      )
+    ) {
+      validationErrors.email =
+        "Enter a valid email address.";
+    } else if (normalizedEmail.length > 254) {
+      validationErrors.email =
+        "Email address is too long.";
+    }
+
+    if (
+      !["admin", "member"].includes(
+        normalizedRole,
+      )
+    ) {
+      validationErrors.role =
+        "Select a valid organization role.";
+    }
+
+    if (
+      role === "admin" &&
+      normalizedRole !== "member"
+    ) {
+      validationErrors.role =
+        "Admins may invite Members only.";
+    }
+
+    if (
+      Object.keys(validationErrors).length > 0
+    ) {
+      setInvitationFieldErrors(validationErrors);
+      setInvitationError("");
+      setInvitationSuccess("");
+
+      return;
+    }
+
+    setIsInviting(true);
+    setInvitationFieldErrors({});
+    setInvitationError("");
+    setInvitationSuccess("");
+
+    try {
+      const response =
+        await createOrganizationInvitation({
+          token,
+          organizationId,
+          email: normalizedEmail,
+          role: normalizedRole,
+        });
+
+      if (!response?.invitation) {
+        throw new Error(
+          "The invitation was created, but the server returned an incomplete response.",
+        );
+      }
+
+      setMembers((currentMembers) => {
+        const nextMembers = currentMembers.filter(
+          (member) =>
+            member.id?.toString() !==
+            response.invitation.id?.toString(),
+        );
+
+        return [
+          ...nextMembers,
+          response.invitation,
+        ].sort(compareWorkspaceMembers);
+      });
+
+      setInvitationForm({
+        email: "",
+        role: "member",
+      });
+
+      setInvitationSuccess(
+        response.message ||
+          "Organization invitation created successfully.",
+      );
+    } catch (error) {
+      setInvitationFieldErrors(
+        error?.fields || {},
+      );
+
+      setInvitationError(
+        error?.message ||
+          "The organization invitation could not be created.",
+      );
+    } finally {
+      setIsInviting(false);
     }
   }
 
@@ -889,6 +1088,161 @@ function OrganizationWorkspace() {
               </span>
             )}
           </div>
+
+          {canInvite && (
+            <section
+              className="organization-workspace__invitation-panel"
+              aria-labelledby="organization-invitation-title"
+            >
+              <div>
+                <p className="organization-workspace__invitation-kicker">
+                  Invite a member
+                </p>
+
+                <h3
+                  className="organization-workspace__invitation-title"
+                  id="organization-invitation-title"
+                >
+                  Add someone to this organization
+                </h3>
+
+                <p className="organization-workspace__invitation-copy">
+                  Invite an existing SkillForge account by
+                  email address.
+                </p>
+              </div>
+
+              <form
+                className="organization-workspace__invitation-form"
+                onSubmit={handleInvitationSubmit}
+                onKeyDown={handleInvitationKeyDown}
+                noValidate
+              >
+                {invitationSuccess && (
+                  <p
+                    className="organization-workspace__invitation-success"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {invitationSuccess}
+                  </p>
+                )}
+
+                {invitationError && (
+                  <p
+                    className="organization-workspace__invitation-error"
+                    role="alert"
+                  >
+                    {invitationError}
+                  </p>
+                )}
+
+                <div className="organization-workspace__invitation-fields">
+                  <div className="organization-workspace__invitation-field">
+                    <label htmlFor="organization-invitation-email">
+                      Email address
+                    </label>
+
+                    <input
+                      id="organization-invitation-email"
+                      name="email"
+                      type="email"
+                      value={invitationForm.email}
+                      maxLength={254}
+                      autoComplete="email"
+                      placeholder="member@example.com"
+                      disabled={isInviting}
+                      aria-invalid={Boolean(
+                        invitationFieldErrors.email,
+                      )}
+                      aria-describedby={
+                        invitationFieldErrors.email
+                          ? "organization-invitation-email-error"
+                          : undefined
+                      }
+                      onChange={handleInvitationChange}
+                    />
+
+                    {invitationFieldErrors.email && (
+                      <span
+                        id="organization-invitation-email-error"
+                        className="organization-workspace__invitation-field-error"
+                      >
+                        {invitationFieldErrors.email}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="organization-workspace__invitation-field">
+                    <label htmlFor="organization-invitation-role">
+                      Organization role
+                    </label>
+
+                    <select
+                      id="organization-invitation-role"
+                      name="role"
+                      value={
+                        role === "admin"
+                          ? "member"
+                          : invitationForm.role
+                      }
+                      disabled={isInviting}
+                      aria-invalid={Boolean(
+                        invitationFieldErrors.role,
+                      )}
+                      aria-describedby={
+                        invitationFieldErrors.role
+                          ? "organization-invitation-role-error"
+                          : "organization-invitation-role-hint"
+                      }
+                      onChange={handleInvitationChange}
+                    >
+                      {role === "owner" && (
+                        <option value="admin">
+                          Admin
+                        </option>
+                      )}
+
+                      <option value="member">
+                        Member
+                      </option>
+                    </select>
+
+                    {invitationFieldErrors.role ? (
+                      <span
+                        id="organization-invitation-role-error"
+                        className="organization-workspace__invitation-field-error"
+                      >
+                        {invitationFieldErrors.role}
+                      </span>
+                    ) : (
+                      <span
+                        id="organization-invitation-role-hint"
+                        className="organization-workspace__invitation-field-hint"
+                      >
+                        {role === "owner"
+                          ? "Owners may invite Admins or Members."
+                          : "Admins may invite Members only."}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  className="organization-workspace__invite-button"
+                  type="submit"
+                  disabled={
+                    isInviting ||
+                    !invitationForm.email.trim()
+                  }
+                >
+                  {isInviting
+                    ? "Sending invitation..."
+                    : "Send invitation"}
+                </button>
+              </form>
+            </section>
+          )}
 
           {isMembersLoading && (
             <div

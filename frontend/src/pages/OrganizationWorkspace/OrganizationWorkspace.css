@@ -997,3 +997,229 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =========================
+   ORGANIZATION INVITATIONS
+========================= */
+
+.organization-workspace__invitation-panel {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 0.8fr)
+    minmax(360px, 1.2fr);
+
+  gap: var(--space-5);
+
+  margin-top: var(--space-5);
+  padding: var(--space-5);
+
+  background: rgba(8, 145, 178, 0.06);
+
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+}
+
+.organization-workspace__invitation-kicker {
+  margin: 0 0 var(--space-2);
+
+  color: var(--color-brand-cyan-light);
+
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.organization-workspace__invitation-title {
+  margin: 0;
+
+  color: var(--color-text-primary);
+
+  font-size: var(--font-size-lg);
+}
+
+.organization-workspace__invitation-copy {
+  margin: var(--space-3) 0 0;
+
+  color: var(--color-text-secondary);
+
+  line-height: 1.6;
+}
+
+.organization-workspace__invitation-form {
+  display: grid;
+
+  gap: var(--space-4);
+}
+
+.organization-workspace__invitation-fields {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.45fr)
+    minmax(150px, 0.55fr);
+
+  gap: var(--space-4);
+}
+
+.organization-workspace__invitation-field {
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--space-2);
+
+  min-width: 0;
+}
+
+.organization-workspace__invitation-field label {
+  color: var(--color-text-primary);
+
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.organization-workspace__invitation-field input,
+.organization-workspace__invitation-field select {
+  width: 100%;
+  min-height: var(--control-height);
+
+  padding: var(--space-3);
+
+  box-sizing: border-box;
+
+  color: var(--color-text-primary);
+  background: rgba(3, 12, 18, 0.72);
+
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+
+  font: inherit;
+}
+
+.organization-workspace__invitation-field input:focus,
+.organization-workspace__invitation-field select:focus {
+  outline: none;
+
+  border-color: var(--border-focus-strong);
+
+  box-shadow:
+    0 0 0 3px rgba(34, 211, 238, 0.12);
+}
+
+.organization-workspace__invitation-field
+  input[aria-invalid="true"],
+.organization-workspace__invitation-field
+  select[aria-invalid="true"] {
+  border-color: var(--color-danger-border);
+}
+
+.organization-workspace__invitation-field-hint {
+  color: var(--color-text-subtle);
+
+  font-size: var(--font-size-xs);
+  line-height: 1.45;
+}
+
+.organization-workspace__invitation-field-error {
+  color: var(--color-danger-text);
+
+  font-size: var(--font-size-xs);
+  line-height: 1.45;
+}
+
+.organization-workspace__invitation-success,
+.organization-workspace__invitation-error {
+  margin: 0;
+  padding: var(--space-3);
+
+  border-radius: var(--radius-sm);
+
+  line-height: 1.5;
+}
+
+.organization-workspace__invitation-success {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.1);
+
+  border: 1px solid rgba(34, 197, 94, 0.38);
+}
+
+.organization-workspace__invitation-error {
+  color: var(--color-danger-text);
+  background: var(--color-danger-background);
+
+  border: 1px solid var(--color-danger-border);
+}
+
+.organization-workspace__invite-button {
+  appearance: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+
+  min-height: var(--control-height);
+  padding: var(--space-button-y) var(--space-5);
+
+  color: var(--color-text-inverse);
+  background: var(--button-gradient);
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-pill);
+
+  box-shadow: var(--shadow-button);
+
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+
+  cursor: pointer;
+
+  transition:
+    box-shadow var(--transition-base),
+    opacity var(--transition-base),
+    transform var(--transition-base);
+}
+
+.organization-workspace__invite-button:hover:not(:disabled) {
+  box-shadow: var(--shadow-button-hover);
+
+  transform: translateY(-1px);
+}
+
+.organization-workspace__invite-button:focus-visible {
+  outline: var(--focus-ring-width) solid
+    var(--border-focus-strong);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.organization-workspace__invite-button:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+  transform: none;
+}
+
+:root[data-theme="day"]
+  .organization-workspace__invitation-field input,
+:root[data-theme="day"]
+  .organization-workspace__invitation-field select {
+  background: rgba(239, 248, 252, 0.82);
+}
+
+@media (max-width: 900px) {
+  .organization-workspace__invitation-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .organization-workspace__invitation-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .organization-workspace__invite-button {
+    width: 100%;
+  }
+}
