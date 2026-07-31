@@ -873,11 +873,20 @@
 
 .project-detail__member-avatar {
   display: grid;
+  place-items: center;
+
+  flex: 0 0 auto;
+
   width: 48px;
   height: 48px;
-  place-items: center;
+
+  overflow: hidden;
+
+  object-fit: cover;
+
   border: 1px solid rgba(103, 232, 249, 0.42);
   border-radius: 50%;
+
   color: #cffafe;
   background:
     radial-gradient(
@@ -889,8 +898,12 @@
   box-shadow:
     0 0 0 1px rgba(103, 232, 249, 0.12),
     0 0 22px rgba(103, 232, 249, 0.22);
-  font-size: 18px;
+}
+
+.project-detail__member-avatar--fallback {
+  font-size: 16px;
   font-weight: 900;
+  line-height: 1;
 }
 
 .project-detail__member-main {

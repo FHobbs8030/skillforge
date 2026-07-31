@@ -1060,72 +1060,300 @@
 }
 
 /* =========================
-   AUTHENTICATED HEADER POLISH
-   Prevent clock/nav overlap at tablet widths
+   UNIFIED AUTHENTICATED HEADER
+   Shared brand and member identity surface
 ========================= */
 
-@media (max-width: 1500px) {
+.header--authenticated .header__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "brand account"
+    "navigation navigation";
+  align-items: start;
+
+  gap: var(--space-2) var(--space-6);
+
+  padding: var(--space-3) var(--space-6) var(--space-2);
+
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(124, 58, 237, 0.08),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(20, 184, 166, 0.07),
+      transparent 34%
+    );
+}
+
+.header--authenticated .header__left {
+  grid-area: brand;
+  justify-self: start;
+  align-self: start;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  gap: 6px;
+
+  min-width: 0;
+  max-width: none;
+}
+
+.header--authenticated .header__logo-link {
+  padding: 1px;
+}
+
+.header--authenticated .header__logo {
+  width: auto;
+  max-width: 150px;
+  height: 44px;
+}
+
+.header--authenticated .header__clock {
+  display: block;
+
+  min-width: 0;
+
+  margin: 0;
+}
+
+.header--authenticated .header__brand-clock .clock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  gap: 1px;
+
+  min-width: 0;
+}
+
+.header--authenticated .header__brand-clock .clock__time {
+  color: var(--color-text-primary);
+
+  font-size: 0.82rem;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.15;
+}
+
+.header--authenticated .header__brand-clock .clock__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 3px;
+
+  min-width: 0;
+
+  color: var(--color-text-secondary);
+
+  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
+.header--authenticated .header__right,
+.header--authenticated .header__authenticated-controls {
+  display: contents;
+}
+
+.header--authenticated .header__account {
+  grid-area: account;
+  justify-self: end;
+  align-self: start;
+
+  display: grid;
+  grid-template-columns: 82px 102px;
+  grid-template-areas:
+    "member member"
+    "theme signout";
+  align-items: center;
+  justify-content: end;
+
+  column-gap: 8px;
+  row-gap: 6px;
+
+  width: 192px;
+  min-width: 192px;
+  max-width: 192px;
+
+  margin: 0;
+  padding: 0;
+
+  overflow: visible;
+
+  background: transparent;
+
+  border: 0;
+  border-radius: 0;
+
+  box-shadow: none;
+}
+
+.header--authenticated .header__user {
+  grid-area: member;
+  justify-self: center;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 4px;
+
+  width: 100%;
+  max-width: 100%;
+
+  padding: 0;
+
+  overflow: visible;
+
+  background: transparent;
+
+  border: 0;
+  border-radius: 0;
+}
+
+.header--authenticated .header__avatar {
+  width: 46px;
+  height: 46px;
+
+  object-fit: cover;
+
+  background: rgba(5, 14, 20, 0.72);
+
+  border: 1px solid rgba(94, 234, 212, 0.64);
+  border-radius: 10px;
+
+  box-shadow:
+    0 0 0 2px rgba(56, 189, 248, 0.08),
+    0 5px 14px rgba(2, 8, 12, 0.28),
+    0 0 13px rgba(20, 184, 166, 0.16);
+}
+
+.header--authenticated .header__avatar--fallback {
+  font-size: var(--font-size-sm);
+}
+
+.header--authenticated .header__username {
+  display: block;
+
+  width: 176px;
+  max-width: 176px;
+
+  overflow: hidden;
+
+  color: var(--color-text-primary);
+
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header--authenticated .header__theme-toggle,
+.header--authenticated .header__nav-link--signout {
+  min-height: 36px;
+
+  border-radius: var(--radius-pill);
+
+  font-size: var(--font-size-xs);
+}
+
+.header--authenticated .header__theme-toggle {
+  grid-area: theme;
+  justify-self: stretch;
+
+  width: 82px;
+
+  padding-right: var(--space-2);
+  padding-left: var(--space-2);
+}
+
+.header--authenticated .header__nav-link--signout {
+  grid-area: signout;
+  justify-self: stretch;
+
+  width: 102px;
+}
+
+.header--authenticated .header__nav {
+  grid-area: navigation;
+  justify-self: center;
+
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: var(--space-4);
+
+  width: 100%;
+  max-width: 100%;
+
+  padding: 2px 0 0;
+
+  overflow: visible;
+}
+
+.header--authenticated .header__nav a {
+  flex: 0 0 auto;
+}
+
+/* =========================
+   AUTHENTICATED TABLET
+========================= */
+
+@media (max-width: 900px) {
   .header--authenticated .header__inner {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      "logo clock account"
-      "nav nav nav";
+    gap: var(--space-2) var(--space-4);
 
-    gap: var(--space-3) var(--space-4);
-
-    align-items: center;
+    padding-right: var(--space-4);
+    padding-left: var(--space-4);
   }
 
-  .header--authenticated .header__left {
-    grid-area: logo;
+  .header--authenticated .header__logo {
+    max-width: 136px;
+    height: 40px;
   }
 
-  .header--authenticated .header__clock {
-    grid-area: clock;
-
-    justify-self: start;
-
-    min-width: 0;
-    margin: 0;
+  .header--authenticated .header__brand-clock .clock__time {
+    font-size: 0.76rem;
   }
 
-  .header--authenticated .header__right,
-  .header--authenticated .header__authenticated-controls {
-    display: contents;
-  }
-
-  .header--authenticated .header__nav {
-    grid-area: nav;
-
-    justify-self: center;
-
-    flex-wrap: wrap;
-    justify-content: center;
-
-    gap: var(--space-4);
+  .header--authenticated .header__brand-clock .clock__meta {
+    font-size: 0.64rem;
   }
 
   .header--authenticated .header__account {
-    grid-area: account;
+    grid-template-columns: 76px 96px;
 
-    justify-self: end;
-  }
-}
-
-@media (max-width: 860px) {
-  .header--authenticated .header__inner {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "logo account"
-      "clock account"
-      "nav nav";
-
-    gap: var(--space-3);
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
   }
 
-  .header--authenticated .header__clock {
-    justify-self: start;
+  .header--authenticated .header__avatar {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 9px;
+  }
+
+  .header--authenticated .header__username {
+    width: 164px;
+    max-width: 164px;
+  }
+
+  .header--authenticated .header__theme-toggle {
+    width: 76px;
+  }
+
+  .header--authenticated .header__nav-link--signout {
+    width: 96px;
   }
 
   .header--authenticated .header__nav {
@@ -1146,146 +1374,322 @@
 }
 
 /* =========================
-   AUTHENTICATED MOBILE COMPACT HEADER
-   Reduce vertical space on project/app pages
+   AUTHENTICATED COMPACT
 ========================= */
 
-@media (max-width: 768px) {
+@media (max-width: 620px) {
   .header--authenticated .header__inner {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      "logo . account"
-      "nav nav nav";
+    grid-template-columns: minmax(0, 1fr) 136px;
 
-    gap: var(--space-2) var(--space-3);
+    column-gap: var(--space-2);
+    row-gap: var(--space-3);
 
-    padding: var(--space-2) var(--space-3);
+    padding: 12px;
   }
 
-  .header--authenticated .header__left {
-    grid-area: logo;
-
-    justify-self: start;
+  .header--authenticated .header__logo {
+    max-width: 128px;
+    height: 38px;
   }
 
-  .header--authenticated .header__clock {
-    display: none;
+  .header--authenticated .header__brand-clock .clock__time {
+    font-size: 0.72rem;
+  }
+
+  .header--authenticated .header__brand-clock .clock__meta {
+    max-width: 132px;
+
+    font-size: 0.6rem;
   }
 
   .header--authenticated .header__account {
-    grid-area: account;
+    grid-template-columns: 58px 70px;
 
-    justify-self: end;
+    column-gap: 6px;
+    row-gap: 5px;
 
-    flex-wrap: nowrap;
-    justify-content: flex-end;
-
-    gap: var(--space-2);
-  }
-
-  .header--authenticated .header__nav {
-    grid-area: nav;
-
-    justify-self: stretch;
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-
-    width: 100%;
-
-    gap: var(--space-4);
-
-    padding: var(--space-1) 0;
-
-    overflow-x: auto;
-    overflow-y: hidden;
-
-    scrollbar-width: none;
-  }
-
-  .header--authenticated .header__nav::-webkit-scrollbar {
-    display: none;
-  }
-
-  .header--authenticated .header__nav a {
-    flex: 0 0 auto;
-
-    font-size: var(--font-size-xs);
-  }
-
-  .header--authenticated .header__nav-label--full {
-    display: none;
-  }
-
-  .header--authenticated .header__nav-label--compact {
-    display: inline;
-  }
-}
-
-@media (max-width: 480px) {
-  .header--authenticated .header__logo {
-    max-width: 116px;
-    height: 34px;
-  }
-
-  .header--authenticated .header__user {
-    max-width: 42px;
-
-    padding: var(--space-1);
-  }
-
-  .header--authenticated .header__username {
-    display: none;
+    width: 134px;
+    min-width: 134px;
+    max-width: 134px;
   }
 
   .header--authenticated .header__avatar {
-    width: 30px;
-    height: 30px;
+    width: 38px;
+    height: 38px;
+
+    border-radius: 8px;
+  }
+
+  .header--authenticated .header__username {
+    width: 128px;
+    max-width: 128px;
+
+    font-size: 0.68rem;
+  }
+
+  .header--authenticated .header__theme-toggle,
+  .header--authenticated .header__nav-link--signout {
+    min-height: 32px;
+
+    padding: 4px 6px;
+
+    font-size: 0.66rem;
+  }
+
+  .header--authenticated .header__theme-toggle {
+    width: 58px;
+
+    gap: 2px;
   }
 
   .header--authenticated .header__nav-link--signout {
-    min-height: 34px;
-
-    padding: var(--space-2);
-
-    font-size: var(--font-size-xs);
+    width: 70px;
   }
 
   .header--authenticated .header__nav {
-    gap: var(--space-3);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    column-gap: 4px;
+    row-gap: 10px;
+
+    width: 100%;
+
+    padding: 0;
+  }
+
+  .header--authenticated .header__nav a {
+    justify-self: center;
+
+    font-size: 0.7rem;
+    text-align: center;
   }
 }
 
-@media (max-width: 420px) {
+/* =========================
+   AUTHENTICATED NARROW
+========================= */
+
+@media (max-width: 480px) {
+  .header--authenticated .header__inner {
+    grid-template-columns: minmax(0, 1fr) 128px;
+
+    padding: 11px;
+  }
+
   .header--authenticated .header__logo {
-    max-width: 104px;
+    max-width: 116px;
+    height: 35px;
+  }
+
+  .header--authenticated
+    .header__brand-clock
+    .clock__meta
+    > span:nth-child(1),
+  .header--authenticated
+    .header__brand-clock
+    .clock__meta
+    > span:nth-child(2) {
+    display: none;
+  }
+
+  .header--authenticated .header__brand-clock .clock__meta {
+    font-size: 0.58rem;
   }
 
   .header--authenticated .header__account {
-    gap: var(--space-1);
+    grid-template-columns: 54px 66px;
+
+    width: 126px;
+    min-width: 126px;
+    max-width: 126px;
   }
 
-  .header--authenticated .header__nav {
-    justify-content: center;
-    flex-wrap: wrap;
-
-    gap: var(--space-2) var(--space-3);
+  .header--authenticated .header__avatar {
+    width: 36px;
+    height: 36px;
   }
 
-  .header--authenticated .header__nav a {
-    font-size: var(--font-size-2xs);
+  .header--authenticated .header__username {
+    width: 120px;
+    max-width: 120px;
+
+    font-size: 0.65rem;
+  }
+
+  .header--authenticated .header__theme-toggle {
+    width: 54px;
+  }
+
+  .header--authenticated .header__nav-link--signout {
+    width: 66px;
   }
 }
 
-@media (max-width: 340px) {
+/* =========================
+   AUTHENTICATED 320PX
+========================= */
+
+@media (max-width: 360px) {
+  .header--authenticated .header__inner {
+    grid-template-columns: minmax(0, 1fr) 118px;
+
+    column-gap: 6px;
+
+    padding: 10px;
+  }
+
   .header--authenticated .header__logo {
     max-width: 104px;
+    height: 32px;
+  }
+
+  .header--authenticated .header__brand-clock {
+    max-width: 108px;
+  }
+
+  .header--authenticated .header__brand-clock .clock__time {
+    font-size: 0.66rem;
+  }
+
+  .header--authenticated .header__brand-clock .clock__meta {
+    max-width: 108px;
+
+    font-size: 0.55rem;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .header--authenticated .header__account {
+    grid-template-columns: 50px 60px;
+
+    column-gap: 5px;
+
+    width: 115px;
+    min-width: 115px;
+    max-width: 115px;
+  }
+
+  .header--authenticated .header__avatar {
+    width: 33px;
+    height: 33px;
+
+    border-radius: 7px;
+  }
+
+  .header--authenticated .header__username {
+    width: 112px;
+    max-width: 112px;
+
+    font-size: 0.62rem;
+  }
+
+  .header--authenticated .header__theme-toggle,
+  .header--authenticated .header__nav-link--signout {
+    min-height: 30px;
+
+    padding: 3px 4px;
+
+    font-size: 0.61rem;
+  }
+
+  .header--authenticated .header__theme-toggle {
+    width: 50px;
+  }
+
+  .header--authenticated .header__nav-link--signout {
+    width: 60px;
   }
 
   .header--authenticated .header__nav {
-    gap: var(--space-2);
+    column-gap: 2px;
+    row-gap: 9px;
   }
 
   .header--authenticated .header__nav a {
-    font-size: 0.68rem;
+    font-size: 0.66rem;
+  }
+}
+
+/* =========================
+   AUTHENTICATED DAY THEME
+========================= */
+
+:root[data-theme="day"] .header--authenticated .header__inner {
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(124, 58, 237, 0.05),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(8, 145, 178, 0.08),
+      transparent 34%
+    );
+}
+
+:root[data-theme="day"] .header--authenticated .header__avatar {
+  background: rgba(255, 255, 255, 0.7);
+
+  border-color: rgba(8, 145, 178, 0.52);
+
+  box-shadow:
+    0 0 0 2px rgba(8, 145, 178, 0.07),
+    0 5px 13px rgba(15, 23, 42, 0.16);
+}
+
+/* =========================
+   LARGE DESKTOP AUTHENTICATED IDENTITY SCALE
+========================= */
+
+@media (min-width: 1100px) {
+  .header--authenticated .header__logo {
+    width: clamp(190px, 15vw, 240px);
+    max-width: none;
+    height: auto;
+  }
+
+  .header--authenticated .header__left {
+    align-self: center;
+
+    gap: 8px;
+  }
+
+  .header--authenticated .header__account {
+    grid-template-columns: 90px 110px;
+
+    column-gap: 10px;
+    row-gap: 10px;
+
+    width: 210px;
+    min-width: 210px;
+    max-width: 210px;
+
+    padding: 3px 0 2px;
+  }
+
+  .header--authenticated .header__user {
+    gap: 6px;
+  }
+
+  .header--authenticated .header__avatar {
+    width: 84px;
+    height: 84px;
+  }
+
+  .header--authenticated .header__username {
+    width: 192px;
+    max-width: 192px;
+
+    line-height: 1.25;
+  }
+
+  .header--authenticated .header__theme-toggle,
+  .header--authenticated .header__nav-link--signout {
+    min-height: 38px;
   }
 }

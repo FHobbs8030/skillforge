@@ -14,6 +14,10 @@ import {
 } from "../../utils/api";
 
 import useAuth from "../../contexts/useAuth";
+import {
+  getUserAvatarUrl,
+  getUserInitials,
+} from "../../utils/avatar";
 
 const projectRoleDetails = {
   owner: {
@@ -1077,52 +1081,73 @@ function ProjectDetail() {
 
           {members.length > 0 ? (
             <div className="project-detail__members-list">
-              {members.map((member) => (
-                <article
-                  className="project-detail__member-card"
-                  key={member.id || member.userId}
-                >
-                  <div
-                    className="project-detail__member-avatar"
-                    aria-hidden="true"
+              {members.map((member) => {
+                const memberAvatarUrl = getUserAvatarUrl(member);
+                const memberInitials = getUserInitials(member);
+                const memberName =
+                  member.fullName || "Unknown member";
+
+                return (
+                  <article
+                    className="project-detail__member-card"
+                    key={member.id || member.userId}
                   >
-                    {(member.fullName || member.email || "?")
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
+                    {memberAvatarUrl ? (
+                      <img
+                        className="project-detail__member-avatar"
+                        src={memberAvatarUrl}
+                        alt={`${memberName} avatar`}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span
+                        className="project-detail__member-avatar project-detail__member-avatar--fallback"
+                        aria-hidden="true"
+                      >
+                        {memberInitials}
+                      </span>
+                    )}
 
-                  <div className="project-detail__member-main">
-                    <div className="project-detail__member-heading">
-                      <div>
-                        <h3>{member.fullName || "Unknown member"}</h3>
-                        <p>{member.email || "Email not available"}</p>
+                    <div className="project-detail__member-main">
+                      <div className="project-detail__member-heading">
+                        <div>
+                          <h3>{memberName}</h3>
+
+                          <p>
+                            {member.email || "Email not available"}
+                          </p>
+                        </div>
+
+                        <div className="project-detail__member-badges">
+                          <span className="project-detail__member-badge project-detail__member-badge_type_role">
+                            {formatMemberLabel(member.role)}
+                          </span>
+
+                          <span className="project-detail__member-badge project-detail__member-badge_type_status">
+                            {formatMemberLabel(member.status)}
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="project-detail__member-badges">
-                        <span className="project-detail__member-badge project-detail__member-badge_type_role">
-                          {formatMemberLabel(member.role)}
-                        </span>
+                      <dl className="project-detail__member-meta">
+                        <div>
+                          <dt>Joined</dt>
+                          <dd>{formatDateTime(member.joinedAt)}</dd>
+                        </div>
 
-                        <span className="project-detail__member-badge project-detail__member-badge_type_status">
-                          {formatMemberLabel(member.status)}
-                        </span>
-                      </div>
+                        <div>
+                          <dt>Account</dt>
+                          <dd>
+                            {formatMemberLabel(
+                              member.accountMembership,
+                            )}
+                          </dd>
+                        </div>
+                      </dl>
                     </div>
-
-                    <dl className="project-detail__member-meta">
-                      <div>
-                        <dt>Joined</dt>
-                        <dd>{formatDateTime(member.joinedAt)}</dd>
-                      </div>
-
-                      <div>
-                        <dt>Account</dt>
-                        <dd>{formatMemberLabel(member.accountMembership)}</dd>
-                      </div>
-                    </dl>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           ) : (
             <div className="project-detail__empty-state">

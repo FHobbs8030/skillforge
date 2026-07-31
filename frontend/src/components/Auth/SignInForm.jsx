@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { signInUser } from "../../utils/api";
 import useAuth from "../../contexts/useAuth";
 
 import "./SignInForm.css";
+
+const SESSION_EXPIRED_STORAGE_KEY =
+  "skillforgeSessionExpiredMessage";
 
 function SignInForm() {
   const { signIn } = useAuth();
@@ -21,6 +24,31 @@ function SignInForm() {
   const [formMessage, setFormMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const storedMessage = sessionStorage.getItem(
+      SESSION_EXPIRED_STORAGE_KEY,
+    );
+
+    const navigationMessage =
+      location.state?.sessionExpired
+        ? location.state.sessionExpiredMessage
+        : "";
+
+    const sessionExpiredMessage =
+      storedMessage || navigationMessage;
+
+    if (!sessionExpiredMessage) {
+      return;
+    }
+
+    sessionStorage.removeItem(
+      SESSION_EXPIRED_STORAGE_KEY,
+    );
+
+    setFormMessage(sessionExpiredMessage);
+    setMessageType("error");
+  }, [location.state]);
 
   const handleChange = (event) => {
     const { name, type, checked, value } = event.target;
@@ -99,13 +127,16 @@ function SignInForm() {
         );
       }
 
+      const postSignInDestination =
+        getPostSignInDestination();
+
       signIn({
         token: response.token,
         user: response.user,
         rememberMe: formData.rememberMe,
       });
 
-      navigate(getPostSignInDestination(), {
+      navigate(postSignInDestination, {
         replace: true,
       });
     } catch (error) {

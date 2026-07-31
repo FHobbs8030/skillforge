@@ -1,3 +1,6 @@
+export const SESSION_EXPIRED_EVENT =
+  "skillforge:session-expired";
+
 const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, "");
 
 function getApiUrl(path) {
@@ -10,7 +13,12 @@ function getApiUrl(path) {
   return `${BASE_URL}${path}`;
 }
 
-async function checkResponse(response) {
+async function checkResponse(
+  response,
+  {
+    isAuthenticatedRequest = false,
+  } = {},
+) {
   const contentType = response.headers.get("content-type") || "";
 
   let responseData = null;
@@ -30,6 +38,16 @@ async function checkResponse(response) {
   }
 
   if (!response.ok) {
+    if (
+      response.status === 401 &&
+      isAuthenticatedRequest &&
+      typeof window !== "undefined"
+    ) {
+      window.dispatchEvent(
+        new CustomEvent(SESSION_EXPIRED_EVENT),
+      );
+    }
+
     const requestError = new Error(
       responseData?.error ||
         responseData?.message ||
@@ -46,16 +64,29 @@ async function checkResponse(response) {
 }
 
 async function apiRequest(path, options = {}) {
+  const requestHeaders = {
+    "Content-Type": "application/json",
+    ...options.headers,
+  };
+
+  const authorizationHeader =
+    requestHeaders.Authorization ||
+    requestHeaders.authorization ||
+    "";
+
+  const isAuthenticatedRequest =
+    typeof authorizationHeader === "string" &&
+    /^Bearer\s+\S+/i.test(authorizationHeader);
+
   const response = await fetch(getApiUrl(path), {
     ...options,
 
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
+    headers: requestHeaders,
   });
 
-  return checkResponse(response);
+  return checkResponse(response, {
+    isAuthenticatedRequest,
+  });
 }
 
 export function signUpUser({ fullName, email, password, membership }) {
@@ -112,6 +143,34 @@ export function updateProfile({ token, fullName, email }) {
       fullName,
       email,
     }),
+  });
+}
+
+export function startGitHubConnection(token) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/auth/github/connect", {
+    method: "POST",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function disconnectGitHubAccount(token) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/auth/github", {
+    method: "DELETE",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
 }
 
@@ -417,4 +476,444 @@ export function connectProjectRepository({ token, projectId, repositoryUrl }) {
       repositoryUrl: normalizedRepositoryUrl,
     }),
   });
+}
+
+export function getOrganizations(token) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/organizations", {
+    method: "GET",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function getPendingOrganizationInvitations(token) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  return apiRequest("/organizations/invitations/pending", {
+    method: "GET",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function createOrganization({
+  token,
+  name,
+  description = "",
+  slug = "",
+}) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  const normalizedName = typeof name === "string" ? name.trim() : "";
+  const normalizedDescription =
+    typeof description === "string" ? description.trim() : "";
+  const normalizedSlug = typeof slug === "string" ? slug.trim() : "";
+
+  if (!normalizedName) {
+    return Promise.reject(new Error("Organization name is required."));
+  }
+
+  const requestBody = {
+    name: normalizedName,
+    description: normalizedDescription,
+  };
+
+  if (normalizedSlug) {
+    requestBody.slug = normalizedSlug;
+  }
+
+  return apiRequest("/organizations", {
+    method: "POST",
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+
+    body: JSON.stringify(requestBody),
+  });
+}
+
+export function getOrganizationById({ token, organizationId }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!organizationId) {
+    return Promise.reject(new Error("Organization ID is required."));
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(organizationId)}`,
+    {
+      method: "GET",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function getOrganizationMembers({ token, organizationId }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!organizationId) {
+    return Promise.reject(new Error("Organization ID is required."));
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(organizationId)}/members`,
+    {
+      method: "GET",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function changeOrganizationMemberRole({
+  token,
+  organizationId,
+  membershipId,
+  role,
+}) {
+  if (!token) {
+    return Promise.reject(
+      new Error("Authentication token is required."),
+    );
+  }
+
+  if (!organizationId) {
+    return Promise.reject(
+      new Error("Organization ID is required."),
+    );
+  }
+
+  if (!membershipId) {
+    return Promise.reject(
+      new Error("Organization membership ID is required."),
+    );
+  }
+
+  const normalizedRole =
+    typeof role === "string"
+      ? role.trim().toLowerCase()
+      : "";
+
+  if (!["admin", "member"].includes(normalizedRole)) {
+    return Promise.reject(
+      new Error("Organization member role must be admin or member."),
+    );
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(
+      organizationId,
+    )}/members/${encodeURIComponent(membershipId)}/role`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify({
+        role: normalizedRole,
+      }),
+    },
+  );
+}
+
+export function deactivateOrganizationMember({
+  token,
+  organizationId,
+  membershipId,
+}) {
+  if (!token) {
+    return Promise.reject(
+      new Error("Authentication token is required."),
+    );
+  }
+
+  if (!organizationId) {
+    return Promise.reject(
+      new Error("Organization ID is required."),
+    );
+  }
+
+  if (!membershipId) {
+    return Promise.reject(
+      new Error("Organization membership ID is required."),
+    );
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(
+      organizationId,
+    )}/members/${encodeURIComponent(membershipId)}/deactivate`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function reactivateOrganizationMember({
+  token,
+  organizationId,
+  membershipId,
+}) {
+  if (!token) {
+    return Promise.reject(
+      new Error("Authentication token is required."),
+    );
+  }
+
+  if (!organizationId) {
+    return Promise.reject(
+      new Error("Organization ID is required."),
+    );
+  }
+
+  if (!membershipId) {
+    return Promise.reject(
+      new Error("Organization membership ID is required."),
+    );
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(
+      organizationId,
+    )}/members/${encodeURIComponent(membershipId)}/reactivate`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function getOrganizationActivity({ token, organizationId }) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!organizationId) {
+    return Promise.reject(new Error("Organization ID is required."));
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(organizationId)}/activity`,
+    {
+      method: "GET",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function acceptOrganizationInvitation({
+  token,
+  organizationId,
+}) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!organizationId) {
+    return Promise.reject(new Error("Organization ID is required."));
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(
+      organizationId,
+    )}/invitations/accept`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function declineOrganizationInvitation({
+  token,
+  organizationId,
+}) {
+  if (!token) {
+    return Promise.reject(new Error("Authentication token is required."));
+  }
+
+  if (!organizationId) {
+    return Promise.reject(new Error("Organization ID is required."));
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(
+      organizationId,
+    )}/invitations/decline`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function updateOrganization({
+  token,
+  organizationId,
+  name,
+  slug,
+  description = "",
+}) {
+  if (!token) {
+    return Promise.reject(
+      new Error("Authentication token is required."),
+    );
+  }
+
+  if (!organizationId) {
+    return Promise.reject(
+      new Error("Organization ID is required."),
+    );
+  }
+
+  const normalizedName =
+    typeof name === "string" ? name.trim() : "";
+
+  const normalizedSlug =
+    typeof slug === "string"
+      ? slug.trim().toLowerCase()
+      : "";
+
+  const normalizedDescription =
+    typeof description === "string"
+      ? description.trim()
+      : "";
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(organizationId)}`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify({
+        name: normalizedName,
+        slug: normalizedSlug,
+        description: normalizedDescription,
+      }),
+    },
+  );
+}
+
+export function archiveOrganization({
+  token,
+  organizationId,
+}) {
+  if (!token) {
+    return Promise.reject(
+      new Error("Authentication token is required."),
+    );
+  }
+
+  if (!organizationId) {
+    return Promise.reject(
+      new Error("Organization ID is required."),
+    );
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(organizationId)}/archive`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function createOrganizationInvitation({
+  token,
+  organizationId,
+  email,
+  role = "member",
+}) {
+  if (!token) {
+    return Promise.reject(
+      new Error("Authentication token is required."),
+    );
+  }
+
+  if (!organizationId) {
+    return Promise.reject(
+      new Error("Organization ID is required."),
+    );
+  }
+
+  const normalizedEmail =
+    typeof email === "string"
+      ? email.trim().toLowerCase()
+      : "";
+
+  const normalizedRole =
+    typeof role === "string"
+      ? role.trim().toLowerCase()
+      : "member";
+
+  if (!normalizedEmail) {
+    return Promise.reject(
+      new Error("Email address is required."),
+    );
+  }
+
+  return apiRequest(
+    `/organizations/${encodeURIComponent(
+      organizationId,
+    )}/invitations`,
+    {
+      method: "POST",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify({
+        email: normalizedEmail,
+        role: normalizedRole,
+      }),
+    },
+  );
 }

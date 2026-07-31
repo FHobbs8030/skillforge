@@ -8,6 +8,8 @@ import CollaboratorDashboard from "./pages/CollaboratorDashboard/CollaboratorDas
 import AppDashboard from "./pages/AppDashboard/AppDashboard";
 import ProjectHistory from "./pages/ProjectHistory/ProjectHistory";
 import ProjectDetail from "./pages/ProjectDetail/ProjectDetail";
+import Organizations from "./pages/Organizations/Organizations";
+import OrganizationWorkspace from "./pages/OrganizationWorkspace/OrganizationWorkspace";
 import ProfilePage from "./pages/ProfilePage/ProfilePage";
 import AuthPage from "./pages/AuthPage/AuthPage";
 
@@ -51,15 +53,35 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+function getRequestedDestination(location) {
+  const requestedLocation = location.state?.from;
+
+  if (!requestedLocation?.pathname) {
+    return "/app";
+  }
+
+  return [
+    requestedLocation.pathname,
+    requestedLocation.search || "",
+    requestedLocation.hash || "",
+  ].join("");
+}
+
 function PublicOnlyRoute({ children }) {
   const { isAuthenticated, isAuthLoading } = useAuth();
+  const location = useLocation();
 
   if (isAuthLoading) {
     return null;
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/app" replace />;
+    return (
+      <Navigate
+        to={getRequestedDestination(location)}
+        replace
+      />
+    );
   }
 
   return children;
@@ -123,6 +145,9 @@ function App() {
   const isAppDashboard = location.pathname === "/app";
   const isProjectHistory = location.pathname === "/projects";
   const isProjectDetail = location.pathname.startsWith("/projects/");
+  const isOrganizations = location.pathname === "/organizations";
+  const isOrganizationWorkspace =
+    location.pathname.startsWith("/organizations/");
   const isProfilePage = location.pathname === "/profile";
 
   const appLayoutClassName = [
@@ -135,6 +160,8 @@ function App() {
     isAppDashboard && "app-layout--app-dashboard",
     isProjectHistory && "app-layout--project-history",
     isProjectDetail && "app-layout--project-detail",
+    isOrganizations && "app-layout--organizations",
+    isOrganizationWorkspace && "app-layout--organization-workspace",
     isProfilePage && "app-layout--profile",
   ]
     .filter(Boolean)
@@ -150,6 +177,8 @@ function App() {
     isAppDashboard && "main-content--app-dashboard",
     isProjectHistory && "main-content--project-history",
     isProjectDetail && "main-content--project-detail",
+    isOrganizations && "main-content--organizations",
+    isOrganizationWorkspace && "main-content--organization-workspace",
     isProfilePage && "main-content--profile",
   ]
     .filter(Boolean)
@@ -165,6 +194,8 @@ function App() {
     isAppDashboard && "main-inner--app-dashboard",
     isProjectHistory && "main-inner--project-history",
     isProjectDetail && "main-inner--project-detail",
+    isOrganizations && "main-inner--organizations",
+    isOrganizationWorkspace && "main-inner--organization-workspace",
     isProfilePage && "main-inner--profile",
   ]
     .filter(Boolean)
@@ -263,6 +294,24 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ProjectDetail />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/organizations"
+                element={
+                  <ProtectedRoute>
+                    <Organizations />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/organizations/:organizationId"
+                element={
+                  <ProtectedRoute>
+                    <OrganizationWorkspace />
                   </ProtectedRoute>
                 }
               />
