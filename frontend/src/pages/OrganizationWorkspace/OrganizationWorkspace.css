@@ -1446,3 +1446,57 @@
     width: 100%;
   }
 }
+
+/* ORGANIZATION OWNERSHIP TRANSFER CONTROLS */
+
+.organization-workspace__member-action-button--transfer {
+  color: #fde68a;
+  background: rgba(180, 83, 9, 0.12);
+
+  border-color: rgba(245, 158, 11, 0.46);
+}
+
+.organization-workspace__member-action-button--transfer:hover:not(:disabled),
+.organization-workspace__member-action-button--transfer:focus-visible:not(:disabled) {
+  color: #fef3c7;
+  background: rgba(180, 83, 9, 0.2);
+
+  border-color: rgba(251, 191, 36, 0.68);
+}
+
+.organization-workspace__member-confirmation--transfer {
+  background: rgba(120, 53, 15, 0.14);
+
+  border-color: rgba(245, 158, 11, 0.42);
+}
+
+.organization-workspace__member-confirmation--transfer
+  .organization-workspace__member-confirmation-copy {
+  color: #fde68a;
+}
+
+.organization-workspace__member-confirmation-copy strong,
+.organization-workspace__member-confirmation-copy span {
+  display: block;
+}
+
+.organization-workspace__member-confirmation-copy strong {
+  margin-bottom: var(--space-2);
+}
+
+:root[data-theme="day"]
+  .organization-workspace__member-action-button--transfer {
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+:root[data-theme="day"]
+  .organization-workspace__member-confirmation--transfer {
+  background: rgba(254, 243, 199, 0.68);
+}
+
+:root[data-theme="day"]
+  .organization-workspace__member-confirmation--transfer
+  .organization-workspace__member-confirmation-copy {
+  color: #78350f;
+}

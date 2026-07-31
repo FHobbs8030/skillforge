@@ -15,6 +15,7 @@ import {
   getOrganizationById,
   getOrganizationMembers,
   reactivateOrganizationMember,
+  transferOrganizationOwnership,
   updateOrganization,
 } from "../../utils/api";
 
@@ -588,28 +589,49 @@ function OrganizationWorkspace() {
     }
   }
 
-  function replaceWorkspaceMember(nextMember) {
-    const nextMemberId = nextMember?.id?.toString();
+  function replaceWorkspaceMembers(nextMembers) {
+    const nextMembersById = new Map(
+      nextMembers
+        .filter((member) => member?.id)
+        .map((member) => [
+          member.id.toString(),
+          member,
+        ]),
+    );
 
-    if (!nextMemberId) {
+    if (nextMembersById.size === 0) {
       return;
     }
 
     setMembers((currentMembers) => {
       const remainingMembers = currentMembers.filter(
-        (member) => member.id?.toString() !== nextMemberId,
+        (member) =>
+          !nextMembersById.has(member.id?.toString()),
       );
 
-      return [...remainingMembers, nextMember].sort(
-        compareWorkspaceMembers,
-      );
+      return [
+        ...remainingMembers,
+        ...nextMembersById.values(),
+      ].sort(compareWorkspaceMembers);
     });
 
-    setCurrentMembership((currentValue) =>
-      currentValue?.id?.toString() === nextMemberId
-        ? nextMember
-        : currentValue,
-    );
+    setCurrentMembership((currentValue) => {
+      const currentMembershipId =
+        currentValue?.id?.toString();
+
+      if (
+        !currentMembershipId ||
+        !nextMembersById.has(currentMembershipId)
+      ) {
+        return currentValue;
+      }
+
+      return nextMembersById.get(currentMembershipId);
+    });
+  }
+
+  function replaceWorkspaceMember(nextMember) {
+    replaceWorkspaceMembers([nextMember]);
   }
 
   function clearMemberFeedback(membershipId) {
@@ -667,6 +689,22 @@ function OrganizationWorkspace() {
         membershipId !== currentMembershipId &&
         member.role !== "owner" &&
         (role === "owner" || member.role === "member"),
+    );
+  }
+
+  function canTransferOwnershipTo(member) {
+    const membershipId = member?.id?.toString();
+
+    const currentMembershipId =
+      currentMembership?.id?.toString();
+
+    return Boolean(
+      role === "owner" &&
+        !isArchived &&
+        membershipId &&
+        membershipId !== currentMembershipId &&
+        member.status === "active" &&
+        member.role !== "owner",
     );
   }
 
@@ -744,6 +782,115 @@ function OrganizationWorkspace() {
     }
   }
 
+  function handleBeginOwnershipTransfer(member) {
+    const membershipId = member?.id?.toString();
+
+    if (
+      hasPendingMemberOperation ||
+      !canTransferOwnershipTo(member)
+    ) {
+      return;
+    }
+
+    clearMemberFeedback(membershipId);
+    setSuccessMessage("");
+
+    setMemberConfirmation({
+      membershipId,
+      action: "transfer",
+    });
+  }
+
+  async function handleOwnershipTransfer(member) {
+    const membershipId = member?.id?.toString();
+
+    if (
+      hasPendingMemberOperation ||
+      !canTransferOwnershipTo(member)
+    ) {
+      return;
+    }
+
+    setMemberOperation({
+      membershipId,
+      action: "transfer",
+    });
+
+    clearMemberFeedback(membershipId);
+    setSuccessMessage("");
+
+    try {
+      const response =
+        await transferOrganizationOwnership({
+          token,
+          organizationId,
+          membershipId,
+        });
+
+      if (
+        !response?.previousOwner ||
+        !response?.newOwner
+      ) {
+        throw new Error(
+          "Ownership transferred, but the server returned an incomplete membership response.",
+        );
+      }
+
+      replaceWorkspaceMembers([
+        response.previousOwner,
+        response.newOwner,
+      ]);
+
+      setOrganization((currentOrganization) => {
+        if (!currentOrganization) {
+          return currentOrganization;
+        }
+
+        return {
+          ...currentOrganization,
+          membership: {
+            ...(currentOrganization.membership || {}),
+            role: response.previousOwner.role,
+            status: response.previousOwner.status,
+            joinedAt: response.previousOwner.joinedAt,
+          },
+        };
+      });
+
+      setMemberConfirmation({
+        membershipId: "",
+        action: "",
+      });
+
+      setSuccessMessage(
+        response.message ||
+          "Organization ownership transferred successfully.",
+      );
+
+      setMemberFeedbackMessage(
+        membershipId,
+        "success",
+        `${
+          response.newOwner.fullName ||
+          response.newOwner.email ||
+          "The selected member"
+        } is now the organization Owner. Your role is now Admin.`,
+      );
+    } catch (error) {
+      setMemberFeedbackMessage(
+        membershipId,
+        "error",
+        error?.message ||
+          "Organization ownership could not be transferred.",
+      );
+    } finally {
+      setMemberOperation({
+        membershipId: "",
+        action: "",
+      });
+    }
+  }
+
   function handleBeginMemberDeactivation(member) {
     const membershipId = member?.id?.toString();
 
@@ -763,7 +910,7 @@ function OrganizationWorkspace() {
     });
   }
 
-  function handleCancelMemberDeactivation() {
+  function handleCancelMemberConfirmation() {
     if (hasPendingMemberOperation) {
       return;
     }
@@ -1587,12 +1734,25 @@ function OrganizationWorkspace() {
                     memberConfirmation.action ===
                       "deactivate";
 
+                  const isConfirmingOwnershipTransfer =
+                    memberConfirmation.membershipId ===
+                      membershipId &&
+                    memberConfirmation.action ===
+                      "transfer";
+
+                  const isConfirmingMemberAction =
+                    isConfirmingDeactivation ||
+                    isConfirmingOwnershipTransfer;
+
                   const canChangeMemberRole =
                     role === "owner" &&
                     !isArchived &&
                     !isCurrentMember &&
                     member.status === "active" &&
                     member.role !== "owner";
+
+                  const canTransferOwnership =
+                    canTransferOwnershipTo(member);
 
                   const canManageLifecycle =
                     canManageLifecycleTarget(member);
@@ -1711,7 +1871,8 @@ function OrganizationWorkspace() {
                         )}
                       </dl>
 
-                      {(canChangeMemberRole ||
+                      {(canTransferOwnership ||
+                        canChangeMemberRole ||
                         canDeactivateMember ||
                         canReactivateMember) && (
                         <div className="organization-workspace__member-controls">
@@ -1721,8 +1882,23 @@ function OrganizationWorkspace() {
                               : "Admin controls"}
                           </p>
 
-                          {!isConfirmingDeactivation && (
+                          {!isConfirmingMemberAction && (
                             <div className="organization-workspace__member-actions">
+                              {canTransferOwnership && (
+                                <button
+                                  className="organization-workspace__member-action-button organization-workspace__member-action-button--transfer"
+                                  type="button"
+                                  disabled={hasPendingMemberOperation}
+                                  onClick={() =>
+                                    handleBeginOwnershipTransfer(
+                                      member,
+                                    )
+                                  }
+                                >
+                                  Transfer ownership
+                                </button>
+                              )}
+
                               {canChangeMemberRole && (
                                 <button
                                   className="organization-workspace__member-action-button organization-workspace__member-action-button--role"
@@ -1780,6 +1956,62 @@ function OrganizationWorkspace() {
                             </div>
                           )}
 
+                          {isConfirmingOwnershipTransfer && (
+                            <div
+                              className="organization-workspace__member-confirmation organization-workspace__member-confirmation--transfer"
+                              role="group"
+                              aria-label={`Confirm ownership transfer to ${
+                                member.fullName ||
+                                member.email ||
+                                "organization member"
+                              }`}
+                            >
+                              <p className="organization-workspace__member-confirmation-copy">
+                                <strong>
+                                  Transfer ownership to{" "}
+                                  {member.fullName ||
+                                    member.email ||
+                                    "this member"}?
+                                </strong>
+
+                                <span>
+                                  They will become the organization
+                                  Owner. Your current Owner role will
+                                  immediately change to Admin, and you
+                                  will lose Owner-only permissions.
+                                </span>
+                              </p>
+
+                              <div className="organization-workspace__member-confirmation-actions">
+                                <button
+                                  className="organization-workspace__member-action-button organization-workspace__member-action-button--transfer"
+                                  type="button"
+                                  disabled={hasPendingMemberOperation}
+                                  onClick={() =>
+                                    handleOwnershipTransfer(member)
+                                  }
+                                >
+                                  {isThisMemberPending &&
+                                  memberOperation.action ===
+                                    "transfer"
+                                    ? "Transferring ownership..."
+                                    : "Confirm ownership transfer"}
+                                </button>
+
+                                <button
+                                  className="organization-workspace__member-action-button organization-workspace__member-action-button--cancel"
+                                  type="button"
+                                  disabled={hasPendingMemberOperation}
+                                  onClick={
+                                    handleCancelMemberConfirmation
+                                  }
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
                           {isConfirmingDeactivation && (
                             <div
                               className="organization-workspace__member-confirmation"
@@ -1817,7 +2049,7 @@ function OrganizationWorkspace() {
                                   className="organization-workspace__member-action-button organization-workspace__member-action-button--cancel"
                                   type="button"
                                   disabled={hasPendingMemberOperation}
-                                  onClick={handleCancelMemberDeactivation}
+                                  onClick={handleCancelMemberConfirmation}
                                 >
                                   Cancel
                                 </button>
