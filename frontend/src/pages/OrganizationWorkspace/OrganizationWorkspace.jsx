@@ -9,9 +9,12 @@ import {
 
 import {
   archiveOrganization,
+  changeOrganizationMemberRole,
   createOrganizationInvitation,
+  deactivateOrganizationMember,
   getOrganizationById,
   getOrganizationMembers,
+  reactivateOrganizationMember,
   updateOrganization,
 } from "../../utils/api";
 
@@ -183,6 +186,18 @@ function OrganizationWorkspace() {
   const [isInviting, setIsInviting] =
     useState(false);
 
+  const [memberOperation, setMemberOperation] = useState({
+    membershipId: "",
+    action: "",
+  });
+
+  const [memberConfirmation, setMemberConfirmation] = useState({
+    membershipId: "",
+    action: "",
+  });
+
+  const [memberFeedback, setMemberFeedback] = useState({});
+
   useEffect(() => {
     let isActive = true;
 
@@ -303,6 +318,9 @@ function OrganizationWorkspace() {
 
   const canInvite =
     ["owner", "admin"].includes(role) && !isArchived;
+
+  const hasPendingMemberOperation =
+    Boolean(memberOperation.membershipId);
 
   const normalizedForm = useMemo(
     () => ({
@@ -567,6 +585,278 @@ function OrganizationWorkspace() {
       );
     } finally {
       setIsInviting(false);
+    }
+  }
+
+  function replaceWorkspaceMember(nextMember) {
+    const nextMemberId = nextMember?.id?.toString();
+
+    if (!nextMemberId) {
+      return;
+    }
+
+    setMembers((currentMembers) => {
+      const remainingMembers = currentMembers.filter(
+        (member) => member.id?.toString() !== nextMemberId,
+      );
+
+      return [...remainingMembers, nextMember].sort(
+        compareWorkspaceMembers,
+      );
+    });
+
+    setCurrentMembership((currentValue) =>
+      currentValue?.id?.toString() === nextMemberId
+        ? nextMember
+        : currentValue,
+    );
+  }
+
+  function clearMemberFeedback(membershipId) {
+    const membershipKey = membershipId?.toString();
+
+    if (!membershipKey) {
+      return;
+    }
+
+    setMemberFeedback((currentFeedback) => {
+      if (!currentFeedback[membershipKey]) {
+        return currentFeedback;
+      }
+
+      const nextFeedback = {
+        ...currentFeedback,
+      };
+
+      delete nextFeedback[membershipKey];
+
+      return nextFeedback;
+    });
+  }
+
+  function setMemberFeedbackMessage(
+    membershipId,
+    type,
+    message,
+  ) {
+    const membershipKey = membershipId?.toString();
+
+    if (!membershipKey) {
+      return;
+    }
+
+    setMemberFeedback((currentFeedback) => ({
+      ...currentFeedback,
+      [membershipKey]: {
+        type,
+        message,
+      },
+    }));
+  }
+
+  function canManageLifecycleTarget(member) {
+    const membershipId = member?.id?.toString();
+
+    const currentMembershipId =
+      currentMembership?.id?.toString();
+
+    return Boolean(
+      !isArchived &&
+        ["owner", "admin"].includes(role) &&
+        membershipId &&
+        membershipId !== currentMembershipId &&
+        member.role !== "owner" &&
+        (role === "owner" || member.role === "member"),
+    );
+  }
+
+  async function handleMemberRoleChange(member, nextRole) {
+    const membershipId = member?.id?.toString();
+
+    const currentMembershipId =
+      currentMembership?.id?.toString();
+
+    const normalizedNextRole =
+      typeof nextRole === "string"
+        ? nextRole.trim().toLowerCase()
+        : "";
+
+    if (
+      hasPendingMemberOperation ||
+      role !== "owner" ||
+      isArchived ||
+      !membershipId ||
+      membershipId === currentMembershipId ||
+      member.status !== "active" ||
+      member.role === "owner" ||
+      !["admin", "member"].includes(normalizedNextRole) ||
+      normalizedNextRole === member.role
+    ) {
+      return;
+    }
+
+    setMemberOperation({
+      membershipId,
+      action: "role",
+    });
+
+    setMemberConfirmation({
+      membershipId: "",
+      action: "",
+    });
+
+    clearMemberFeedback(membershipId);
+
+    try {
+      const response = await changeOrganizationMemberRole({
+        token,
+        organizationId,
+        membershipId,
+        role: normalizedNextRole,
+      });
+
+      if (!response?.member) {
+        throw new Error(
+          "The member role changed, but the server returned an incomplete response.",
+        );
+      }
+
+      replaceWorkspaceMember(response.member);
+
+      setMemberFeedbackMessage(
+        membershipId,
+        "success",
+        response.message ||
+          `Organization member role changed to ${normalizedNextRole}.`,
+      );
+    } catch (error) {
+      setMemberFeedbackMessage(
+        membershipId,
+        "error",
+        error?.message ||
+          "The organization member role could not be changed.",
+      );
+    } finally {
+      setMemberOperation({
+        membershipId: "",
+        action: "",
+      });
+    }
+  }
+
+  function handleBeginMemberDeactivation(member) {
+    const membershipId = member?.id?.toString();
+
+    if (
+      hasPendingMemberOperation ||
+      !canManageLifecycleTarget(member) ||
+      member.status !== "active"
+    ) {
+      return;
+    }
+
+    clearMemberFeedback(membershipId);
+
+    setMemberConfirmation({
+      membershipId,
+      action: "deactivate",
+    });
+  }
+
+  function handleCancelMemberDeactivation() {
+    if (hasPendingMemberOperation) {
+      return;
+    }
+
+    setMemberConfirmation({
+      membershipId: "",
+      action: "",
+    });
+  }
+
+  async function handleMemberLifecycle(member, action) {
+    const membershipId = member?.id?.toString();
+
+    const isDeactivateAction =
+      action === "deactivate";
+
+    const isReactivateAction =
+      action === "reactivate";
+
+    const expectedStatus = isDeactivateAction
+      ? "active"
+      : "inactive";
+
+    if (
+      hasPendingMemberOperation ||
+      !canManageLifecycleTarget(member) ||
+      member.status !== expectedStatus ||
+      (!isDeactivateAction && !isReactivateAction)
+    ) {
+      return;
+    }
+
+    setMemberOperation({
+      membershipId,
+      action,
+    });
+
+    clearMemberFeedback(membershipId);
+
+    try {
+      const request = isDeactivateAction
+        ? deactivateOrganizationMember
+        : reactivateOrganizationMember;
+
+      const response = await request({
+        token,
+        organizationId,
+        membershipId,
+      });
+
+      if (!response?.member) {
+        throw new Error(
+          `The member was ${
+            isDeactivateAction
+              ? "deactivated"
+              : "reactivated"
+          }, but the server returned an incomplete response.`,
+        );
+      }
+
+      replaceWorkspaceMember(response.member);
+
+      setMemberFeedbackMessage(
+        membershipId,
+        "success",
+        response.message ||
+          `Organization member ${
+            isDeactivateAction
+              ? "deactivated"
+              : "reactivated"
+          }.`,
+      );
+
+      setMemberConfirmation({
+        membershipId: "",
+        action: "",
+      });
+    } catch (error) {
+      setMemberFeedbackMessage(
+        membershipId,
+        "error",
+        error?.message ||
+          `The organization member could not be ${
+            isDeactivateAction
+              ? "deactivated"
+              : "reactivated"
+          }.`,
+      );
+    } finally {
+      setMemberOperation({
+        membershipId: "",
+        action: "",
+      });
     }
   }
 
@@ -1280,9 +1570,43 @@ function OrganizationWorkspace() {
             members.length > 0 && (
               <div className="organization-workspace__member-list">
                 {members.map((member) => {
+                  const membershipId =
+                    member.id?.toString() || "";
+
                   const isCurrentMember =
                     currentMembership?.id?.toString() ===
-                    member.id?.toString();
+                    membershipId;
+
+                  const isThisMemberPending =
+                    memberOperation.membershipId ===
+                    membershipId;
+
+                  const isConfirmingDeactivation =
+                    memberConfirmation.membershipId ===
+                      membershipId &&
+                    memberConfirmation.action ===
+                      "deactivate";
+
+                  const canChangeMemberRole =
+                    role === "owner" &&
+                    !isArchived &&
+                    !isCurrentMember &&
+                    member.status === "active" &&
+                    member.role !== "owner";
+
+                  const canManageLifecycle =
+                    canManageLifecycleTarget(member);
+
+                  const canDeactivateMember =
+                    canManageLifecycle &&
+                    member.status === "active";
+
+                  const canReactivateMember =
+                    canManageLifecycle &&
+                    member.status === "inactive";
+
+                  const feedback =
+                    memberFeedback[membershipId] || null;
 
                   const memberAvatarUrl = getUserAvatarUrl(member);
                   const memberInitials = getUserInitials(member);
@@ -1386,6 +1710,136 @@ function OrganizationWorkspace() {
                           </div>
                         )}
                       </dl>
+
+                      {(canChangeMemberRole ||
+                        canDeactivateMember ||
+                        canReactivateMember) && (
+                        <div className="organization-workspace__member-controls">
+                          <p className="organization-workspace__member-controls-title">
+                            {role === "owner"
+                              ? "Owner controls"
+                              : "Admin controls"}
+                          </p>
+
+                          {!isConfirmingDeactivation && (
+                            <div className="organization-workspace__member-actions">
+                              {canChangeMemberRole && (
+                                <button
+                                  className="organization-workspace__member-action-button organization-workspace__member-action-button--role"
+                                  type="button"
+                                  disabled={hasPendingMemberOperation}
+                                  onClick={() =>
+                                    handleMemberRoleChange(
+                                      member,
+                                      member.role === "admin"
+                                        ? "member"
+                                        : "admin",
+                                    )
+                                  }
+                                >
+                                  {isThisMemberPending &&
+                                  memberOperation.action === "role"
+                                    ? "Updating role..."
+                                    : member.role === "admin"
+                                      ? "Change to Member"
+                                      : "Promote to Admin"}
+                                </button>
+                              )}
+
+                              {canDeactivateMember && (
+                                <button
+                                  className="organization-workspace__member-action-button organization-workspace__member-action-button--deactivate"
+                                  type="button"
+                                  disabled={hasPendingMemberOperation}
+                                  onClick={() =>
+                                    handleBeginMemberDeactivation(member)
+                                  }
+                                >
+                                  Deactivate
+                                </button>
+                              )}
+
+                              {canReactivateMember && (
+                                <button
+                                  className="organization-workspace__member-action-button organization-workspace__member-action-button--reactivate"
+                                  type="button"
+                                  disabled={hasPendingMemberOperation}
+                                  onClick={() =>
+                                    handleMemberLifecycle(
+                                      member,
+                                      "reactivate",
+                                    )
+                                  }
+                                >
+                                  {isThisMemberPending &&
+                                  memberOperation.action === "reactivate"
+                                    ? "Reactivating..."
+                                    : "Reactivate"}
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          {isConfirmingDeactivation && (
+                            <div
+                              className="organization-workspace__member-confirmation"
+                              role="group"
+                              aria-label={`Confirm deactivation for ${
+                                member.fullName ||
+                                member.email ||
+                                "organization member"
+                              }`}
+                            >
+                              <p className="organization-workspace__member-confirmation-copy">
+                                Deactivate this member? They will lose
+                                access until reactivated.
+                              </p>
+
+                              <div className="organization-workspace__member-confirmation-actions">
+                                <button
+                                  className="organization-workspace__member-action-button organization-workspace__member-action-button--deactivate"
+                                  type="button"
+                                  disabled={hasPendingMemberOperation}
+                                  onClick={() =>
+                                    handleMemberLifecycle(
+                                      member,
+                                      "deactivate",
+                                    )
+                                  }
+                                >
+                                  {isThisMemberPending &&
+                                  memberOperation.action === "deactivate"
+                                    ? "Deactivating..."
+                                    : "Confirm deactivation"}
+                                </button>
+
+                                <button
+                                  className="organization-workspace__member-action-button organization-workspace__member-action-button--cancel"
+                                  type="button"
+                                  disabled={hasPendingMemberOperation}
+                                  onClick={handleCancelMemberDeactivation}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {feedback && (
+                        <div
+                          className={`organization-workspace__member-feedback organization-workspace__member-feedback--${feedback.type}`}
+                          role={
+                            feedback.type === "error"
+                              ? "alert"
+                              : "status"
+                          }
+                          aria-live="polite"
+                        >
+                          {feedback.message}
+                        </div>
+                      )}
                     </article>
                   );
                 })}
